@@ -39,7 +39,7 @@ namespace GroundRouteFinder
             preprocess();
             logElapsed("preprocessing done");
 
-            IEnumerable<TargetNode> targets = _runways.Select(r => r as TargetNode).Concat(_startPoints.Select(s => s as TargetNode));
+            IEnumerable<TargetNode> targets = _runways.Select(r => r as TargetNode);//.Concat(_startPoints.Select(s => s as TargetNode));
 
             foreach (TargetNode target in targets)
             {
@@ -47,7 +47,6 @@ namespace GroundRouteFinder
                 for (int i = 0; i < Vertex.Sizes; i++)
                 {
                     v.DistanceToTarget[i] = 0;
-                    v.Done[i] = true;
                 }
 
                 foreach (MeasuredVertex vto in v.IncommingVertices)
@@ -59,83 +58,82 @@ namespace GroundRouteFinder
                     }
                 }
 
+                v.Done = true;
+
 
                 int procced = 0;
                 StringBuilder sb = new StringBuilder();
-                for (int size = 0; size < Vertex.Sizes; size++)
-                {
-                    while (_vertices.Count > 0)
-                    {
-                        v = _vertices.Values.FirstOrDefault(a => a.PathToTarget[size] != null && !a.Done[size]);
-                        if (v == null)
-                            break;
-
-                        //var kvp = _vertices.FirstOrDefault(a => a.Value.PathToTarget[0] != null && !a.Value.Done);
-                        //if (kvp.Value == null)
-                        //    break;
-                        //else
-                        //    v = kvp.Value;
-                        foreach (MeasuredVertex vto in v.IncommingVertices)
-                        {
-                            if (vto.MaxSize < size)
-                                continue;
-
-                            //                        for (int i = 0; i <= vto.MaxSize; i++)
-                            //                        {
-                            if (v.PathToTarget[size] == null)
-                                continue;
-
-                            if (vto.SourceVertex.DistanceToTarget[size] > (v.DistanceToTarget[size] + vto.RelativeDistance))
-                            {
-                                vto.SourceVertex.DistanceToTarget[size] = (v.DistanceToTarget[size] + vto.RelativeDistance);
-                                vto.SourceVertex.PathToTarget[size] = v;
-                            }
-                            //}
-                        }
-                        v.Done[size] = true;
-                        procced++;
-                    }
-
-                //    logElapsed($"calculations done for {target.ToString()} {size}");
-                }
-                //foreach (StartPoint startPoint in _startPoints)
+                //for (int size = 0; size < Vertex.Sizes; size++)
                 //{
-                //    sb.AppendFormat("{0} Near: {1}\n", startPoint.Name, startPoint.NearestVertex.Id);
-                //    for (int s = 0; s < 6; s++)
-                //    {
-                //        if (startPoint.NearestVertex.PathToTarget[s] == null)
-                //        {
-                //            sb.AppendFormat($"No {s} Path\n");
-                //        }
-                //        else
-                //        {
-                //            Vertex vx = startPoint.NearestVertex;
-                //            while (vx.PathToTarget[s] != null)
-                //            {
-                //                sb.AppendFormat("{0}(", vx.Id);
-                //                //for (int sz = 0; sz < 6; sz++)
-                //                //{
-                //                //    sb.AppendFormat("{0} ", vx.PathToTarget[sz] == null ? "x" : vx.PathToTarget[sz].Id.ToString());
-                //                //}
-                //                sb.Append(")->");
-                //                vx = vx.PathToTarget[s];
-                //            }
-                //            sb.AppendFormat(">{0}\n", vx.Id);
-                //        }
-                //    }
-                //    break;
-                //}
-                //rtb.AppendText(sb.ToString());
-                //break;
+                while (_vertices.Count > 0)
+                {
+                    v = _vertices.Values.FirstOrDefault(a => a.PathToTarget[0] != null && !a.Done && a.OutgoingVertices.All(ov => ov.Done));
+                    if (v == null)
+                        break;
+
+                    //var kvp = _vertices.FirstOrDefault(a => a.Value.PathToTarget[0] != null && !a.Value.Done);
+                    //if (kvp.Value == null)
+                    //    break;
+                    //else
+                    //    v = kvp.Value;
+                    foreach (MeasuredVertex vto in v.IncommingVertices)
+                    {
+                        for (int i = 0; i <= vto.MaxSize; i++)
+                        {
+                            if (v.PathToTarget[i] == null)
+                                continue;
+
+                            if (vto.SourceVertex.DistanceToTarget[i] > (v.DistanceToTarget[i] + vto.RelativeDistance))
+                            {
+                                vto.SourceVertex.DistanceToTarget[i] = (v.DistanceToTarget[i] + vto.RelativeDistance);
+                                vto.SourceVertex.PathToTarget[i] = v;
+                            }
+                        }
+                    }
+                    v.Done = true;
+                    procced++;
+                }
+
+                logElapsed($"calculations done for {target.ToString()}");
+
+                foreach (StartPoint startPoint in _startPoints)
+                {
+                    sb.AppendFormat("{0} Near: {1}\n", startPoint.Name, startPoint.NearestVertex.Id);
+                    for (int s = 0; s < 6; s++)
+                    {
+                        if (startPoint.NearestVertex.PathToTarget[s] == null)
+                        {
+                            sb.AppendFormat($"No {s} Path\n");
+                        }
+                        else
+                        {
+                            Vertex vx = startPoint.NearestVertex;
+                            while (vx.PathToTarget[s] != null)
+                            {
+                                sb.AppendFormat("{0}(", vx.Id);
+                                //for (int sz = 0; sz < 6; sz++)
+                                //{
+                                //    sb.AppendFormat("{0} ", vx.PathToTarget[sz] == null ? "x" : vx.PathToTarget[sz].Id.ToString());
+                                //}
+                                sb.Append(")->");
+                                vx = vx.PathToTarget[s];
+                            }
+                            sb.AppendFormat(">{0}\n", vx.Id);
+                        }
+                    }
+                    break;
+                }
+                rtb.AppendText(sb.ToString());
+                break;
 
                 foreach (Vertex vtx in _vertices.Values)
                 {
                     for (int i = 0; i < Vertex.Sizes; i++)
                     {
                         vtx.DistanceToTarget[i] = double.MaxValue;
-                        vtx.PathToTarget[i] = null;
-                        vtx.Done[i] = false;
+                        vtx.PathToTarget[i] = null;                        
                     }
+                    vtx.Done = false;
                 }
             }
             logElapsed("processing done");
