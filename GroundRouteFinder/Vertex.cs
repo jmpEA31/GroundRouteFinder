@@ -44,7 +44,7 @@ namespace GroundRouteFinder
 
             for (int i = 0; i < Sizes; i++)
             {
-                DistanceToTarget[i] = float.MaxValue;
+                DistanceToTarget[i] = double.MaxValue / 2;
                 PathToTarget[i] = null;
             }
 
