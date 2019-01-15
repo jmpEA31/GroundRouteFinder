@@ -6,23 +6,21 @@ using System.Threading.Tasks;
 
 namespace GroundRouteFinder
 {
-    public class StartPoint
+    public class StartPoint : TargetNode
     {
-        public double Latitude;
-        public double Longitude;
-
         public string Type;
         public string Jets;
-
         public string Name;
 
-        public Vertex NearestVertex;
-
-        public StartPoint()
+        public StartPoint() 
+            : base()
         {
             NearestVertex = null;
         }
 
-
+        public override string ToString()
+        {
+            return Name;
+        }
     }
 }

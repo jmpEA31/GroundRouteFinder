@@ -34,9 +34,10 @@
             // 
             // button1
             // 
-            this.button1.Location = new System.Drawing.Point(13, 13);
+            this.button1.Location = new System.Drawing.Point(17, 16);
+            this.button1.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(75, 23);
+            this.button1.Size = new System.Drawing.Size(100, 28);
             this.button1.TabIndex = 0;
             this.button1.Text = "button1";
             this.button1.UseVisualStyleBackColor = true;
@@ -44,19 +45,22 @@
             // 
             // rtb
             // 
-            this.rtb.Location = new System.Drawing.Point(94, 15);
+            this.rtb.Font = new System.Drawing.Font("Consolas", 7.8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.rtb.Location = new System.Drawing.Point(125, 18);
+            this.rtb.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.rtb.Name = "rtb";
-            this.rtb.Size = new System.Drawing.Size(741, 532);
+            this.rtb.Size = new System.Drawing.Size(1500, 654);
             this.rtb.TabIndex = 1;
             this.rtb.Text = "";
             // 
             // Form1
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(847, 559);
+            this.ClientSize = new System.Drawing.Size(1670, 688);
             this.Controls.Add(this.rtb);
             this.Controls.Add(this.button1);
+            this.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.Name = "Form1";
             this.Text = "Form1";
             this.ResumeLayout(false);
