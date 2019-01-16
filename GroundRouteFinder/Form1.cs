@@ -18,6 +18,7 @@ namespace GroundRouteFinder
         private List<Runway> _runways;
         private DateTime _start;
         private static char[] _splitters = { ' ' };
+        private Dictionary<string, RunwayEdges> _runwayEdges;
 
         public Form1()
         {
@@ -34,10 +35,13 @@ namespace GroundRouteFinder
             _start = DateTime.Now;
             rtb.Clear();
 
+            //loadFile("..\\..\\..\\..\\EIDW_Scenery_Pack\\EIDW_Scenery_Pack\\Earth nav data\\apt.dat");
             loadFile("..\\..\\..\\..\\LFPG_Scenery_Pack\\LFPG_Scenery_Pack\\Earth nav data\\apt.dat");
             logElapsed("loading done");
             preprocess();
             logElapsed("preprocessing done");
+
+            return;
 
             IEnumerable<TargetNode> targets = _runways.Select(r => r as TargetNode).Concat(_startPoints.Select(s => s as TargetNode));
 
@@ -177,6 +181,8 @@ namespace GroundRouteFinder
             _vertices = new Dictionary<ulong, Vertex>();
             _startPoints = new List<StartPoint>();
             _runways = new List<Runway>();
+            _runwayEdges = new Dictionary<string, RunwayEdges>();
+
 
             string[] lines = File.ReadAllLines(name);
             for (int i = 0; i < lines.Length; i++)
@@ -208,13 +214,23 @@ namespace GroundRouteFinder
                     ulong va = ulong.Parse(tokens[1]);
                     ulong vb = ulong.Parse(tokens[2]);
                     int maxSize = 5;
-                    if (tokens[4][0] == 't')
-                        maxSize = (int)(tokens[4][8]-'A');
+                    bool isRunway = (tokens[4][0] != 't');
+                    if (!isRunway)
+                        maxSize = (int)(tokens[4][8] - 'A');
+                    else
+                    {
+                        if (!_runwayEdges.ContainsKey(tokens[5]))
+                        {
+                            _runwayEdges[tokens[5]] = new RunwayEdges();
+                        }
 
-                    _vertices[vb].AddEdgeFrom(_vertices[va], maxSize);
+                        _runwayEdges[tokens[5]].AddEdge(_vertices[va], _vertices[vb]);
+                    }
+
+                    _vertices[vb].AddEdgeFrom(_vertices[va], maxSize, isRunway);
                     if (tokens[3][0] == 't')
                     {
-                        _vertices[va].AddEdgeFrom(_vertices[vb], maxSize);
+                        _vertices[va].AddEdgeFrom(_vertices[vb], maxSize, isRunway);
                     }
                 }
                 else if (lines[i].StartsWith("1300 "))
@@ -263,7 +279,7 @@ namespace GroundRouteFinder
             {
                 double shortestDistance = double.MaxValue;
 
-                foreach (Vertex vx in _vertices.Values)
+                foreach (Vertex vx in _vertices.Values.Where(v => v.IsRunwayEdge))
                 {
                     double d = vx.CrudeRelativeDistanceEstimate(r.ActualLatitude, r.ActualLongitude);
                     if (d < shortestDistance)
@@ -272,6 +288,26 @@ namespace GroundRouteFinder
                         r.NearestVertex = vx;
                     }
                 }
+            }
+
+            foreach (Runway r in _runways)
+            {
+                var edgesKeys = _runwayEdges.Where(rwe => rwe.Value.HasVertex(r.NearestVertex.Id)).Select(rwe => rwe.Key);
+                rtb.AppendText($"Runway: {r.Number}, Nearest Node: {r.NearestVertex.Id}, Edges: {string.Join(", ", edgesKeys)}\n");
+
+                string edgeKey = edgesKeys.FirstOrDefault();
+                if (!string.IsNullOrEmpty(edgeKey))
+                {
+                    RunwayEdges rwe = _runwayEdges[edgeKey];
+                    string chain = rwe.FindChainFrom(r.NearestVertex.Id);
+                    rtb.AppendText($"{chain}\n");
+                }
+            }
+
+            foreach (var kvp in _runwayEdges)
+            {
+                kvp.Value.Process();
+                rtb.AppendText($"Runway: {kvp.Key}, Edges: {kvp.Value.Edges.Count}\n");
             }
 
         }

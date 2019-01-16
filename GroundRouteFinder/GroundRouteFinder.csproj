@@ -67,6 +67,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Runway.cs" />
+    <Compile Include="RunwayEdge.cs" />
+    <Compile Include="RunwayEdges.cs" />
     <Compile Include="StartPoint.cs" />
     <Compile Include="TargetNode.cs" />
     <Compile Include="Vertex.cs" />

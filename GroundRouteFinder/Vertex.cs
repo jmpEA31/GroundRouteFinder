@@ -19,7 +19,6 @@ namespace GroundRouteFinder
         public const int Sizes = 6;
 
         public List<MeasuredVertex> IncommingVertices;
-        public List<Vertex> OutgoingVertices;
 
         public double [] DistanceToTarget;
         public Vertex [] PathToTarget;
@@ -29,6 +28,9 @@ namespace GroundRouteFinder
         public string LatitudeString;
         public string LongitudeString;
 
+        public bool IsRunwayEdge;
+        public bool IsNonRunwayEdge;
+
         public bool Done;
 
         public const double D2R = (Math.PI / 180.0);
@@ -37,7 +39,9 @@ namespace GroundRouteFinder
         {
             Id = id;
             IncommingVertices = new List<MeasuredVertex>();
-            OutgoingVertices = new List<Vertex>();
+
+            IsRunwayEdge = false;
+            IsNonRunwayEdge = false;
 
             DistanceToTarget = new double[Sizes];
             PathToTarget = new Vertex[Sizes];
@@ -67,14 +71,14 @@ namespace GroundRouteFinder
             }
         }
 
-        public void AddEdgeFrom(Vertex sourceVertex, int maxSize)
+        public void AddEdgeFrom(Vertex sourceVertex, int maxSize, bool isRunway)
         {
-            IncommingVertices.Add(new MeasuredVertex() { SourceVertex = sourceVertex, RelativeDistance = 0, MaxSize = maxSize });
-        }
+            if (isRunway)
+                IsRunwayEdge = true;
+            else
+                IsNonRunwayEdge = true;
 
-        public void AddEdgeTo(Vertex destinationVertex)
-        {
-            OutgoingVertices.Add(destinationVertex);
+            IncommingVertices.Add(new MeasuredVertex() { SourceVertex = sourceVertex, RelativeDistance = 0, MaxSize = maxSize });
         }
 
         public double CrudeRelativeDistanceEstimate(double latitudeOther, double longitudeOther)
