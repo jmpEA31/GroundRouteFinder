@@ -11,17 +11,19 @@ namespace GroundRouteFinder
         public Vertex SourceVertex;
         public int MaxSize;
         public double RelativeDistance;
+        public double? Bearing;
     }
 
     public class Vertex
     {
         public ulong Id;
+        public string Name;
         public const int Sizes = 6;
 
         public List<MeasuredVertex> IncommingVertices;
 
-        public double [] DistanceToTarget;
-        public Vertex [] PathToTarget;
+        public double DistanceToTarget;
+        public Vertex PathToTarget;
 
         public double Latitude;
         public double Longitude;
@@ -31,7 +33,7 @@ namespace GroundRouteFinder
         public bool IsRunwayEdge;
         public bool IsNonRunwayEdge;
 
-        public bool Done;
+        public double TemporaryDistance;
 
         public const double D2R = (Math.PI / 180.0);
 
@@ -43,16 +45,9 @@ namespace GroundRouteFinder
             IsRunwayEdge = false;
             IsNonRunwayEdge = false;
 
-            DistanceToTarget = new double[Sizes];
-            PathToTarget = new Vertex[Sizes];
+            DistanceToTarget = double.MaxValue;
+            PathToTarget = null;
 
-            for (int i = 0; i < Sizes; i++)
-            {
-                DistanceToTarget[i] = double.MaxValue / 2;
-                PathToTarget[i] = null;
-            }
-
-            Done = false;
             LatitudeString = latitude;
             LongitudeString = longitude;
         }
@@ -83,11 +78,16 @@ namespace GroundRouteFinder
 
         public double CrudeRelativeDistanceEstimate(double latitudeOther, double longitudeOther)
         {
+            return CrudeRelativeDistanceEstimate(Latitude, Longitude, latitudeOther, longitudeOther);
+        }
+
+        public static Double CrudeRelativeDistanceEstimate(double φ1, double λ1, double φ2, double λ2)
+        {
             // Not interested in the actual distance between the points
             // Also assuming that on airport scale lat/lon is linear enough
-            double dLongitude = Longitude - longitudeOther;
-            double dLatitude = Latitude - latitudeOther;
-            return Math.Sqrt(dLongitude * dLongitude + dLatitude * dLatitude);
+            double dλ = λ1 - λ2;
+            double dφ = φ1 - φ2;
+            return Math.Sqrt(dλ * dλ + dφ * dφ);
         }
 
         public double RelativeDistance(double latitudeOther, double longitudeOther)
