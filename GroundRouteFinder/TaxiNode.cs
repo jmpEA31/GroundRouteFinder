@@ -6,24 +6,24 @@ using System.Threading.Tasks;
 
 namespace GroundRouteFinder
 {
-    public class MeasuredVertex
+    public class MeasuredNode
     {
-        public Vertex SourceVertex;
+        public TaxiNode SourceNode;
         public int MaxSize;
         public double RelativeDistance;
         public double? Bearing;
     }
 
-    public class Vertex
+    public class TaxiNode
     {
         public ulong Id;
         public string Name;
         public const int Sizes = 6;
 
-        public List<MeasuredVertex> IncomingVertices;
+        public List<MeasuredNode> IncomingVertices;
 
         public double DistanceToTarget;
-        public Vertex PathToTarget;
+        public TaxiNode PathToTarget;
 
         public double Latitude;
         public double Longitude;
@@ -35,12 +35,10 @@ namespace GroundRouteFinder
 
         public double TemporaryDistance;
 
-        public const double D2R = (Math.PI / 180.0);
-
-        public Vertex(ulong id, string latitude, string longitude)
+        public TaxiNode(ulong id, string latitude, string longitude)
         {
             Id = id;
-            IncomingVertices = new List<MeasuredVertex>();
+            IncomingVertices = new List<MeasuredNode>();
 
             IsRunwayEdge = false;
             IsNonRunwayEdge = false;
@@ -54,71 +52,26 @@ namespace GroundRouteFinder
 
         public void ComputeLonLat()
         {
-            Latitude = double.Parse(LatitudeString) * D2R;
-            Longitude = double.Parse(LongitudeString) * D2R;
+            Latitude = double.Parse(LatitudeString) * VortexMath.Deg2Rad;
+            Longitude = double.Parse(LongitudeString) * VortexMath.Deg2Rad;
         }
 
         public void ComputeDistances()
         {
-            foreach (MeasuredVertex mv in IncomingVertices)
+            foreach (MeasuredNode mv in IncomingVertices)
             {
-                mv.RelativeDistance = CrudeRelativeDistanceEstimate(mv.SourceVertex.Latitude, mv.SourceVertex.Longitude);
+                mv.RelativeDistance = VortexMath.DistancePyth(Latitude, Longitude, mv.SourceNode.Latitude, mv.SourceNode.Longitude);
             }
         }
 
-        public void AddEdgeFrom(Vertex sourceVertex, int maxSize, bool isRunway)
+        public void AddEdgeFrom(TaxiNode sourceVertex, int maxSize, bool isRunway)
         {
             if (isRunway)
                 IsRunwayEdge = true;
             else
                 IsNonRunwayEdge = true;
 
-            IncomingVertices.Add(new MeasuredVertex() { SourceVertex = sourceVertex, RelativeDistance = 0, MaxSize = maxSize });
+            IncomingVertices.Add(new MeasuredNode() { SourceNode = sourceVertex, RelativeDistance = 0, MaxSize = maxSize });
         }
-
-        public double CrudeRelativeDistanceEstimate(double latitudeOther, double longitudeOther)
-        {
-            return CrudeRelativeDistanceEstimate(Latitude, Longitude, latitudeOther, longitudeOther);
-        }
-
-        public static Double CrudeRelativeDistanceEstimate(double φ1, double λ1, double φ2, double λ2)
-        {
-            // Not interested in the actual distance between the points
-            // Also assuming that on airport scale lat/lon is linear enough
-            double dλ = λ1 - λ2;
-            double dφ = φ1 - φ2;
-            return Math.Sqrt(dλ * dλ + dφ * dφ);
-        }
-
-        public double RelativeDistance(double latitudeOther, double longitudeOther)
-        {
-            double dLongitude = Longitude - longitudeOther;
-            double dLatitude = Latitude - latitudeOther;
-
-            double result1 = Math.Pow(Math.Sin(dLatitude / 2.0), 2.0) +
-                          Math.Cos(latitudeOther) * Math.Cos(Latitude) *
-                          Math.Pow(Math.Sin(dLongitude / 2.0), 2.0);
-
-            // No conversion to KM's or miles, just relative
-            return Math.Atan2(Math.Sqrt(result1), Math.Sqrt(1.0 - result1));
-        }
-
-        public double DistanceKM(double φ2, double λ2)
-        {
-            return CrudeRelativeDistanceEstimate(Latitude, Longitude, φ2, λ2);
-        }
-
-        public static double DistanceKM(double φ1, double λ1, double φ2, double λ2)
-        {
-            double dλ = λ1 - λ2;
-            double dφ = φ1 - φ2;
-
-            double result1 = Math.Pow(Math.Sin(dφ / 2.0), 2.0) +
-                          Math.Cos(φ2) * Math.Cos(φ1) *
-                          Math.Pow(Math.Sin(dλ / 2.0), 2.0);
-
-            return 2.0 * 6371.0 * Math.Atan2(Math.Sqrt(result1), Math.Sqrt(1.0 - result1));
-        }
-
     }
 }

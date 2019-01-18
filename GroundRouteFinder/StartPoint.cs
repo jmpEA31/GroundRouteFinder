@@ -17,7 +17,7 @@ namespace GroundRouteFinder
 
         public double PushBackLatitude;
         public double PushBackLongitude;
-        public Vertex AlternateAfterPushBack;
+        public TaxiNode AlternateAfterPushBack;
 
         public StartPoint() 
             : base()
@@ -27,67 +27,207 @@ namespace GroundRouteFinder
             PushBackLongitude = 0;
         }
 
-        public static double ComputeBearing(double lat1, double lon1, double lat2, double lon2)
+        public void DetermineTaxiOutLocation(IEnumerable<TaxiNode> taxiNodes)
         {
-            double dLon = (lon2 - lon1);
-            double dPhi = Math.Log(Math.Tan(lat2 / 2 + Math.PI / 4) / Math.Tan(lat1 / 2 + Math.PI / 4));
-            if (Math.Abs(dLon) > Math.PI)
+            double shortestDistance = double.MaxValue;
+            double bestPushBackLatitude = 0;
+            double bestPushBackLongitude = 0;
+            TaxiNode firstAfterPush = null;
+            TaxiNode alternateAfterPush = null;
+
+            // For gates use the indicated bearings (push back), for others add 180 degrees for straight out
+            // Then convert to -180...180 range
+            double adjustedBearing = (Type == "gate") ? Bearing : (Bearing + Math.PI);
+            if (adjustedBearing > Math.PI)
+                adjustedBearing -= (VortexMath.PI2);
+
+            // Compute the distance (arbitrary units) from each taxi node to the start location
+            foreach (TaxiNode node in taxiNodes)
             {
-                dLon = dLon > 0 ? -(2 * Math.PI - dLon) : (2 * Math.PI + dLon);
+                node.TemporaryDistance = VortexMath.DistancePyth(node.Latitude, node.Longitude, Latitude, Longitude);
             }
-            return Math.Atan2(dLon, dPhi);
+
+            // Select the 25 nearest, then from those select only the ones that are in the 180 degree arc of the direction
+            // we intend to move in from the startpoint
+            // todo: make both 25 and 180 parameters
+            IEnumerable<TaxiNode> selectedNodes = taxiNodes.OrderBy(v => v.TemporaryDistance).Take(25);
+            selectedNodes = selectedNodes.Where(v => Math.Abs(adjustedBearing - VortexMath.BearingRadians(v.Latitude, v.Longitude, Latitude, Longitude)) < VortexMath.PI05);
+
+            // For each qualifying node
+            foreach (TaxiNode v in selectedNodes)
+            {
+                // Look at each link coming into it from other nodes
+                foreach (MeasuredNode incoming in v.IncomingVertices)
+                {
+                    // Compute the bearing of the link if it has not been calculated yet
+                    // todo: how much time do I gain here? Might be easier, clearer and nearly as fast to compute all of them while adding them during the file read
+                    if (!incoming.Bearing.HasValue)
+                    {
+                        incoming.Bearing = VortexMath.BearingRadians(incoming.SourceNode.Latitude, incoming.SourceNode.Longitude, v.Latitude, v.Longitude);
+                    }
+
+                    double pushBackLatitude = 0;
+                    double pushBackLongitude = 0;
+
+                    // Now find where the 'start point outgoing line' intersects with the taxi link we are currently checking
+                    if (!VortexMath.Intersection(Latitude, Longitude, adjustedBearing,
+                                                incoming.SourceNode.Latitude, incoming.SourceNode.Longitude, incoming.Bearing.Value,
+                                                ref pushBackLatitude, ref pushBackLongitude))
+                    {
+                        // If computation fails, try again but now with the link in the other direction.
+                        // Ignoring one way links here, I just want a push back target for now that's close to A link.
+                        if (!VortexMath.Intersection(Latitude, Longitude, adjustedBearing,
+                                                     incoming.SourceNode.Latitude, incoming.SourceNode.Longitude, incoming.Bearing.Value + Math.PI,
+                                                     ref pushBackLatitude, ref pushBackLongitude))
+                        {
+                            // Lines might be parallel, can't find intersection, skip
+                            continue;
+                        }
+                    }
+
+                    // Great Circles cross twice, if we found the one on the back of the earth, convert it to the
+                    // one on the airport
+                    // Todo: check might fail for airports on the -180/+180 longitude line
+                    if (Math.Abs(pushBackLongitude - Longitude) > 0.25 * Math.PI)
+                    {
+                        pushBackLatitude = -pushBackLatitude;
+                        pushBackLongitude += Math.PI;
+                    }
+
+                    // To find the best spot we must know if the found intersection is actually
+                    // on the link or if it is somewhere outside the actual link. These are 
+                    // still usefull in some cases
+                    bool foundTargetIsOutsideSegment = false;
+
+                    // Todo: check might fail for airports on the -180/+180 longitude line
+                    if (pushBackLatitude - incoming.SourceNode.Latitude > 0)
+                    {
+                        if (v.Latitude - pushBackLatitude <= 0)
+                            foundTargetIsOutsideSegment = true;
+                    }
+                    else if (v.Latitude - pushBackLatitude > 0)
+                        foundTargetIsOutsideSegment = true;
+
+                    if (pushBackLongitude - incoming.SourceNode.Longitude > 0)
+                    {
+                        if (v.Longitude - pushBackLongitude <= 0)
+                            foundTargetIsOutsideSegment = true;
+                    }
+                    else if (v.Longitude - pushBackLongitude > 0)
+                        foundTargetIsOutsideSegment = true;
+
+                    // Ignore links where the taxiout line intercepts at too sharp of an angle if it is 
+                    // also outside the actual link.
+                    // todo: Maybe ignore these links right away, saves a lot of calculations
+                    double interceptAngleSharpness = Math.Abs(VortexMath.PI05 - Math.Abs((adjustedBearing - incoming.Bearing.Value) % Math.PI)) / Math.PI;
+                    if (foundTargetIsOutsideSegment && interceptAngleSharpness > 0.4)
+                    {
+                        continue;
+                    }
+
+                    // for the found location keep track of the distance to it from the start point
+                    // also keep track of the distances to both nodes of the link we are inspecting now
+                    double pushDistance = 0.0;
+                    double distanceSource = VortexMath.DistancePyth(incoming.SourceNode.Latitude, incoming.SourceNode.Longitude, pushBackLatitude, pushBackLongitude);
+                    double distanceDest = VortexMath.DistancePyth(v.Latitude, v.Longitude, pushBackLatitude, pushBackLongitude);
+
+                    // If the found point is outside the link, add the distance to the nearest node of
+                    // the link time 2 as a penalty to the actual distance. This prevents pushback point
+                    // candidates that sneak up on the start because of a slight angle in remote link
+                    // from being accepted as best.
+                    TaxiNode nearestVertexIfPushBackOutsideSegment = null;
+                    if (foundTargetIsOutsideSegment)
+                    {
+                        if (distanceSource < distanceDest)
+                        {
+                            pushDistance = distanceSource * 2.0;
+                            nearestVertexIfPushBackOutsideSegment = incoming.SourceNode;
+                        }
+                        else
+                        {
+                            pushDistance = distanceDest * 2.0;
+                            nearestVertexIfPushBackOutsideSegment = v;
+                        }
+                    }
+
+                    // How far is the candidate from the start point?
+                    pushDistance += VortexMath.DistancePyth(Latitude, Longitude, pushBackLatitude, pushBackLongitude);
+
+                    // See if it is a better candidate
+                    if (pushDistance < shortestDistance)
+                    {
+                        bestPushBackLatitude = pushBackLatitude;
+                        bestPushBackLongitude = pushBackLongitude;
+                        shortestDistance = pushDistance;
+
+                        // Setting things up for the path calculation that will follow later
+                        if (foundTargetIsOutsideSegment)
+                        {
+                            // The taxi out route will start with a push to the best candidate
+                            // Then move to the 'firstAfterPush' node and from there follow
+                            // the 'shortest' path to the runway
+                            firstAfterPush = nearestVertexIfPushBackOutsideSegment;
+                            alternateAfterPush = null;
+                        }
+                        else
+                        {
+                            // The taxi out route will start with a push to the best candidate
+                            // Then, if the second node in the find 'shortest' path is the alternate
+                            // the first point will be skipped. If the second point is not the alternate,
+                            // the 'firstAfterPush' will be the first indeed and after that the found
+                            // route will be followed.
+                            if (distanceSource < distanceDest)
+                            {
+                                firstAfterPush = incoming.SourceNode;
+                                alternateAfterPush = v;
+                            }
+                            else
+                            {
+                                firstAfterPush = v;
+                                alternateAfterPush = incoming.SourceNode;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // All candiates have been considered, post processing the winner:
+            if (shortestDistance < double.MaxValue)
+            {
+                // If there is one, check if it is not too far away from the start. This catches cases where
+                // a gate at the end of an apron with heading parallel to the apron entry would get a best
+                // target on the taxiway outside the apron.
+                double actualDistance = VortexMath.DistanceKM(Latitude, Longitude, bestPushBackLatitude, bestPushBackLongitude);
+                if (actualDistance > 0.25)
+                {
+                    // Fix this by pushing to the end point of the entry link
+                    // (If that is actually the nearest node to the parking, but alas...
+                    //  this is the default WT3 behaviour anyway)
+                    NearestVertex = selectedNodes.First();
+                    AlternateAfterPushBack = null;
+                    PushBackLatitude = NearestVertex.Latitude;
+                    PushBackLongitude = NearestVertex.Longitude;
+                }
+                else
+                {
+                    // Store the results in the startpoint
+                    PushBackLatitude = bestPushBackLatitude;
+                    PushBackLongitude = bestPushBackLongitude;
+                    NearestVertex = firstAfterPush;
+                    AlternateAfterPushBack = alternateAfterPush;
+                }
+            }
+            else
+            {
+                // Crude fallback to defautl WT behavoit if nothing was found.
+                NearestVertex = selectedNodes.First();
+                AlternateAfterPushBack = null;
+                PushBackLatitude = NearestVertex.Latitude;
+                PushBackLongitude = NearestVertex.Longitude;
+            }
         }
 
-        public static bool Intersection(double φ1, double λ1, double θ13, double φ2, double λ2, double θ23, ref double latIntersection, ref double lonIntersection)
-        {
-            double Δφ = φ2 - φ1;
-            double Δλ = λ2 - λ1;
 
-            double sinhalfΔφ = Math.Sin(Δφ / 2);
-            double sinhalfΔλ = Math.Sin(Δλ / 2);
-            double sinφ1 = Math.Sin(φ1);
-            double sinφ2 = Math.Sin(φ2);
-            double cosφ1 = Math.Cos(φ1);
-            double cosφ2 = Math.Cos(φ2);
-
-            // angular distance p1-p2
-            double δ12 = 2 * Math.Asin(Math.Sqrt(sinhalfΔφ * sinhalfΔφ + cosφ1 * Math.Cos(φ2) * sinhalfΔλ * sinhalfΔλ));
-            if (δ12 == 0) return false;
-
-            double sinδ12 = Math.Sin(δ12);
-            double cosδ12 = Math.Cos(δ12);
-
-
-            // initial/final bearings between points
-            double θa = Math.Acos((sinφ2 - sinφ1 * cosδ12) / (sinδ12 * cosφ1));
-            if (double.IsNaN(θa)) θa = 0; // protect against rounding
-            double θb = Math.Acos((sinφ1 - sinφ2 * cosδ12) / (sinδ12 * cosφ2));
-
-            double θ12 = Math.Sin(λ2 - λ1) > 0 ? θa : 2 * Math.PI - θa;
-            double θ21 = Math.Sin(λ2 - λ1) > 0 ? 2 * Math.PI - θb : θb;
-
-            double α1 = θ13 - θ12; // angle 2-1-3
-            double α2 = θ21 - θ23; // angle 1-2-3
-
-            double sinα1 = Math.Sin(α1);
-            double sinα2 = Math.Sin(α2);
-            double cosα1 = Math.Cos(α1);
-            if (sinα1 == 0 && sinα2 == 0) return false; // infinite intersections
-            if (sinα1 * sinα2 < 0) return false;      // ambiguous intersection
-
-            double α3 = Math.Acos(-cosα1 * Math.Cos(α2) + sinα1 * sinα2 * cosδ12);
-            double δ13 = Math.Atan2(sinδ12 * sinα1 * sinα2, Math.Cos(α2) + cosα1 * Math.Cos(α3));
-            latIntersection = Math.Asin(sinφ1 * Math.Cos(δ13) + cosφ1 * Math.Sin(δ13) * Math.Cos(θ13));
-            double Δλ13 = Math.Atan2(Math.Sin(θ13) * Math.Sin(δ13) * cosφ1, Math.Cos(δ13) - sinφ1 * Math.Sin(latIntersection));
-            lonIntersection = (((λ1 + Δλ13) + 3.0 * Math.PI) % (2.0 * Math.PI)) - Math.PI;
-
-            //return new LatLon(φ3.toDegrees(), (λ3.toDegrees() + 540) % 360 - 180); // normalise to −180..+180°
-
-            //double resLat = latIntersection * 180.0 / Math.PI;
-            //double resLon = ((lonIntersection * 180.0 / Math.PI) + 540) % 360 - 180;
-
-            return true;
-        }
 
         public override string ToString()
         {

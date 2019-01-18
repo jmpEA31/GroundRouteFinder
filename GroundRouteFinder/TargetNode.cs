@@ -8,10 +8,10 @@ namespace GroundRouteFinder
 {
     public class TargetNode
     {
-        public double ActualLatitude;
-        public double ActualLongitude;
+        public double Latitude;
+        public double Longitude;
 
-        public Vertex NearestVertex;
+        public TaxiNode NearestVertex;
 
         public TargetNode()
         {

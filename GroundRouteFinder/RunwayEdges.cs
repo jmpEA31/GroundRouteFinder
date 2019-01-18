@@ -15,7 +15,7 @@ namespace GroundRouteFinder
             Edges = new List<RunwayEdge>();
         }
 
-        public void AddEdge(Vertex v1, Vertex v2)
+        public void AddEdge(TaxiNode v1, TaxiNode v2)
         {
             Edges.Add(new RunwayEdge(v1, v2));
         }
@@ -41,7 +41,7 @@ namespace GroundRouteFinder
             else
             {
                 ulong previousId = vertexId;
-                Vertex next = (edge.V1.Id == previousId) ? edge.V2 : edge.V1;
+                TaxiNode next = (edge.V1.Id == previousId) ? edge.V2 : edge.V1;
                 ulong nextId = next.Id;
                 sb.AppendFormat("{0}* ", previousId);
                 sb.AppendFormat("{0}{1} ", nextId, next.IsNonRunwayEdge ? "*":" ");
