@@ -20,7 +20,7 @@ namespace GroundRouteFinder
         public string Name;
         public const int Sizes = 6;
 
-        public List<MeasuredVertex> IncommingVertices;
+        public List<MeasuredVertex> IncomingVertices;
 
         public double DistanceToTarget;
         public Vertex PathToTarget;
@@ -40,7 +40,7 @@ namespace GroundRouteFinder
         public Vertex(ulong id, string latitude, string longitude)
         {
             Id = id;
-            IncommingVertices = new List<MeasuredVertex>();
+            IncomingVertices = new List<MeasuredVertex>();
 
             IsRunwayEdge = false;
             IsNonRunwayEdge = false;
@@ -60,7 +60,7 @@ namespace GroundRouteFinder
 
         public void ComputeDistances()
         {
-            foreach (MeasuredVertex mv in IncommingVertices)
+            foreach (MeasuredVertex mv in IncomingVertices)
             {
                 mv.RelativeDistance = CrudeRelativeDistanceEstimate(mv.SourceVertex.Latitude, mv.SourceVertex.Longitude);
             }
@@ -73,7 +73,7 @@ namespace GroundRouteFinder
             else
                 IsNonRunwayEdge = true;
 
-            IncommingVertices.Add(new MeasuredVertex() { SourceVertex = sourceVertex, RelativeDistance = 0, MaxSize = maxSize });
+            IncomingVertices.Add(new MeasuredVertex() { SourceVertex = sourceVertex, RelativeDistance = 0, MaxSize = maxSize });
         }
 
         public double CrudeRelativeDistanceEstimate(double latitudeOther, double longitudeOther)
@@ -103,14 +103,19 @@ namespace GroundRouteFinder
             return Math.Atan2(Math.Sqrt(result1), Math.Sqrt(1.0 - result1));
         }
 
-        public double DistanceKM(double latitudeOther, double longitudeOther)
+        public double DistanceKM(double φ2, double λ2)
         {
-            double dLongitude = Longitude - longitudeOther;
-            double dLatitude = Latitude - latitudeOther;
+            return CrudeRelativeDistanceEstimate(Latitude, Longitude, φ2, λ2);
+        }
 
-            double result1 = Math.Pow(Math.Sin(dLatitude / 2.0), 2.0) +
-                          Math.Cos(latitudeOther) * Math.Cos(Latitude) *
-                          Math.Pow(Math.Sin(dLongitude / 2.0), 2.0);
+        public static double DistanceKM(double φ1, double λ1, double φ2, double λ2)
+        {
+            double dλ = λ1 - λ2;
+            double dφ = φ1 - φ2;
+
+            double result1 = Math.Pow(Math.Sin(dφ / 2.0), 2.0) +
+                          Math.Cos(φ2) * Math.Cos(φ1) *
+                          Math.Pow(Math.Sin(dλ / 2.0), 2.0);
 
             return 2.0 * 6371.0 * Math.Atan2(Math.Sqrt(result1), Math.Sqrt(1.0 - result1));
         }

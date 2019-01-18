@@ -15,41 +15,16 @@ namespace GroundRouteFinder
 
         public double Bearing;
 
+        public double PushBackLatitude;
+        public double PushBackLongitude;
+        public Vertex AlternateAfterPushBack;
+
         public StartPoint() 
             : base()
         {
-            NearestVertex = null;
-        }
-
-        public void FindTaxiOutPoint()
-        {
-            Vertex first = NearestVertex;
-            Vertex second = first.PathToTarget;
-
-            StreamWriter sw = File.CreateText("D:\\hick.csv");
-            sw.WriteLine("lat,lon,title");
-            sw.WriteLine($"{first.Latitude * 180.0 / Math.PI},{first.Longitude * 180.0 / Math.PI},first");
-            sw.WriteLine($"{second.Latitude * 180.0 / Math.PI},{second.Longitude * 180.0 / Math.PI},second");
-            sw.WriteLine($"{ActualLatitude * 180.0 / Math.PI},{ActualLongitude * 180.0 / Math.PI},parking");
-          
-
-            double departureBearing = ComputeBearing(first.Latitude, first.Longitude, second.Latitude, second.Longitude);
-
-            double latFirstTarget = 0;
-            double lonFirstTarget = 0;
-
-            if (Intersection(first.Latitude, first.Longitude, departureBearing, ActualLatitude, ActualLongitude, (Bearing + Math.PI) % (Math.PI * 2), ref latFirstTarget, ref lonFirstTarget))
-            {
-                sw.WriteLine($"{latFirstTarget * 180.0 / Math.PI},{lonFirstTarget * 180.0 / Math.PI},push");
-            }
-            else if (Intersection(first.Latitude, first.Longitude, departureBearing, ActualLatitude, ActualLongitude, Bearing, ref latFirstTarget, ref lonFirstTarget))
-            {
-                latFirstTarget = -latFirstTarget;
-                lonFirstTarget += Math.PI;
-                sw.WriteLine($"{latFirstTarget * 180.0 / Math.PI},{lonFirstTarget * 180.0 / Math.PI},push");
-            }
-
-            sw.Close();
+            AlternateAfterPushBack = null;
+            PushBackLatitude = 0;
+            PushBackLongitude = 0;
         }
 
         public static double ComputeBearing(double lat1, double lon1, double lat2, double lon2)
