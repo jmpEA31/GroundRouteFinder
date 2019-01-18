@@ -8,8 +8,11 @@ namespace GroundRouteFinder
 {
     public class VortexMath
     {
+        public const double PI = Math.PI;
         public const double PI2 = 2.0 * Math.PI;
+        public const double PI3 = 3.0 * Math.PI;
         public const double PI05 = 0.5 * Math.PI;
+        public const double PI025 = 0.25 * Math.PI;
         public const double Deg2Rad = Math.PI / 180.0;
         public const double Rad2Deg = 180.0 / Math.PI;
 
@@ -135,6 +138,17 @@ namespace GroundRouteFinder
             λi = (((λ1 + Δλ13) + 3.0 * Math.PI) % (VortexMath.PI2)) - Math.PI;
 
             return true;
+        }
+
+        public static void PointFrom(double φ1, double λ1, double θ, double distance, ref double φo, ref double λo)
+        {
+            double dR = distance / 6371.0;
+            double sinφ1 = Math.Sin(φ1);
+            double cosφ1 = Math.Cos(φ1);
+            double sindR = Math.Sin(dR);
+            double cosdR = Math.Cos(dR);
+            φo = Math.Asin(sinφ1 * cosdR + cosφ1 * sindR * Math.Cos(θ));
+            λo = λ1 + Math.Atan2(Math.Sin(θ) * sindR * cosφ1, cosdR - sinφ1 * Math.Sin(φo));
         }
     }
 }

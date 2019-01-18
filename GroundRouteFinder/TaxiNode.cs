@@ -8,10 +8,12 @@ namespace GroundRouteFinder
 {
     public class MeasuredNode
     {
+        public string LinkName;
+        public bool IsRunway;
         public TaxiNode SourceNode;
         public int MaxSize;
         public double RelativeDistance;
-        public double? Bearing;
+        public double Bearing;
     }
 
     public class TaxiNode
@@ -24,6 +26,8 @@ namespace GroundRouteFinder
 
         public double DistanceToTarget;
         public TaxiNode PathToTarget;
+        public string NameToTarget;
+        public bool PathIsRunway;
 
         public double Latitude;
         public double Longitude;
@@ -61,17 +65,20 @@ namespace GroundRouteFinder
             foreach (MeasuredNode mv in IncomingVertices)
             {
                 mv.RelativeDistance = VortexMath.DistancePyth(Latitude, Longitude, mv.SourceNode.Latitude, mv.SourceNode.Longitude);
+                mv.Bearing = VortexMath.BearingRadians(mv.SourceNode.Latitude, mv.SourceNode.Longitude, Latitude, Longitude);
             }
         }
 
-        public void AddEdgeFrom(TaxiNode sourceVertex, int maxSize, bool isRunway)
+        public void AddEdgeFrom(TaxiNode sourceVertex, int maxSize, bool isRunway, string linkName)
         {
             if (isRunway)
                 IsRunwayEdge = true;
             else
                 IsNonRunwayEdge = true;
 
-            IncomingVertices.Add(new MeasuredNode() { SourceNode = sourceVertex, RelativeDistance = 0, MaxSize = maxSize });
+                      
+
+            IncomingVertices.Add(new MeasuredNode() { SourceNode = sourceVertex, RelativeDistance = 0, MaxSize = maxSize, LinkName = linkName, IsRunway = isRunway });
         }
     }
 }

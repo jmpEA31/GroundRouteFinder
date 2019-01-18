@@ -8,10 +8,25 @@ namespace GroundRouteFinder
 {
     public class Runway : TargetNode
     {
-        public string Number;
+        private string _number;
 
-        public Runway() : base()
+        public Runway OppositeEnd;
+
+        public string Number
         {
+            get { return _number; }
+
+            set
+            {
+                _number = value;
+                FileNameSafeName = value;
+            }
+        }
+
+        public Runway() 
+            : base()
+        {
+            OppositeEnd = null;
         }
 
         public override string ToString()

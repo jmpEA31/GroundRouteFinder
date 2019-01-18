@@ -11,7 +11,20 @@ namespace GroundRouteFinder
     {
         public string Type;
         public string Jets;
-        public string Name;
+        public string Operation;
+        public int MaxSize;
+
+        private string _name;
+        public string Name
+        {
+            get { return _name; }
+
+            set
+            {
+                _name = value;
+                FileNameSafeName = value;
+            }
+        }
 
         public double Bearing;
 
@@ -59,25 +72,18 @@ namespace GroundRouteFinder
                 // Look at each link coming into it from other nodes
                 foreach (MeasuredNode incoming in v.IncomingVertices)
                 {
-                    // Compute the bearing of the link if it has not been calculated yet
-                    // todo: how much time do I gain here? Might be easier, clearer and nearly as fast to compute all of them while adding them during the file read
-                    if (!incoming.Bearing.HasValue)
-                    {
-                        incoming.Bearing = VortexMath.BearingRadians(incoming.SourceNode.Latitude, incoming.SourceNode.Longitude, v.Latitude, v.Longitude);
-                    }
-
                     double pushBackLatitude = 0;
                     double pushBackLongitude = 0;
 
                     // Now find where the 'start point outgoing line' intersects with the taxi link we are currently checking
                     if (!VortexMath.Intersection(Latitude, Longitude, adjustedBearing,
-                                                incoming.SourceNode.Latitude, incoming.SourceNode.Longitude, incoming.Bearing.Value,
+                                                incoming.SourceNode.Latitude, incoming.SourceNode.Longitude, incoming.Bearing,
                                                 ref pushBackLatitude, ref pushBackLongitude))
                     {
                         // If computation fails, try again but now with the link in the other direction.
                         // Ignoring one way links here, I just want a push back target for now that's close to A link.
                         if (!VortexMath.Intersection(Latitude, Longitude, adjustedBearing,
-                                                     incoming.SourceNode.Latitude, incoming.SourceNode.Longitude, incoming.Bearing.Value + Math.PI,
+                                                     incoming.SourceNode.Latitude, incoming.SourceNode.Longitude, incoming.Bearing + Math.PI,
                                                      ref pushBackLatitude, ref pushBackLongitude))
                         {
                             // Lines might be parallel, can't find intersection, skip
@@ -119,7 +125,7 @@ namespace GroundRouteFinder
                     // Ignore links where the taxiout line intercepts at too sharp of an angle if it is 
                     // also outside the actual link.
                     // todo: Maybe ignore these links right away, saves a lot of calculations
-                    double interceptAngleSharpness = Math.Abs(VortexMath.PI05 - Math.Abs((adjustedBearing - incoming.Bearing.Value) % Math.PI)) / Math.PI;
+                    double interceptAngleSharpness = Math.Abs(VortexMath.PI05 - Math.Abs((adjustedBearing - incoming.Bearing) % Math.PI)) / Math.PI;
                     if (foundTargetIsOutsideSegment && interceptAngleSharpness > 0.4)
                     {
                         continue;
@@ -232,6 +238,12 @@ namespace GroundRouteFinder
         public override string ToString()
         {
             return Name;
+        }
+
+        internal void SetLimits(int maxSize, string operation)
+        {
+            MaxSize = maxSize;
+            Operation = operation;
         }
     }
 }
