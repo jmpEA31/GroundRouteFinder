@@ -150,5 +150,17 @@ namespace GroundRouteFinder
             φo = Math.Asin(sinφ1 * cosdR + cosφ1 * sindR * Math.Cos(θ));
             λo = λ1 + Math.Atan2(Math.Sin(θ) * sindR * cosφ1, cosdR - sinφ1 * Math.Sin(φo));
         }
+
+        /// <summary>
+        /// Calculates the number of radians to turn from θ1 ('current bearing') to θ2 ('next bearing')
+        /// Value is returned in range [0...180>, so it does not show the direction, just the 'sharpness'
+        /// </summary>
+        /// <param name="θ1">Current Bearing</param>
+        /// <param name="θ2">Next Bearing</param>
+        /// <returns></returns>
+        public static double TurnAngle(double θ1, double θ2)
+        {
+            return Math.Abs(((VortexMath.PI3 + θ1 - θ2) % VortexMath.PI2) - VortexMath.PI);
+        }
     }
 }

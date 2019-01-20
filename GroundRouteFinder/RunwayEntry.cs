@@ -1,0 +1,19 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace GroundRouteFinder
+{
+   public class RunwayTakeOffSpot
+    {
+        public TaxiNode TakeOffNode;
+        public List<TaxiNode> EntryPoints;
+
+        public RunwayTakeOffSpot()
+        {
+            EntryPoints = new List<TaxiNode>();
+        }
+    }
+}

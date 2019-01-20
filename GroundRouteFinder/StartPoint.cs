@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace GroundRouteFinder
 {
-    public class StartPoint : TargetNode
+    public class Parking : TargetNode
     {
         public string Type;
         public string Jets;
@@ -32,7 +32,7 @@ namespace GroundRouteFinder
         public double PushBackLongitude;
         public TaxiNode AlternateAfterPushBack;
 
-        public StartPoint() 
+        public Parking() 
             : base()
         {
             AlternateAfterPushBack = null;
@@ -70,7 +70,7 @@ namespace GroundRouteFinder
             foreach (TaxiNode v in selectedNodes)
             {
                 // Look at each link coming into it from other nodes
-                foreach (MeasuredNode incoming in v.IncomingVertices)
+                foreach (MeasuredNode incoming in v.IncomingNodes)
                 {
                     double pushBackLatitude = 0;
                     double pushBackLongitude = 0;

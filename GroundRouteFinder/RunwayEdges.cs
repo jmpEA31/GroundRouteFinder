@@ -30,18 +30,21 @@ namespace GroundRouteFinder
             
         }
 
-        public string FindChainFrom(ulong vertexId)
+        public List<TaxiNode> FindChainFrom(ulong nodeId, out string debug)
         {
+            List<TaxiNode> nodes = new List<TaxiNode>();
             StringBuilder sb = new StringBuilder();
-            RunwayEdge edge = Edges.SingleOrDefault(e => e.V1.Id == vertexId || e.V2.Id == vertexId);
+            RunwayEdge edge = Edges.SingleOrDefault(e => e.V1.Id == nodeId || e.V2.Id == nodeId);
             if (edge == null)
             {
-                return "No or multiple edges with start node found.";
+                debug = "No or multiple edges with start node found.";
             }
             else
             {
-                ulong previousId = vertexId;
+                ulong previousId = nodeId;
                 TaxiNode next = (edge.V1.Id == previousId) ? edge.V2 : edge.V1;
+                nodes.Add((edge.V1.Id == previousId) ? edge.V1 : edge.V2);
+                nodes.Add(next);
                 ulong nextId = next.Id;
                 sb.AppendFormat("{0}* ", previousId);
                 sb.AppendFormat("{0}{1} ", nextId, next.IsNonRunwayEdge ? "*":" ");
@@ -53,12 +56,14 @@ namespace GroundRouteFinder
                     {
                         previousId = nextId;
                         next = (edge.V1.Id == previousId) ? edge.V2 : edge.V1;
+                        nodes.Add(next);
                         nextId = next.Id;
                         sb.AppendFormat("{0}{1} ", nextId, next.IsNonRunwayEdge ? "*" : " ");
                     }
                 }
-                return sb.ToString();
+                debug = sb.ToString();
             }
+            return nodes;
         }
     }
 }

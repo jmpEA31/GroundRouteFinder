@@ -66,9 +66,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ResultRoute.cs" />
     <Compile Include="Runway.cs" />
     <Compile Include="RunwayEdge.cs" />
     <Compile Include="RunwayEdges.cs" />
+    <Compile Include="RunwayEntry.cs" />
     <Compile Include="StartPoint.cs" />
     <Compile Include="TargetNode.cs" />
     <Compile Include="TaxiNode.cs" />
