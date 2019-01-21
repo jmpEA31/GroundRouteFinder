@@ -4,15 +4,26 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace GroundRouteFinder
+namespace GroundRouteFinder.AptDat
 {
     public class Runway : TargetNode
     {
         private string _number;
 
-        public double Displacement;
+        private double _displacement;
+        public double Displacement
+        {
+            get { return _displacement; }
+            set
+            {
+                _displacement = value;
+                update();
+            }
+        }
         public double DisplacedLatitude;
         public double DisplacedLongitude;
+        public double Length;
+
         public TaxiNode DisplacedNode;
 
         public List<RunwayTakeOffSpot> TakeOffSpots;
@@ -24,11 +35,7 @@ namespace GroundRouteFinder
             set
             {
                 _oppositeEnd = value;
-                if (value != null)
-                {
-                    Bearing = VortexMath.BearingRadians(Latitude, Longitude, _oppositeEnd.Latitude, _oppositeEnd.Longitude);
-                    VortexMath.PointFrom(Latitude, Longitude, Bearing, Displacement, ref DisplacedLatitude, ref DisplacedLongitude);
-                }
+                update();
             }
         }
         public double Bearing;
@@ -50,6 +57,15 @@ namespace GroundRouteFinder
             OppositeEnd = null;
             DisplacedNode = null;
             TakeOffSpots = new List<RunwayTakeOffSpot>();
+        }
+
+        private void update()
+        {
+            if (OppositeEnd != null)
+            {
+                Bearing = VortexMath.BearingRadians(Latitude, Longitude, _oppositeEnd.Latitude, _oppositeEnd.Longitude);
+                VortexMath.PointFrom(Latitude, Longitude, Bearing, Displacement, ref DisplacedLatitude, ref DisplacedLongitude);                
+            }
         }
 
         public override string ToString()

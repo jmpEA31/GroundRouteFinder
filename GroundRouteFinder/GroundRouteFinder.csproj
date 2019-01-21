@@ -66,14 +66,17 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AptDat\Airport.cs" />
+    <Compile Include="AptDat\RunwayExitSpot.cs" />
+    <Compile Include="AptDat\TaxiEdge.cs" />
     <Compile Include="ResultRoute.cs" />
-    <Compile Include="Runway.cs" />
-    <Compile Include="RunwayEdge.cs" />
-    <Compile Include="RunwayEdges.cs" />
-    <Compile Include="RunwayEntry.cs" />
-    <Compile Include="StartPoint.cs" />
+    <Compile Include="AptDat\Runway.cs" />
+    <Compile Include="AptDat\RunwayEdge.cs" />
+    <Compile Include="AptDat\RunwayEdges.cs" />
+    <Compile Include="AptDat\RunwayTakeOffSpot.cs" />
+    <Compile Include="AptDat\StartPoint.cs" />
     <Compile Include="TargetNode.cs" />
-    <Compile Include="TaxiNode.cs" />
+    <Compile Include="AptDat\TaxiNode.cs" />
     <Compile Include="Form1.cs">
       <SubType>Form</SubType>
     </Compile>

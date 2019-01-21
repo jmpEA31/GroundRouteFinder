@@ -153,14 +153,27 @@ namespace GroundRouteFinder
 
         /// <summary>
         /// Calculates the number of radians to turn from θ1 ('current bearing') to θ2 ('next bearing')
-        /// Value is returned in range [0...180>, so it does not show the direction, just the 'sharpness'
+        /// Value is returned in range [-180...180>
         /// </summary>
         /// <param name="θ1">Current Bearing</param>
         /// <param name="θ2">Next Bearing</param>
         /// <returns></returns>
         public static double TurnAngle(double θ1, double θ2)
         {
+            return ((VortexMath.PI3 + θ1 - θ2) % VortexMath.PI2) - VortexMath.PI;
+        }
+
+        /// <summary>
+        /// Calculates the number of radians to turn from θ1 ('current bearing') to θ2 ('next bearing')
+        /// Value is returned in range [0...180>, so it does not show the direction, just the 'sharpness'
+        /// </summary>
+        /// <param name="θ1">Current Bearing</param>
+        /// <param name="θ2">Next Bearing</param>
+        /// <returns></returns>
+        public static double AbsTurnAngle(double θ1, double θ2)
+        {
             return Math.Abs(((VortexMath.PI3 + θ1 - θ2) % VortexMath.PI2) - VortexMath.PI);
         }
+
     }
 }

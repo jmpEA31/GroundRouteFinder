@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace GroundRouteFinder
+namespace GroundRouteFinder.AptDat
 {
     public class RunwayEdges
     {
@@ -47,7 +47,7 @@ namespace GroundRouteFinder
                 nodes.Add(next);
                 ulong nextId = next.Id;
                 sb.AppendFormat("{0}* ", previousId);
-                sb.AppendFormat("{0}{1} ", nextId, next.IsNonRunwayEdge ? "*":" ");
+                sb.AppendFormat("{0}{1} ", nextId, next.IsNonRunwayNode ? "*":" ");
 
                 while (edge != null)
                 {
@@ -58,7 +58,7 @@ namespace GroundRouteFinder
                         next = (edge.V1.Id == previousId) ? edge.V2 : edge.V1;
                         nodes.Add(next);
                         nextId = next.Id;
-                        sb.AppendFormat("{0}{1} ", nextId, next.IsNonRunwayEdge ? "*" : " ");
+                        sb.AppendFormat("{0}{1} ", nextId, next.IsNonRunwayNode ? "*" : " ");
                     }
                 }
                 debug = sb.ToString();

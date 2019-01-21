@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace GroundRouteFinder
+namespace GroundRouteFinder.AptDat
 {
     public class MeasuredNode
     {
@@ -34,8 +34,11 @@ namespace GroundRouteFinder
         public string LatitudeString;
         public string LongitudeString;
 
-        public bool IsRunwayEdge;
-        public bool IsNonRunwayEdge;
+        // Both will be true if there are runway edges and taxiway edges coming into this node
+        // todo: figure out a cleaner way to deal with this. EDges can be rwy or twy, but also may (not) have
+        // runway operations assigned to them. It's probably best to not look at the runwayness of nodes, just edges
+        public bool IsRunwayNode;
+        public bool IsNonRunwayNode;
 
         public double TemporaryDistance;
 
@@ -44,8 +47,8 @@ namespace GroundRouteFinder
             Id = id;
             IncomingNodes = new List<MeasuredNode>();
 
-            IsRunwayEdge = false;
-            IsNonRunwayEdge = false;
+            IsRunwayNode = false;
+            IsNonRunwayNode = false;
 
             DistanceToTarget = double.MaxValue;
             PathToTarget = null;
@@ -72,9 +75,9 @@ namespace GroundRouteFinder
         public void AddEdgeFrom(TaxiNode sourceVertex, int maxSize, bool isRunway, string linkName)
         {
             if (isRunway)
-                IsRunwayEdge = true;
+                IsRunwayNode = true;
             else
-                IsNonRunwayEdge = true;
+                IsNonRunwayNode = true;
 
             IncomingNodes.Add(new MeasuredNode() { SourceNode = sourceVertex, RelativeDistance = 0, MaxSize = maxSize, LinkName = linkName, IsRunway = isRunway });
         }
