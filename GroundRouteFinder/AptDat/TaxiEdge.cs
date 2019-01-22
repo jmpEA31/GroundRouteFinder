@@ -10,11 +10,22 @@ namespace GroundRouteFinder.AptDat
     {
         public bool ActiveZone;
         public string ActiveFor;
-        public ulong Node1;
-        public ulong Node2;
+        public ulong StartNodeId;
+        public ulong EndNodeId;
+        public bool IsRunway;
+        public int MaxSize;
+        public string LinkName;
 
-        public TaxiEdge()
+        public TaxiEdge(ulong startNodeId, ulong endNodeId, bool isRunway, int maxSize, string linkName)
         {
+            StartNodeId = startNodeId;
+            EndNodeId = endNodeId;
+            IsRunway = isRunway;
+            MaxSize = maxSize;
+            LinkName = linkName;
+
+            ActiveFor = "";
+            ActiveZone = false;
         }
     }
 }
