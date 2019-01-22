@@ -71,8 +71,6 @@
     <Compile Include="AptDat\TaxiEdge.cs" />
     <Compile Include="ResultRoute.cs" />
     <Compile Include="AptDat\Runway.cs" />
-    <Compile Include="AptDat\RunwayEdge.cs" />
-    <Compile Include="AptDat\RunwayEdges.cs" />
     <Compile Include="AptDat\RunwayTakeOffSpot.cs" />
     <Compile Include="AptDat\StartPoint.cs" />
     <Compile Include="TargetNode.cs" />
