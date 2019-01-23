@@ -20,16 +20,9 @@ namespace GroundRouteFinder.AptDat
 
         private Dictionary<Parking, Dictionary<TaxiNode, ResultRoute>> _resultCache;
 
-        private Dictionary<int, Runway.RunwayNodeUsage[]> SizeToUsage = new Dictionary<int, Runway.RunwayNodeUsage[]>();
 
         public Airport()
         {
-            SizeToUsage.Add(0, new Runway.RunwayNodeUsage[] { Runway.RunwayNodeUsage.ExitShort, Runway.RunwayNodeUsage.ExitReduced2 });
-            SizeToUsage.Add(1, new Runway.RunwayNodeUsage[] { Runway.RunwayNodeUsage.ExitShort, Runway.RunwayNodeUsage.ExitReduced2 });
-            SizeToUsage.Add(2, new Runway.RunwayNodeUsage[] { Runway.RunwayNodeUsage.ExitShort, Runway.RunwayNodeUsage.ExitReduced2, Runway.RunwayNodeUsage.ExitReduced1 });
-            SizeToUsage.Add(3, new Runway.RunwayNodeUsage[] { Runway.RunwayNodeUsage.ExitReduced2, Runway.RunwayNodeUsage.ExitReduced1, Runway.RunwayNodeUsage.ExitMax });
-            SizeToUsage.Add(4, new Runway.RunwayNodeUsage[] { Runway.RunwayNodeUsage.ExitReduced2, Runway.RunwayNodeUsage.ExitReduced1, Runway.RunwayNodeUsage.ExitMax });
-            SizeToUsage.Add(5, new Runway.RunwayNodeUsage[] { Runway.RunwayNodeUsage.ExitReduced2, Runway.RunwayNodeUsage.ExitReduced1, Runway.RunwayNodeUsage.ExitMax });
         }
 
         public void Load(string name)
@@ -120,7 +113,7 @@ namespace GroundRouteFinder.AptDat
                     // Pick the runway exit points for the selected size
                     foreach (Runway r in _runways)
                     {
-                        foreach (Runway.RunwayNodeUsage use in SizeToUsage[size])
+                        foreach (Runway.RunwayNodeUsage use in Settings.SizeToUsage[size])
                         {
                             Runway.UsageNodes exitNodes = r.GetNodesForUsage(use);
                             Runway.NodeUsage usage = exitNodes.Roles[(int)Runway.UsageNodes.Role.Left];
@@ -145,11 +138,12 @@ namespace GroundRouteFinder.AptDat
                             if (bestSide != Runway.UsageNodes.Role.Max)
                             {
                                 usage = exitNodes.Roles[(int)bestSide];
-                                ir.AddResult(_edges, usage.OffRunwayNode, size);
+                                ir.AddResult(_edges, r, usage.OnRunwayNode, usage.OffRunwayNode, size);
                             }
                         }
                     }
                 }
+                ir.WriteRoutes();
             }
         }
 
@@ -217,28 +211,7 @@ namespace GroundRouteFinder.AptDat
                     if (parking.MaxSize < size)
                         continue;
 
-                    switch (size)
-                    {
-                        case 0: // XPlane type A 'wingspan < 15'
-                            routeSizes.AddRange(new int[] { 0, 7, 8, 9 }); // Fighter, Light Jet, Light Prop, Helicopter
-                            break;
-                        case 1: // XPlane type B 'wingspan < 24'
-                            routeSizes.AddRange(new int[] { 5, 6 }); // Medium Jet, Medium Prop
-                            break;
-                        case 2: // XPlane type C 'wingspan < 36'
-                            routeSizes.Add(3); // Large Jet
-                            break;
-                        case 3: // XPlane type D 'wingspan < 52'
-                            routeSizes.Add(4); // Large Prop
-                            break;
-                        case 4: // XPlane type E 'wingspan < 65'
-                            routeSizes.Add(2); // Heavy Jet
-                            break;
-                        case 5: // XPlane type F 'wingspan < 80'
-                        default:
-                            routeSizes.Add(1); // Supah Heavy Jet
-                            break;
-                    }
+                    routeSizes.AddRange(Settings.XPlaneCategoryToWTType(size));
                 }
 
                 // If route does not apply to any size anymore, skip it
@@ -248,7 +221,7 @@ namespace GroundRouteFinder.AptDat
                 int speed = 15;
 
                 string allSizes = string.Join(" ", routeSizes.OrderBy(w => w));
-/*
+
                 string sizeName = (routeSizes.Count == 10) ? "all" : allSizes.Replace(" ", "");
                 string fileName = $"E:\\GroundRoutes\\Departures\\LFPG\\{parking.FileNameSafeName}_to_{runway.Designator}-{entry}_{sizeName}.txt";
                 File.Delete(fileName);
@@ -378,7 +351,7 @@ namespace GroundRouteFinder.AptDat
 
                     sw.Write("ENDSTEERPOINTS\n");
                 }
-*/
+
                 route = route.NextSizes;
             }
         }

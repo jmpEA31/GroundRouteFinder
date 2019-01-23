@@ -25,6 +25,7 @@ namespace GroundRouteFinder
 
     public class ResultRoute
     {
+        public Runway Runway;
         public RunwayTakeOffSpot TakeoffSpot;
         public TaxiNode TargetNode;
         public double Distance;
@@ -103,9 +104,10 @@ namespace GroundRouteFinder
             }
         }
 
-        public static ResultRoute ExtractRoute(IEnumerable<TaxiEdge> edges, TaxiNode nearestNode, int size)
+        public static ResultRoute ExtractRoute(IEnumerable<TaxiEdge> edges, Runway r, TaxiNode nearestNode, int size)
         {
             ResultRoute extracted = new ResultRoute(size);
+            extracted.Runway = r;
             extracted.NearestNode = nearestNode;
             ulong node1 = extracted.NearestNode.Id;
             extracted.Distance = nearestNode.DistanceToTarget;

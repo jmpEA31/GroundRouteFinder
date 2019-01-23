@@ -46,14 +46,6 @@ namespace GroundRouteFinder.AptDat
 
         public double Bearing;
 
-        private class ExitData
-        {
-            public TaxiNode RunwayNode;
-            public TaxiNode ExitNode;
-            public double Distance;
-            public double ExitAngle;
-        }
-
         public class NodeUsage
         {
             public TaxiNode OnRunwayNode;
@@ -371,20 +363,6 @@ namespace GroundRouteFinder.AptDat
                         Console.WriteLine($"  {(UsageNodes.Role)i,5} -x-x-x-");
                     }
                 }
-            }
-        }
-
-
-
-        private void dumpExit(ExitData exit, string note)
-        {
-            if (exit != null)
-            {
-                Console.WriteLine($"{Designator} Leaving from {exit.RunwayNode.Id} to {exit.ExitNode.Id} at {exit.ExitAngle * VortexMath.Rad2Deg:0.0} degrees, @{exit.Distance:0.00}km {note}");
-            }
-            else
-            {
-                Console.WriteLine($"{Designator}: None for {note}");
             }
         }
 

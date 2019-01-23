@@ -74,6 +74,7 @@
     <Compile Include="AptDat\Runway.cs" />
     <Compile Include="AptDat\RunwayTakeOffSpot.cs" />
     <Compile Include="AptDat\StartPoint.cs" />
+    <Compile Include="Settings.cs" />
     <Compile Include="TargetNode.cs" />
     <Compile Include="AptDat\TaxiNode.cs" />
     <Compile Include="Form1.cs">
