@@ -47,6 +47,7 @@ namespace GroundRouteFinder.AptDat
             double bestPushBackLongitude = 0;
             TaxiNode firstAfterPush = null;
             TaxiNode alternateAfterPush = null;
+            TaxiNode fallback = null;
 
             // For gates use the indicated bearings (push back), for others add 180 degrees for straight out
             // Then convert to -180...180 range
@@ -64,6 +65,7 @@ namespace GroundRouteFinder.AptDat
             // we intend to move in from the startpoint
             // todo: make both 25 and 180 parameters
             IEnumerable<TaxiNode> selectedNodes = taxiNodes.OrderBy(v => v.TemporaryDistance).Take(25);
+            fallback = selectedNodes.First();
             selectedNodes = selectedNodes.Where(v => Math.Abs(adjustedBearing - VortexMath.BearingRadians(v.Latitude, v.Longitude, Latitude, Longitude)) < VortexMath.PI05);
 
             // For each qualifying node
@@ -209,27 +211,27 @@ namespace GroundRouteFinder.AptDat
                     // Fix this by pushing to the end point of the entry link
                     // (If that is actually the nearest node to the parking, but alas...
                     //  this is the default WT3 behaviour anyway)
-                    NearestVertex = selectedNodes.First();
+                    NearestNode = selectedNodes.First();
                     AlternateAfterPushBack = null;
-                    PushBackLatitude = NearestVertex.Latitude;
-                    PushBackLongitude = NearestVertex.Longitude;
+                    PushBackLatitude = NearestNode.Latitude;
+                    PushBackLongitude = NearestNode.Longitude;
                 }
                 else
                 {
                     // Store the results in the startpoint
                     PushBackLatitude = bestPushBackLatitude;
                     PushBackLongitude = bestPushBackLongitude;
-                    NearestVertex = firstAfterPush;
+                    NearestNode = firstAfterPush;
                     AlternateAfterPushBack = alternateAfterPush;
                 }
             }
             else
             {
                 // Crude fallback to defautl WT behavoit if nothing was found.
-                NearestVertex = selectedNodes.First();
+                NearestNode = fallback;
                 AlternateAfterPushBack = null;
-                PushBackLatitude = NearestVertex.Latitude;
-                PushBackLongitude = NearestVertex.Longitude;
+                PushBackLatitude = NearestNode.Latitude;
+                PushBackLongitude = NearestNode.Longitude;
             }
         }
 

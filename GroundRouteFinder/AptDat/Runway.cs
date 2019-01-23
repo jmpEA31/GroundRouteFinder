@@ -58,28 +58,65 @@ namespace GroundRouteFinder.AptDat
             public TaxiNode OnRunwayNode;
             public TaxiNode OffRunwayNode;
             public double EffectiveLength;
+
+            public NodeUsage(TaxiNode onRunwayNode, TaxiNode offRunwayNode, double exitDistance)
+            {
+                OnRunwayNode = onRunwayNode;
+                OffRunwayNode = offRunwayNode;
+                EffectiveLength = exitDistance;
+            }
         }
 
         public class UsageNodes
         {
-            public NodeUsage Left;
-            public NodeUsage Right;
+            public enum Role : int
+            {
+                Left = 0,
+                Right = 1,
+                Max
+            }
+
+            public NodeUsage[] Roles;
 
             public UsageNodes()
             {
-                Left = null;
-                Right = null;
+                Roles = new NodeUsage[(int)Role.Max];
             }
         }
 
-        public enum RunwayNodeUsage
+        public class Tracking
         {
-            EntryNormal,
+            public bool MaxLengthFound;
+            public TaxiNode MaxLengthNode;
+            public bool Reduced1Found;
+            public TaxiNode ReducedNode1;
+            public bool Reduced2Found;
+            public TaxiNode ReducedNode2;
+            public bool MinimumFound;
+            public TaxiNode MinimumNode;
+
+            public Tracking()
+            {
+                MaxLengthFound = false;
+                MaxLengthNode = null;
+                Reduced1Found = false;
+                ReducedNode1 = null;
+                Reduced2Found = false;
+                ReducedNode2 = null;
+                MinimumFound = false;
+                MinimumNode = null;
+            }
+        }
+
+        public enum RunwayNodeUsage : int
+        {
+            EntryNormal = 0,
             EntryDisplaced,
             ExitMax,
             ExitReduced1,
             ExitReduced2,
-            ExitShort
+            ExitShort,
+            Max
         }
 
         public Dictionary<RunwayNodeUsage, UsageNodes> _usageNodes;
@@ -90,7 +127,7 @@ namespace GroundRouteFinder.AptDat
         }
 
 
-        public Runway(string designator, double latitude, double longitude, double displacement, double oppositeLatitude, double oppositeLongitude) 
+        public Runway(string designator, double latitude, double longitude, double displacement, double oppositeLatitude, double oppositeLongitude)
         {
             NearestNode = null;
             DisplacedNode = null;
@@ -196,146 +233,152 @@ namespace GroundRouteFinder.AptDat
 
             // Do it again for exits
             runwayChain.Reverse();
-            selectedNodes = 0;
 
-            List<ExitData> leftExits = new List<ExitData>();
-            List<ExitData> rightExits = new List<ExitData>();
+            Tracking rightTracking = new Tracking();
+            Tracking leftTracking = new Tracking();
+            Tracking tracking = new Tracking();
+            double reduced1Length = double.MaxValue;
 
-            bool leftMaxFound = false;
-            bool leftReduced1Found = false;
-            bool leftReduced2Found = false;
-            bool rightMaxFound = false;
-
-            foreach (TaxiNode node in runwayChain)
+            foreach (TaxiNode onRunwayNode in runwayChain)
             {
                 // Find nodes that have the current runway node in an incoming edge
-                IEnumerable<TaxiEdge> exitEdges = taxiEdges.Where(edge => edge.StartNodeId == node.Id);
+                IEnumerable<TaxiEdge> exitEdges = taxiEdges.Where(edge => edge.StartNodeId == onRunwayNode.Id);
                 exitEdges = exitEdges.Where(ee => !runwayChain.Select(n => n.Id).Contains(ee.EndNodeId));
-
-                if (exitEdges.Count() == 0)
-                {
-                    //Console.WriteLine($" No links exiting out of {node.Id} @{VortexMath.DistanceKM(r.Latitude, r.Longitude, node.Latitude, node.Longitude):0.00}km");
-                }
 
                 foreach (TaxiEdge exit in exitEdges)
                 {
-                    TaxiNode exitNode = taxiNodes.Single(tn => tn.Id == exit.EndNodeId);
-                    MeasuredNode mn = exitNode.IncomingNodes.SingleOrDefault(inc => inc.SourceNode.Id == node.Id);
+                    TaxiNode offRunwayNode = taxiNodes.Single(tn => tn.Id == exit.EndNodeId);
+                    MeasuredNode mn = offRunwayNode.IncomingNodes.SingleOrDefault(inc => inc.SourceNode.Id == onRunwayNode.Id);
                     if (mn == null)
                         continue;
 
                     double exitAngle = VortexMath.TurnAngle(Bearing, mn.Bearing); // sign indicates left or right turn
-                    double exitDistance = VortexMath.DistanceKM(Latitude, Longitude, node.Latitude, node.Longitude);
+                    double exitDistance = VortexMath.DistanceKM(Latitude, Longitude, onRunwayNode.Latitude, onRunwayNode.Longitude);
 
-                    if (exitAngle < 0)
+                    if (Math.Abs(exitAngle) < VortexMath.Deg100Rad && exitDistance >= (Length * 0.4))
                     {
-                        if (Math.Abs(exitAngle) < (100.0 * VortexMath.Deg2Rad) && exitDistance >= (Length * 0.4))
+                        // If we found a shorter candidate clear all results for the Short Exit:
+                        if (tracking.MinimumNode != null && tracking.MinimumNode != onRunwayNode)
                         {
-                            // store mins
+                            tracking.MinimumNode = null;
+                            getOrCreate(RunwayNodeUsage.ExitShort).Roles[(int)UsageNodes.Role.Left] = null;
+                            getOrCreate(RunwayNodeUsage.ExitShort).Roles[(int)UsageNodes.Role.Right] = null;
                         }
 
-                        if (!leftMaxFound && Math.Abs(exitAngle) < 100.0 * VortexMath.Deg2Rad)
+                        // If this a new node, or the same as already present, add it
+                        if (tracking.MinimumNode == null || tracking.MinimumNode == onRunwayNode)
                         {
-                            if (!_usageNodes.ContainsKey(RunwayNodeUsage.ExitMax))
-                                _usageNodes[RunwayNodeUsage.ExitMax] = new UsageNodes();
-
-                            _usageNodes[RunwayNodeUsage.ExitMax].Left = new NodeUsage() { OnRunwayNode = node, OffRunwayNode = exitNode, EffectiveLength = exitDistance };
-                            leftMaxFound = true;
+                            tracking.MinimumNode = onRunwayNode;
+                            getOrCreate(RunwayNodeUsage.ExitShort).Roles[(int)(exitAngle < 0 ? UsageNodes.Role.Left : UsageNodes.Role.Right)] = new NodeUsage(onRunwayNode, offRunwayNode, exitDistance);
                         }
-
-                        if (leftMaxFound && !leftReduced1Found && Math.Abs(exitAngle) < 46.0 * VortexMath.Deg2Rad && exitDistance >= (Length * 0.4))
-                        {
-                            if (!_usageNodes.ContainsKey(RunwayNodeUsage.ExitReduced1))
-                                _usageNodes[RunwayNodeUsage.ExitReduced1] = new UsageNodes();
-
-                            _usageNodes[RunwayNodeUsage.ExitReduced1].Left = new NodeUsage() { OnRunwayNode = node, OffRunwayNode = exitNode, EffectiveLength = exitDistance };
-                            leftReduced1Found = true;
-                        }
-
-                        if (leftMaxFound && leftReduced1Found && !leftReduced2Found)
-                        {                            
-                            if (Math.Abs(exitAngle) < 46.0 * VortexMath.Deg2Rad && exitDistance >= (Length * 0.4) && exitDistance < _usageNodes[RunwayNodeUsage.ExitReduced1].Left.EffectiveLength - 0.3)
-                            {
-                                if (!_usageNodes.ContainsKey(RunwayNodeUsage.ExitReduced2))
-                                    _usageNodes[RunwayNodeUsage.ExitReduced2] = new UsageNodes();
-
-                                _usageNodes[RunwayNodeUsage.ExitReduced2].Left = new NodeUsage() { OnRunwayNode = node, OffRunwayNode = exitNode, EffectiveLength = exitDistance };
-                                leftReduced2Found = true;
-                            }
-                        }
-
                     }
 
 
-                    if (Math.Abs(exitAngle) < 1.1 * VortexMath.PI05)
+                        if (tracking.MaxLengthNode == null || tracking.MaxLengthNode == onRunwayNode)
                     {
-                        if (exitAngle < 0)
+                        if (Math.Abs(exitAngle) < VortexMath.Deg100Rad)
                         {
-                            leftExits.Add(new ExitData() { RunwayNode = node, ExitNode = exitNode, ExitAngle = exitAngle, Distance = VortexMath.DistanceKM(Latitude, Longitude, node.Latitude, node.Longitude) });
+                            tracking.MaxLengthNode = onRunwayNode;
+                            getOrCreate(RunwayNodeUsage.ExitMax).Roles[(int)(exitAngle < 0 ? UsageNodes.Role.Left : UsageNodes.Role.Right)] = new NodeUsage(onRunwayNode, offRunwayNode, exitDistance);
                         }
-                        else
-                        {
-                            rightExits.Add(new ExitData() { RunwayNode = node, ExitNode = exitNode, ExitAngle = exitAngle, Distance = VortexMath.DistanceKM(Latitude, Longitude, node.Latitude, node.Longitude) });
-                        }
-                        //Console.WriteLine($"{r.Number} Leaving from {node.Id} to {exitNode.Id} at"+
-                        //    $" {exitAngle * VortexMath.Rad2Deg:0.0} degrees, @{VortexMath.DistanceKM(r.Latitude, r.Longitude, node.Latitude, node.Longitude):0.00}km");
                     }
+                    else if (tracking.ReducedNode1 == null || tracking.ReducedNode1 == onRunwayNode)
+                    {
+                        if (Math.Abs(exitAngle) < VortexMath.Deg475Rad && exitDistance >= (Length * 0.4))
+                        {
+                            tracking.ReducedNode1 = onRunwayNode;
+                            reduced1Length = exitDistance;
+                            getOrCreate(RunwayNodeUsage.ExitReduced1).Roles[(int)(exitAngle < 0 ? UsageNodes.Role.Left : UsageNodes.Role.Right)] = new NodeUsage(onRunwayNode, offRunwayNode, exitDistance);
+                        }
+                    }
+                    else if (tracking.ReducedNode2 == null || tracking.ReducedNode2 == onRunwayNode)
+                    {
+                        if (Math.Abs(exitAngle) < VortexMath.Deg475Rad && exitDistance >= (Length * 0.4) && exitDistance < reduced1Length - 0.3)
+                        {
+                            tracking.ReducedNode2 = onRunwayNode;
+                            getOrCreate(RunwayNodeUsage.ExitReduced2).Roles[(int)(exitAngle < 0 ? UsageNodes.Role.Left : UsageNodes.Role.Right)] = new NodeUsage(onRunwayNode, offRunwayNode, exitDistance);
+                        }
+                    }
+
+
+                    //    if (exitAngle < 0)
+                    //{
+                    //    evaluateExit(UsageNodes.Role.Left, onRunwayNode, offRunwayNode, -exitAngle, exitDistance, leftTracking);
+                    //}
+                    //else
+                    //{
+                    //    evaluateExit(UsageNodes.Role.Right, onRunwayNode, offRunwayNode, exitAngle, exitDistance, rightTracking);
+                    //}
                 }
             }
-
-            dumpExits(leftExits);
-            dumpExits(rightExits);
-
+            dumpExits();
             return true;
         }
 
 
-        private void dumpExits(List<ExitData> exits)
+        private void evaluateExit(UsageNodes.Role role, TaxiNode onRunwayNode, TaxiNode offRunwayNode, double exitAngle, double exitDistance, Tracking tracking)
         {
-            int selected = 0;
-            ExitData selected1 = null;
-            ExitData selected2 = null;
-            ExitData selected3 = null;
-            ExitData selected4 = null;
-            foreach (ExitData ed in exits)
+            // Find the 'shortest' exit with a turn of less than 100 degrees and at least at 40% of the runway length
+            if (Math.Abs(exitAngle) < VortexMath.Deg100Rad && exitDistance >= (Length * 0.4))
             {
-                if (ed.ExitAngle < (100.0 * VortexMath.Deg2Rad) && ed.Distance >= (Length * 0.4))
-                {
-                    selected4 = ed;
-                }
+                getOrCreate(RunwayNodeUsage.ExitShort).Roles[(int)role] = new NodeUsage(onRunwayNode, offRunwayNode, exitDistance);
+                tracking.MinimumFound = true;
+            }
 
-                switch (selected)
-                {
-                    case 0:
-                        if (ed.ExitAngle < (100.0 * VortexMath.Deg2Rad) && ed.Distance >= (Length * 0.6))
-                        {
-                            selected1 = ed;
-                            selected++;
-                        }
-                        break;
-                    case 1:
-                        if (ed.ExitAngle < (46.0 * VortexMath.Deg2Rad) && ed.Distance >= (Length * 0.4))
-                        {
-                            selected2 = ed;
-                            selected++;
-                        }
-                        break;
-                    case 2:
-                        if (ed.ExitAngle < (46.0 * VortexMath.Deg2Rad) && ed.Distance >= (Length * 0.4) && (selected2.Distance - ed.Distance) > 0.3)
-                        {
-                            selected3 = ed;
-                            selected++;
-                        }
+            // Find the last exit with a turn less than 100 degrees
+            if (!tracking.MaxLengthFound && exitAngle < VortexMath.Deg100Rad)
+            {
+                getOrCreate(RunwayNodeUsage.ExitMax).Roles[(int)role] = new NodeUsage(onRunwayNode, offRunwayNode, exitDistance);
+                tracking.MaxLengthFound = true;
+            }
 
-                        break;
-                    default:
-                        break;
+            // Find an earlier exit between the max and 40% runway length, with an exit angle < 47.5
+            else if (tracking.MaxLengthFound && !tracking.Reduced1Found && exitAngle < VortexMath.Deg475Rad && exitDistance >= (Length * 0.4))
+            {
+                getOrCreate(RunwayNodeUsage.ExitReduced1).Roles[(int)role] = new NodeUsage(onRunwayNode, offRunwayNode, exitDistance);
+                tracking.Reduced1Found = true;
+            }
+
+            // Find an even earlier exit, at least 300m away from the previous but before 40% runway length with an exit angle < 47.5
+            else if (tracking.Reduced1Found && !tracking.Reduced2Found)
+            {
+                if (Math.Abs(exitAngle) < VortexMath.Deg475Rad && exitDistance >= (Length * 0.4) && exitDistance < getOrCreate(RunwayNodeUsage.ExitReduced1).Roles[(int)role].EffectiveLength - 0.3)
+                {
+                    getOrCreate(RunwayNodeUsage.ExitReduced2).Roles[(int)role] = new NodeUsage(onRunwayNode, offRunwayNode, exitDistance);
+                    tracking.Reduced2Found = true;
                 }
             }
-            dumpExit(selected1, "max range");
-            dumpExit(selected2, "first alternate");
-            dumpExit(selected3, "second alternate");
-            dumpExit(selected4, "minimum");
+        }
+
+        private UsageNodes getOrCreate(RunwayNodeUsage usage)
+        {
+            if (!_usageNodes.ContainsKey(usage))
+                _usageNodes[usage] = new UsageNodes();
+
+            return _usageNodes[usage];
+        }
+
+
+        private void dumpExits()
+        {
+            Console.WriteLine($"Runway: {Designator}");
+            foreach (KeyValuePair<RunwayNodeUsage, UsageNodes> node in _usageNodes)
+            {
+                Console.WriteLine($" {node.Key}");
+                for (int i=0;i<(int)UsageNodes.Role.Max;i++)
+                {
+                    NodeUsage usage = node.Value.Roles[i];
+
+                    if (usage != null)
+                    {
+                        Console.WriteLine($"  {(UsageNodes.Role)i,5} {usage.OnRunwayNode.Id}->{usage.OffRunwayNode.Id} @{usage.EffectiveLength:0.0}km");
+                    }
+                    else
+                    {
+                        Console.WriteLine($"  {(UsageNodes.Role)i,5} -x-x-x-");
+                    }
+                }
+            }
         }
 
 
@@ -362,9 +405,7 @@ namespace GroundRouteFinder.AptDat
             do
             {
                 // todo: test with crossing runways
-                TaxiEdge edgeToNext = taxiEdges.SingleOrDefault(e => e.IsRunway &&
-                                                        ((e.StartNodeId == current.Id && e.EndNodeId != previousId) ||
-                                                         (e.EndNodeId == current.Id && e.StartNodeId != previousId)));
+                TaxiEdge edgeToNext = taxiEdges.SingleOrDefault(e => e.IsRunway && (e.StartNodeId == current.Id && e.EndNodeId != previousId));
                 if (edgeToNext == null)
                     break;
 

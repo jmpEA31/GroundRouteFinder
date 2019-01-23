@@ -99,18 +99,29 @@ namespace GroundRouteFinder.AptDat
             }
         }
 
-
-        public void FindOutboundRoutes()
+        public void FindInboundRoutes()
         {
-            findOutboundRoutes(_taxiNodes, _parkings);
+            foreach (Parking parking in _parkings)
+            {
+                for (int size = TaxiNode.Sizes - 1; size >= 0; size--)
+                {
+                    // Nearest node should become 'closest to computed pushback point'
+                    findShortestPaths(_taxiNodes, parking.NearestNode, size);
+
+                    // Pick the runway exit points for the selected size
+                    // ..
+                }
+            }
         }
 
-        private void findOutboundRoutes(IEnumerable<TaxiNode> nodes, IEnumerable<Parking> parkings)
+        public void FindOutboundRoutes()
         {
             // for each runway
             foreach (Runway runway in _runways)
             {
                 _resultCache = new Dictionary<Parking, Dictionary<TaxiNode, ResultRoute>>();
+
+                IEnumerable<TaxiNode> sourceNodes = runway.GetNodesForUsage(Runway.RunwayNodeUsage.ExitMax);
 
                 // for each takeoff spot
                 foreach (RunwayTakeOffSpot takeoffSpot in runway.TakeOffSpots)
@@ -121,13 +132,13 @@ namespace GroundRouteFinder.AptDat
                         // find shortest path from each parking to each takeoff spot considering each entrypoint
                         foreach (TaxiNode runwayEntryNode in takeoffSpot.EntryPoints)
                         {
-                            findShortestPaths(nodes, parkings, runwayEntryNode, size);
-                            foreach (Parking parking in parkings)
+                            findShortestPaths(_taxiNodes, runwayEntryNode, size);
+                            foreach (Parking parking in _parkings)
                             {
                                 ResultRoute bestResultSoFar = getBestResultSoFar(runwayEntryNode, parking, size);
-                                if (bestResultSoFar.Distance > parking.NearestVertex.DistanceToTarget)
+                                if (bestResultSoFar.Distance > parking.NearestNode.DistanceToTarget)
                                 {
-                                    ResultRoute better = extractRoute(parking.NearestVertex, size);
+                                    ResultRoute better = extractRoute(parking.NearestNode, size);
                                     better.TakeoffSpot = takeoffSpot;
                                     improveResult(runwayEntryNode, parking, size, bestResultSoFar, better);
                                 }
@@ -144,7 +155,7 @@ namespace GroundRouteFinder.AptDat
                     IEnumerable<KeyValuePair<TaxiNode, ResultRoute>> best2 = kvp.Value.OrderBy(v => v.Value.Distance).Take(2);
                     foreach (KeyValuePair<TaxiNode, ResultRoute> kvpi in best2)
                     {
-                        writeOutboundRoutes(runway, kvpi.Value.TakeoffSpot, currentEntry++, nodes, kvp.Key, kvpi.Value);
+                        writeOutboundRoutes(runway, kvpi.Value.TakeoffSpot, currentEntry++, _taxiNodes, kvp.Key, kvpi.Value);
                     }
                 }
             }
@@ -200,7 +211,7 @@ namespace GroundRouteFinder.AptDat
                 int speed = 15;
 
                 string allSizes = string.Join(" ", routeSizes.OrderBy(w => w));
-
+/*
                 string sizeName = (routeSizes.Count == 10) ? "all" : allSizes.Replace(" ", "");
                 string fileName = $"E:\\GroundRoutes\\Departures\\LFPG\\{parking.FileNameSafeName}_to_{runway.Designator}-{entry}_{sizeName}.txt";
                 File.Delete(fileName);
@@ -330,6 +341,7 @@ namespace GroundRouteFinder.AptDat
 
                     sw.Write("ENDSTEERPOINTS\n");
                 }
+*/
                 route = route.NextSizes;
             }
         }
@@ -375,7 +387,7 @@ namespace GroundRouteFinder.AptDat
             while (pathNode != null)
             {
                 ulong node2 = pathNode.Id;
-                TaxiEdge edge = _edges.Single(e => e.StartNodeId == node1 && e.EndNodeId == node2 || e.StartNodeId == node2 && e.EndNodeId == node1);
+                TaxiEdge edge = _edges.Single(e => e.StartNodeId == node1 && e.EndNodeId == node2);
                 currentLink.Next = new LinkedNode()
                 {
                     Node = pathNode.PathToTarget,
@@ -393,7 +405,7 @@ namespace GroundRouteFinder.AptDat
         }
 
 
-        private void findShortestPaths(IEnumerable<TaxiNode> nodes, IEnumerable<Parking> startPoints, TaxiNode targetNode, int size)
+        private void findShortestPaths(IEnumerable<TaxiNode> nodes, TaxiNode targetNode, int size)
         {
             List<TaxiNode> untouchedNodes = nodes.ToList();
             List<TaxiNode> touchedNodes = new List<TaxiNode>();
@@ -494,13 +506,30 @@ namespace GroundRouteFinder.AptDat
             ulong va = ulong.Parse(tokens[1]);
             ulong vb = ulong.Parse(tokens[2]);
             bool isRunway = (tokens[4][0] != 't');
+            bool isTwoWay = (tokens[3][0] == 't');
             int maxSize = isRunway ? 5 : (int)(tokens[4][8] - 'A'); // todo: make more robust / future proof
             string linkName = tokens.Length > 5 ? string.Join(" ", tokens.Skip(5)) : "";
 
-            _edges.Add(new TaxiEdge(va, vb, isRunway,maxSize, linkName));   
+            TaxiEdge prev = _edges.SingleOrDefault(e => (e.StartNodeId == va && e.EndNodeId == vb));
+            if (prev != null)
+                // todo: report warning
+                prev.MaxSize = Math.Max(prev.MaxSize, maxSize);
+            else
+                _edges.Add(new TaxiEdge(va, vb, isRunway, maxSize, linkName));
+
+            if (isTwoWay)
+            {
+                prev = _edges.SingleOrDefault(e => (e.StartNodeId == vb && e.EndNodeId == va));
+                if (prev != null)
+                    // todo: report warning
+                    prev.MaxSize = Math.Max(prev.MaxSize, maxSize);
+                else
+                    _edges.Add(new TaxiEdge(vb, va, isRunway, maxSize, linkName));
+            }
+
 
             _nodeDict[vb].AddEdgeFrom(_nodeDict[va], maxSize, isRunway, linkName);
-            if (tokens[3][0] == 't')
+            if (isTwoWay)
             {
                 _nodeDict[va].AddEdgeFrom(_nodeDict[vb], maxSize, isRunway, linkName);
             }

@@ -34,10 +34,15 @@ namespace GroundRouteFinder
 
             _airport = new Airport();
             _airport.Load("..\\..\\..\\..\\LFPG_Scenery_Pack\\LFPG_Scenery_Pack\\Earth nav data\\apt.dat");
+            //_airport.Load("..\\..\\..\\..\\EIDW_Scenery_Pack\\EIDW_Scenery_Pack\\Earth nav data\\apt.dat");
             logElapsed("loading done");
 
             _airport.FindOutboundRoutes();
             logElapsed("outbound done");
+
+            _airport.FindInboundRoutes();
+            logElapsed("inbound done");
+
         }
     }
 }

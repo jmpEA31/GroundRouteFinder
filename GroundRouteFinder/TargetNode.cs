@@ -14,7 +14,7 @@ namespace GroundRouteFinder.AptDat
         public double Latitude;
         public double Longitude;
 
-        public TaxiNode NearestVertex;
+        public TaxiNode NearestNode;
 
         private string _fileNameSafeName;
         public string FileNameSafeName
@@ -28,7 +28,7 @@ namespace GroundRouteFinder.AptDat
 
         public TargetNode()
         {
-            NearestVertex = null;
+            NearestNode = null;
         }
     }
 }
