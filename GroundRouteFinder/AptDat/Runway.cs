@@ -42,6 +42,7 @@ namespace GroundRouteFinder.AptDat
         public double Length;
 
         public List<RunwayTakeOffSpot> TakeOffSpots;
+        public List<TaxiNode> RunwayNodes;
 
         public double Bearing;
 
@@ -121,9 +122,9 @@ namespace GroundRouteFinder.AptDat
 
         public Dictionary<RunwayNodeUsage, UsageNodes> _usageNodes;
 
-        public IEnumerable<TaxiNode> GetNodesForUsage(RunwayNodeUsage usage)
+        public UsageNodes GetNodesForUsage(RunwayNodeUsage usage)
         {
-            return null;
+            return _usageNodes[usage];
         }
 
 
@@ -178,14 +179,14 @@ namespace GroundRouteFinder.AptDat
             string edgeKey = selectedEdges.First().LinkName;
             selectedEdges = taxiEdges.Where(te => te.LinkName == edgeKey);
 
-            List<TaxiNode> runwayChain = findChain(taxiNodes, selectedEdges);
+            RunwayNodes = findChain(taxiNodes, selectedEdges);
 
             int selectedNodes = 0;
             bool displacedNodeFound = false;
 
             // Look for entries into taxinodes along the runway. We want to select all possible entries from
             // the first two nodes with at least 1 entry
-            foreach (TaxiNode node in runwayChain)
+            foreach (TaxiNode node in RunwayNodes)
             {
                 if (selectedNodes > 1)
                     break;
@@ -232,18 +233,18 @@ namespace GroundRouteFinder.AptDat
             }
 
             // Do it again for exits
-            runwayChain.Reverse();
+            RunwayNodes.Reverse();
 
             Tracking rightTracking = new Tracking();
             Tracking leftTracking = new Tracking();
             Tracking tracking = new Tracking();
             double reduced1Length = double.MaxValue;
 
-            foreach (TaxiNode onRunwayNode in runwayChain)
+            foreach (TaxiNode onRunwayNode in RunwayNodes)
             {
                 // Find nodes that have the current runway node in an incoming edge
                 IEnumerable<TaxiEdge> exitEdges = taxiEdges.Where(edge => edge.StartNodeId == onRunwayNode.Id);
-                exitEdges = exitEdges.Where(ee => !runwayChain.Select(n => n.Id).Contains(ee.EndNodeId));
+                exitEdges = exitEdges.Where(ee => !RunwayNodes.Select(n => n.Id).Contains(ee.EndNodeId));
 
                 foreach (TaxiEdge exit in exitEdges)
                 {
@@ -274,7 +275,7 @@ namespace GroundRouteFinder.AptDat
                     }
 
 
-                        if (tracking.MaxLengthNode == null || tracking.MaxLengthNode == onRunwayNode)
+                    if (tracking.MaxLengthNode == null || tracking.MaxLengthNode == onRunwayNode)
                     {
                         if (Math.Abs(exitAngle) < VortexMath.Deg100Rad)
                         {
@@ -299,19 +300,11 @@ namespace GroundRouteFinder.AptDat
                             getOrCreate(RunwayNodeUsage.ExitReduced2).Roles[(int)(exitAngle < 0 ? UsageNodes.Role.Left : UsageNodes.Role.Right)] = new NodeUsage(onRunwayNode, offRunwayNode, exitDistance);
                         }
                     }
-
-
-                    //    if (exitAngle < 0)
-                    //{
-                    //    evaluateExit(UsageNodes.Role.Left, onRunwayNode, offRunwayNode, -exitAngle, exitDistance, leftTracking);
-                    //}
-                    //else
-                    //{
-                    //    evaluateExit(UsageNodes.Role.Right, onRunwayNode, offRunwayNode, exitAngle, exitDistance, rightTracking);
-                    //}
                 }
             }
             dumpExits();
+
+            RunwayNodes.Reverse();
             return true;
         }
 

@@ -20,8 +20,16 @@ namespace GroundRouteFinder.AptDat
 
         private Dictionary<Parking, Dictionary<TaxiNode, ResultRoute>> _resultCache;
 
+        private Dictionary<int, Runway.RunwayNodeUsage[]> SizeToUsage = new Dictionary<int, Runway.RunwayNodeUsage[]>();
+
         public Airport()
         {
+            SizeToUsage.Add(0, new Runway.RunwayNodeUsage[] { Runway.RunwayNodeUsage.ExitShort, Runway.RunwayNodeUsage.ExitReduced2 });
+            SizeToUsage.Add(1, new Runway.RunwayNodeUsage[] { Runway.RunwayNodeUsage.ExitShort, Runway.RunwayNodeUsage.ExitReduced2 });
+            SizeToUsage.Add(2, new Runway.RunwayNodeUsage[] { Runway.RunwayNodeUsage.ExitShort, Runway.RunwayNodeUsage.ExitReduced2, Runway.RunwayNodeUsage.ExitReduced1 });
+            SizeToUsage.Add(3, new Runway.RunwayNodeUsage[] { Runway.RunwayNodeUsage.ExitReduced2, Runway.RunwayNodeUsage.ExitReduced1, Runway.RunwayNodeUsage.ExitMax });
+            SizeToUsage.Add(4, new Runway.RunwayNodeUsage[] { Runway.RunwayNodeUsage.ExitReduced2, Runway.RunwayNodeUsage.ExitReduced1, Runway.RunwayNodeUsage.ExitMax });
+            SizeToUsage.Add(5, new Runway.RunwayNodeUsage[] { Runway.RunwayNodeUsage.ExitReduced2, Runway.RunwayNodeUsage.ExitReduced1, Runway.RunwayNodeUsage.ExitMax });
         }
 
         public void Load(string name)
@@ -103,13 +111,44 @@ namespace GroundRouteFinder.AptDat
         {
             foreach (Parking parking in _parkings)
             {
-                for (int size = TaxiNode.Sizes - 1; size >= 0; size--)
+                InboundResults ir = new InboundResults(parking);
+                for (int size = parking.MaxSize; size >= 0; size--)
                 {
                     // Nearest node should become 'closest to computed pushback point'
                     findShortestPaths(_taxiNodes, parking.NearestNode, size);
 
                     // Pick the runway exit points for the selected size
-                    // ..
+                    foreach (Runway r in _runways)
+                    {
+                        foreach (Runway.RunwayNodeUsage use in SizeToUsage[size])
+                        {
+                            Runway.UsageNodes exitNodes = r.GetNodesForUsage(use);
+                            Runway.NodeUsage usage = exitNodes.Roles[(int)Runway.UsageNodes.Role.Left];
+                            double bestDistance = double.MaxValue;
+                            Runway.UsageNodes.Role bestSide = Runway.UsageNodes.Role.Max;
+                            if (usage != null)
+                            {
+                                bestDistance = usage.OffRunwayNode.DistanceToTarget;
+                                bestSide = Runway.UsageNodes.Role.Left;
+                            }
+
+                            usage = exitNodes.Roles[(int)Runway.UsageNodes.Role.Right];
+                            if (usage != null)
+                            {
+                                if (usage.OffRunwayNode.DistanceToTarget < bestDistance)
+                                {
+                                    bestDistance = usage.OffRunwayNode.DistanceToTarget;
+                                    bestSide = Runway.UsageNodes.Role.Right;
+                                }
+                            }
+
+                            if (bestSide != Runway.UsageNodes.Role.Max)
+                            {
+                                usage = exitNodes.Roles[(int)bestSide];
+                                ir.AddResult(_edges, usage.OffRunwayNode, size);
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -120,8 +159,6 @@ namespace GroundRouteFinder.AptDat
             foreach (Runway runway in _runways)
             {
                 _resultCache = new Dictionary<Parking, Dictionary<TaxiNode, ResultRoute>>();
-
-                IEnumerable<TaxiNode> sourceNodes = runway.GetNodesForUsage(Runway.RunwayNodeUsage.ExitMax);
 
                 // for each takeoff spot
                 foreach (RunwayTakeOffSpot takeoffSpot in runway.TakeOffSpots)

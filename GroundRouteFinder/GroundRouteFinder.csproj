@@ -69,6 +69,7 @@
     <Compile Include="AptDat\Airport.cs" />
     <Compile Include="AptDat\RunwayExitSpot.cs" />
     <Compile Include="AptDat\TaxiEdge.cs" />
+    <Compile Include="InboundResults.cs" />
     <Compile Include="ResultRoute.cs" />
     <Compile Include="AptDat\Runway.cs" />
     <Compile Include="AptDat\RunwayTakeOffSpot.cs" />

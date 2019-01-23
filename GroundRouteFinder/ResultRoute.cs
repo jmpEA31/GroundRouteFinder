@@ -33,6 +33,9 @@ namespace GroundRouteFinder
         public List<int> ValidForSizes;
         public ResultRoute NextSizes;
 
+        public int MaxSize;
+        public int MinSize;
+
         public ResultRoute(int size)
         {
             ValidForSizes = new List<int>();
@@ -41,6 +44,9 @@ namespace GroundRouteFinder
 
             Distance = double.MaxValue;
             NextSizes = null;
+
+            MaxSize = size;
+            MinSize = 0;
         }
 
         public ResultRoute(ResultRoute other)
@@ -95,6 +101,36 @@ namespace GroundRouteFinder
                     ValidForSizes.Remove(size);
                 }
             }
+        }
+
+        public static ResultRoute ExtractRoute(IEnumerable<TaxiEdge> edges, TaxiNode nearestNode, int size)
+        {
+            ResultRoute extracted = new ResultRoute(size);
+            extracted.NearestNode = nearestNode;
+            ulong node1 = extracted.NearestNode.Id;
+            extracted.Distance = nearestNode.DistanceToTarget;
+            extracted.RouteStart = new LinkedNode() { Node = nearestNode.PathToTarget, Next = null, LinkName = nearestNode.NameToTarget };
+            LinkedNode currentLink = extracted.RouteStart;
+            TaxiNode pathNode = nearestNode.PathToTarget;
+
+            while (pathNode != null)
+            {
+                ulong node2 = pathNode.Id;
+                TaxiEdge edge = edges.Single(e => e.StartNodeId == node1 && e.EndNodeId == node2);
+                currentLink.Next = new LinkedNode()
+                {
+                    Node = pathNode.PathToTarget,
+                    Next = null,
+                    LinkName = pathNode.NameToTarget,
+                    ActiveZone = (edge != null) ? edge.ActiveZone : false,
+                    ActiveFor = (edge != null) ? edge.ActiveFor : "?",
+                };
+                node1 = node2;
+                currentLink = currentLink.Next;
+                pathNode = pathNode.PathToTarget;
+            }
+
+            return extracted;
         }
     }
 }
