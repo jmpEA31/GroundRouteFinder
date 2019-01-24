@@ -120,7 +120,7 @@ namespace GroundRouteFinder
 
             if (pathNode != null)
             {
-                sneakEdge = edges.SingleOrDefault(e => e.StartNodeId == node1 && e.EndNodeId == pathNode.Id);
+                sneakEdge = edges.SingleOrDefault(e => e.StartNode.Id == node1 && e.EndNode.Id == pathNode.Id);
             }
 
             extracted.RouteStart = new LinkedNode()
@@ -137,7 +137,7 @@ namespace GroundRouteFinder
             while (pathNode != null)
             {
                 ulong node2 = pathNode.Id;
-                TaxiEdge edge = edges.Single(e => e.StartNodeId == node1 && e.EndNodeId == node2);
+                TaxiEdge edge = edges.Single(e => e.StartNode.Id == node1 && e.EndNode.Id == node2);
                 currentLink.Next = new LinkedNode()
                 {
                     Node = pathNode.PathToTarget,

@@ -6,23 +6,13 @@ using System.Threading.Tasks;
 
 namespace GroundRouteFinder.AptDat
 {
-    public class MeasuredNode
-    {
-        public string LinkName;
-        public bool IsRunway;
-        public TaxiNode SourceNode;
-        public int MaxSize;
-        public double RelativeDistance;
-        public double Bearing;
-    }
-
     public class TaxiNode : LocationObject
     {
         public ulong Id;
         public string Name;
         public const int Sizes = 6;
 
-        public List<MeasuredNode> IncomingNodes;
+        public List<TaxiEdge> IncomingNodes;
 
         public double DistanceToTarget;
         public TaxiNode PathToTarget;
@@ -45,7 +35,7 @@ namespace GroundRouteFinder.AptDat
             : base()
         {
             Id = id;
-            IncomingNodes = new List<MeasuredNode>();
+            IncomingNodes = new List<TaxiEdge>();
 
             IsRunwayNode = false;
             IsNonRunwayNode = false;
@@ -63,23 +53,14 @@ namespace GroundRouteFinder.AptDat
             Longitude = double.Parse(LongitudeString) * VortexMath.Deg2Rad;
         }
 
-        public void ComputeDistances()
+        public void AddEdgeFrom(TaxiEdge edge)
         {
-            foreach (MeasuredNode mv in IncomingNodes)
-            {
-                mv.RelativeDistance = VortexMath.DistancePyth(this, mv.SourceNode);
-                mv.Bearing = VortexMath.BearingRadians(mv.SourceNode.Latitude, mv.SourceNode.Longitude, Latitude, Longitude);
-            }
-        }
-
-        public void AddEdgeFrom(TaxiNode sourceVertex, int maxSize, bool isRunway, string linkName)
-        {
-            if (isRunway)
+            if (edge.IsRunway)
                 IsRunwayNode = true;
             else
                 IsNonRunwayNode = true;
 
-            IncomingNodes.Add(new MeasuredNode() { SourceNode = sourceVertex, RelativeDistance = 0, MaxSize = maxSize, LinkName = linkName, IsRunway = isRunway });
+            IncomingNodes.Add(edge);
         }
     }
 }

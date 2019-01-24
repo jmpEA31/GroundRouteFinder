@@ -156,7 +156,7 @@ namespace GroundRouteFinder.AptDat
             }
 
             // Find the nodes that make up this runway: first find an edge connected to the nearest node
-            IEnumerable<TaxiEdge> selectedEdges = taxiEdges.Where(te => te.IsRunway && (te.EndNodeId == NearestNode.Id || te.StartNodeId == NearestNode.Id));
+            IEnumerable<TaxiEdge> selectedEdges = taxiEdges.Where(te => te.IsRunway && (te.EndNode.Id == NearestNode.Id || te.StartNode.Id == NearestNode.Id));
             if (selectedEdges.Count() == 0)
                 return false;
 
@@ -204,7 +204,7 @@ namespace GroundRouteFinder.AptDat
 
                 // Now inspect the current node
                 bool selectedOne = false;
-                foreach (MeasuredNode mn in node.IncomingNodes)
+                foreach (TaxiEdge mn in node.IncomingNodes)
                 {
                     if (mn.IsRunway)
                         continue;
@@ -213,7 +213,7 @@ namespace GroundRouteFinder.AptDat
                     if (entryAngle <= 0.6 * VortexMath.PI) // allow a turn of roughly 100 degrees, todo: maybe lower this?
                     {
                         selectedOne = true;
-                        takeOffSpot.EntryPoints.Add(mn.SourceNode);
+                        takeOffSpot.EntryPoints.Add(mn.StartNode);
                     }
                 }
 
@@ -234,13 +234,13 @@ namespace GroundRouteFinder.AptDat
             foreach (TaxiNode onRunwayNode in RunwayNodes)
             {
                 // Find nodes that have the current runway node in an incoming edge
-                IEnumerable<TaxiEdge> exitEdges = taxiEdges.Where(edge => edge.StartNodeId == onRunwayNode.Id);
-                exitEdges = exitEdges.Where(ee => !runwayNodes.Select(n => n.Id).Contains(ee.EndNodeId));
+                IEnumerable<TaxiEdge> exitEdges = taxiEdges.Where(edge => edge.StartNode.Id == onRunwayNode.Id);
+                exitEdges = exitEdges.Where(ee => !runwayNodes.Select(n => n.Id).Contains(ee.EndNode.Id));
 
                 foreach (TaxiEdge exit in exitEdges)
                 {
-                    TaxiNode offRunwayNode = taxiNodes.Single(tn => tn.Id == exit.EndNodeId);
-                    MeasuredNode mn = offRunwayNode.IncomingNodes.SingleOrDefault(inc => inc.SourceNode.Id == onRunwayNode.Id);
+                    TaxiNode offRunwayNode = taxiNodes.Single(tn => tn.Id == exit.EndNode.Id);
+                    TaxiEdge mn = offRunwayNode.IncomingNodes.SingleOrDefault(inc => inc.StartNode.Id == onRunwayNode.Id);
                     if (mn == null)
                         continue;
 
@@ -398,7 +398,7 @@ namespace GroundRouteFinder.AptDat
             {
                 // Now find an edge that is marked as 'runway' and that starts at the current node, bt does not lead to the previous node
                 // todo: test with crossing runways
-                TaxiEdge edgeToNext = taxiEdges.SingleOrDefault(e => e.IsRunway && (e.StartNodeId == currentNode.Id && e.EndNodeId != previousNodeId));
+                TaxiEdge edgeToNext = taxiEdges.SingleOrDefault(e => e.IsRunway && (e.StartNode.Id == currentNode.Id && e.EndNode.Id != previousNodeId));
                 if (edgeToNext == null)
                     break;
 
@@ -406,7 +406,7 @@ namespace GroundRouteFinder.AptDat
                 previousNodeId = currentNode.Id;
 
                 // And get the new current node
-                currentNode = taxiNodes.Single(n => n.Id == edgeToNext.EndNodeId);
+                currentNode = taxiNodes.Single(n => n.Id == edgeToNext.EndNode.Id);
                 if (currentNode != null)
                     nodes.Add(currentNode);
             }

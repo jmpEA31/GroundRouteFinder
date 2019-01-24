@@ -13,7 +13,6 @@ namespace GroundRouteFinder.AptDat
         private IEnumerable<TaxiNode> _taxiNodes;
         private List<Parking> _parkings; /* could be gate, helo, tie down, ... but 'parking' improved readability of some of the code */
         private List<Runway> _runways;
-//        private Dictionary<string, RunwayEdges> _runwayEdges;
         private List<TaxiEdge> _edges;
 
         private static char[] _splitters = { ' ' };
@@ -30,7 +29,6 @@ namespace GroundRouteFinder.AptDat
             _nodeDict = new Dictionary<ulong, TaxiNode>();
             _parkings = new List<Parking>();
             _runways = new List<Runway>();
-            //_runwayEdges = new Dictionary<string, RunwayEdges>();
             _edges = new List<TaxiEdge>();
 
             string[] lines = File.ReadAllLines(name);
@@ -77,11 +75,10 @@ namespace GroundRouteFinder.AptDat
                 v.ComputeLonLat();
             }
 
-            // Compute the lengths of each link (in arbitrary units
-            // to avoid sin/cos and a find multiplications)
-            foreach (TaxiNode v in _taxiNodes)
+            // Compute distance and bearing of each edge
+            foreach (TaxiEdge edge in _edges)
             {
-                v.ComputeDistances();
+                edge.Compute();
             }
 
             // Damn you X plane for not requiring parking spots/gate to be linked
@@ -405,7 +402,7 @@ namespace GroundRouteFinder.AptDat
             while (pathNode != null)
             {
                 ulong node2 = pathNode.Id;
-                TaxiEdge edge = _edges.Single(e => e.StartNodeId == node1 && e.EndNodeId == node2);
+                TaxiEdge edge = _edges.Single(e => e.StartNode.Id == node1 && e.EndNode.Id == node2);
                 currentLink.Next = new LinkedNode()
                 {
                     Node = pathNode.PathToTarget,
@@ -438,22 +435,22 @@ namespace GroundRouteFinder.AptDat
             targetNode.DistanceToTarget = 0;
             targetNode.PathToTarget = null;
 
-            foreach (MeasuredNode vto in targetNode.IncomingNodes)
+            foreach (TaxiEdge vto in targetNode.IncomingNodes)
             {
                 if (size > vto.MaxSize)
                     continue;
 
-                if (untouchedNodes.Contains(vto.SourceNode) && !touchedNodes.Contains(vto.SourceNode))
+                if (untouchedNodes.Contains(vto.StartNode) && !touchedNodes.Contains(vto.StartNode))
                 {
-                    untouchedNodes.Remove(vto.SourceNode);
-                    touchedNodes.Add(vto.SourceNode);
+                    untouchedNodes.Remove(vto.StartNode);
+                    touchedNodes.Add(vto.StartNode);
                 }
 
-                vto.SourceNode.DistanceToTarget = vto.RelativeDistance;
-                vto.SourceNode.PathToTarget = targetNode;
-                vto.SourceNode.NameToTarget = vto.LinkName;
-                vto.SourceNode.PathIsRunway = vto.IsRunway;
-                vto.SourceNode.BearingToTarget = VortexMath.BearingRadians(vto.SourceNode, targetNode);
+                vto.StartNode.DistanceToTarget = vto.DistanceKM;
+                vto.StartNode.PathToTarget = targetNode;
+                vto.StartNode.NameToTarget = vto.LinkName;
+                vto.StartNode.PathIsRunway = vto.IsRunway;
+                vto.StartNode.BearingToTarget = VortexMath.BearingRadians(vto.StartNode, targetNode);
             }
 
             //doneNodes.Add(targetNode);
@@ -465,13 +462,13 @@ namespace GroundRouteFinder.AptDat
                 double min = touchedNodes.Min(a => a.DistanceToTarget);
                 targetNode = touchedNodes.FirstOrDefault(a => a.DistanceToTarget == min);
 
-                foreach (MeasuredNode incoming in targetNode.IncomingNodes)
+                foreach (TaxiEdge incoming in targetNode.IncomingNodes)
                 {
                     if (size > incoming.MaxSize)
                         continue;
 
                     // Try to force smaller aircraft to take their specific routes
-                    double penalizedDistance = incoming.RelativeDistance; // vto.RelativeDistance * (1.0 + 2.0 * (vto.MaxSize - size));
+                    double penalizedDistance = incoming.DistanceKM; // vto.RelativeDistance * (1.0 + 2.0 * (vto.MaxSize - size));
 
                     //double bearingToTarget = VortexMath.BearingRadians(incoming.SourceNode.Latitude, incoming.SourceNode.Longitude, targetNode.Latitude, targetNode.Longitude);
                     //double turnToTarget = VortexMath.AbsTurnAngle(targetNode.BearingToTarget, incoming.Bearing);
@@ -484,19 +481,19 @@ namespace GroundRouteFinder.AptDat
                     if (incoming.IsRunway)
                         penalizedDistance += 1.0;
 
-                    if (incoming.SourceNode.DistanceToTarget > (targetNode.DistanceToTarget + penalizedDistance))
+                    if (incoming.StartNode.DistanceToTarget > (targetNode.DistanceToTarget + penalizedDistance))
                     {
-                        if (untouchedNodes.Contains(incoming.SourceNode) && !touchedNodes.Contains(incoming.SourceNode))
+                        if (untouchedNodes.Contains(incoming.StartNode) && !touchedNodes.Contains(incoming.StartNode))
                         {
-                            untouchedNodes.Remove(incoming.SourceNode);
-                            touchedNodes.Add(incoming.SourceNode);
+                            untouchedNodes.Remove(incoming.StartNode);
+                            touchedNodes.Add(incoming.StartNode);
                         }
 
-                        incoming.SourceNode.DistanceToTarget = (targetNode.DistanceToTarget + penalizedDistance);
-                        incoming.SourceNode.PathToTarget = targetNode;
-                        incoming.SourceNode.NameToTarget = incoming.LinkName;
-                        incoming.SourceNode.PathIsRunway = incoming.IsRunway;
-                        incoming.SourceNode.BearingToTarget = incoming.Bearing;
+                        incoming.StartNode.DistanceToTarget = (targetNode.DistanceToTarget + penalizedDistance);
+                        incoming.StartNode.PathToTarget = targetNode;
+                        incoming.StartNode.NameToTarget = incoming.LinkName;
+                        incoming.StartNode.PathIsRunway = incoming.IsRunway;
+                        incoming.StartNode.BearingToTarget = incoming.Bearing;
                     }
                 }
 
@@ -538,28 +535,37 @@ namespace GroundRouteFinder.AptDat
             int maxSize = isRunway ? 5 : (int)(tokens[4][8] - 'A'); // todo: make more robust / future proof
             string linkName = tokens.Length > 5 ? string.Join(" ", tokens.Skip(5)) : "";
 
-            TaxiEdge prev = _edges.SingleOrDefault(e => (e.StartNodeId == va && e.EndNodeId == vb));
-            if (prev != null)
-                // todo: report warning
-                prev.MaxSize = Math.Max(prev.MaxSize, maxSize);
-            else
-                _edges.Add(new TaxiEdge(va, vb, isRunway, maxSize, linkName));
+            TaxiNode startNode = _nodeDict[va];
+            TaxiNode endNode = _nodeDict[vb];
 
-            if (isTwoWay)
+            TaxiEdge outgoingEdge = _edges.SingleOrDefault(e => (e.StartNode.Id == va && e.EndNode.Id == vb));
+            if (outgoingEdge != null)
+                // todo: report warning
+                outgoingEdge.MaxSize = Math.Max(outgoingEdge.MaxSize, maxSize);
+            else
             {
-                prev = _edges.SingleOrDefault(e => (e.StartNodeId == vb && e.EndNodeId == va));
-                if (prev != null)
-                    // todo: report warning
-                    prev.MaxSize = Math.Max(prev.MaxSize, maxSize);
-                else
-                    _edges.Add(new TaxiEdge(vb, va, isRunway, maxSize, linkName));
+                outgoingEdge = new TaxiEdge(startNode, endNode, isRunway, maxSize, linkName);
+                _edges.Add(outgoingEdge);
             }
 
-
-            _nodeDict[vb].AddEdgeFrom(_nodeDict[va], maxSize, isRunway, linkName);
+            TaxiEdge incomingEdge = null;
             if (isTwoWay)
             {
-                _nodeDict[va].AddEdgeFrom(_nodeDict[vb], maxSize, isRunway, linkName);
+                incomingEdge = _edges.SingleOrDefault(e => (e.StartNode.Id == vb && e.EndNode.Id == va));
+                if (incomingEdge != null)
+                    // todo: report warning
+                    incomingEdge.MaxSize = Math.Max(incomingEdge.MaxSize, maxSize);
+                else
+                {
+                    incomingEdge = new TaxiEdge(endNode, startNode, isRunway, maxSize, linkName);
+                    _edges.Add(incomingEdge);
+                }
+            }
+
+            endNode.AddEdgeFrom(outgoingEdge);
+            if (isTwoWay)
+            {
+                startNode.AddEdgeFrom(incomingEdge);
             }
         }
 

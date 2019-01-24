@@ -86,20 +86,20 @@ namespace GroundRouteFinder.AptDat
             foreach (TaxiNode v in selectedNodes)
             {
                 // Look at each link coming into it from other nodes
-                foreach (MeasuredNode incoming in v.IncomingNodes)
+                foreach (TaxiEdge incoming in v.IncomingNodes)
                 {
                     double pushBackLatitude = 0;
                     double pushBackLongitude = 0;
 
                     // Now find where the 'start point outgoing line' intersects with the taxi link we are currently checking
                     if (!VortexMath.Intersection(Latitude, Longitude, adjustedBearing,
-                                                incoming.SourceNode.Latitude, incoming.SourceNode.Longitude, incoming.Bearing,
+                                                incoming.StartNode.Latitude, incoming.StartNode.Longitude, incoming.Bearing,
                                                 ref pushBackLatitude, ref pushBackLongitude))
                     {
                         // If computation fails, try again but now with the link in the other direction.
                         // Ignoring one way links here, I just want a push back target for now that's close to A link.
                         if (!VortexMath.Intersection(Latitude, Longitude, adjustedBearing,
-                                                     incoming.SourceNode.Latitude, incoming.SourceNode.Longitude, incoming.Bearing + Math.PI,
+                                                     incoming.StartNode.Latitude, incoming.StartNode.Longitude, incoming.Bearing + Math.PI,
                                                      ref pushBackLatitude, ref pushBackLongitude))
                         {
                             // Lines might be parallel, can't find intersection, skip
@@ -122,7 +122,7 @@ namespace GroundRouteFinder.AptDat
                     bool foundTargetIsOutsideSegment = false;
 
                     // Todo: check might fail for airports on the -180/+180 longitude line
-                    if (pushBackLatitude - incoming.SourceNode.Latitude > 0)
+                    if (pushBackLatitude - incoming.StartNode.Latitude > 0)
                     {
                         if (v.Latitude - pushBackLatitude <= 0)
                             foundTargetIsOutsideSegment = true;
@@ -130,7 +130,7 @@ namespace GroundRouteFinder.AptDat
                     else if (v.Latitude - pushBackLatitude > 0)
                         foundTargetIsOutsideSegment = true;
 
-                    if (pushBackLongitude - incoming.SourceNode.Longitude > 0)
+                    if (pushBackLongitude - incoming.StartNode.Longitude > 0)
                     {
                         if (v.Longitude - pushBackLongitude <= 0)
                             foundTargetIsOutsideSegment = true;
@@ -150,7 +150,7 @@ namespace GroundRouteFinder.AptDat
                     // for the found location keep track of the distance to it from the start point
                     // also keep track of the distances to both nodes of the link we are inspecting now
                     double pushDistance = 0.0;
-                    double distanceSource = VortexMath.DistancePyth(incoming.SourceNode.Latitude, incoming.SourceNode.Longitude, pushBackLatitude, pushBackLongitude);
+                    double distanceSource = VortexMath.DistancePyth(incoming.StartNode.Latitude, incoming.StartNode.Longitude, pushBackLatitude, pushBackLongitude);
                     double distanceDest = VortexMath.DistancePyth(v.Latitude, v.Longitude, pushBackLatitude, pushBackLongitude);
 
                     // If the found point is outside the link, add the distance to the nearest node of
@@ -163,7 +163,7 @@ namespace GroundRouteFinder.AptDat
                         if (distanceSource < distanceDest)
                         {
                             pushDistance = distanceSource * 2.0;
-                            nearestVertexIfPushBackOutsideSegment = incoming.SourceNode;
+                            nearestVertexIfPushBackOutsideSegment = incoming.StartNode;
                         }
                         else
                         {
@@ -200,13 +200,13 @@ namespace GroundRouteFinder.AptDat
                             // route will be followed.
                             if (distanceSource < distanceDest)
                             {
-                                firstAfterPush = incoming.SourceNode;
+                                firstAfterPush = incoming.StartNode;
                                 alternateAfterPush = v;
                             }
                             else
                             {
                                 firstAfterPush = v;
-                                alternateAfterPush = incoming.SourceNode;
+                                alternateAfterPush = incoming.StartNode;
                             }
                         }
                     }
