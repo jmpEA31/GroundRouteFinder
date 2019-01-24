@@ -7,8 +7,22 @@ using System.Threading.Tasks;
 
 namespace GroundRouteFinder.AptDat
 {
-    public class Parking : TargetNode
+    public class Parking : LocationObject
     {
+        private static char[] _invalidChars = Path.GetInvalidFileNameChars();
+
+        private string _fileNameSafeName;
+        public string FileNameSafeName
+        {
+            get { return _fileNameSafeName; }
+            protected set
+            {
+                _fileNameSafeName = new string(value.Select(c => _invalidChars.Contains(c) ? '_' : c).ToArray());
+            }
+        }
+
+        public TaxiNode NearestNode;
+
         public string Type;
         public string Jets;
         public string Operation;
@@ -58,7 +72,7 @@ namespace GroundRouteFinder.AptDat
             // Compute the distance (arbitrary units) from each taxi node to the start location
             foreach (TaxiNode node in taxiNodes)
             {
-                node.TemporaryDistance = VortexMath.DistancePyth(node.Latitude, node.Longitude, Latitude, Longitude);
+                node.TemporaryDistance = VortexMath.DistancePyth(node, this);
             }
 
             // Select the 25 nearest, then from those select only the ones that are in the 180 degree arc of the direction
@@ -66,7 +80,7 @@ namespace GroundRouteFinder.AptDat
             // todo: make both 25 and 180 parameters
             IEnumerable<TaxiNode> selectedNodes = taxiNodes.OrderBy(v => v.TemporaryDistance).Take(25);
             fallback = selectedNodes.First();
-            selectedNodes = selectedNodes.Where(v => Math.Abs(adjustedBearing - VortexMath.BearingRadians(v.Latitude, v.Longitude, Latitude, Longitude)) < VortexMath.PI05);
+            selectedNodes = selectedNodes.Where(v => Math.Abs(adjustedBearing - VortexMath.BearingRadians(v, this)) < VortexMath.PI05);
 
             // For each qualifying node
             foreach (TaxiNode v in selectedNodes)

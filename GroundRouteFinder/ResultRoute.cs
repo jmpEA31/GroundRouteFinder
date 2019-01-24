@@ -33,6 +33,7 @@ namespace GroundRouteFinder
         public LinkedNode RouteStart;
         public List<int> ValidForSizes;
         public ResultRoute NextSizes;
+        public List<TaxiNode> Lead;
 
         public int MaxSize;
         public int MinSize;
@@ -111,9 +112,27 @@ namespace GroundRouteFinder
             extracted.NearestNode = nearestNode;
             ulong node1 = extracted.NearestNode.Id;
             extracted.Distance = nearestNode.DistanceToTarget;
-            extracted.RouteStart = new LinkedNode() { Node = nearestNode.PathToTarget, Next = null, LinkName = nearestNode.NameToTarget };
+
+            TaxiNode pathNode;
+            pathNode = nearestNode.PathToTarget;
+
+            TaxiEdge sneakEdge = null;
+
+            if (pathNode != null)
+            {
+                sneakEdge = edges.SingleOrDefault(e => e.StartNodeId == node1 && e.EndNodeId == pathNode.Id);
+            }
+
+            extracted.RouteStart = new LinkedNode()
+            {
+                Node = nearestNode.PathToTarget,
+                Next = null,
+                LinkName = nearestNode.NameToTarget,
+                ActiveZone = (sneakEdge != null) ? sneakEdge.ActiveZone : false,
+                ActiveFor = (sneakEdge != null) ? sneakEdge.ActiveFor : "?"
+            };
+
             LinkedNode currentLink = extracted.RouteStart;
-            TaxiNode pathNode = nearestNode.PathToTarget;
 
             while (pathNode != null)
             {

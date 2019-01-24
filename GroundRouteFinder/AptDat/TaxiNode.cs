@@ -16,7 +16,7 @@ namespace GroundRouteFinder.AptDat
         public double Bearing;
     }
 
-    public class TaxiNode
+    public class TaxiNode : LocationObject
     {
         public ulong Id;
         public string Name;
@@ -26,11 +26,10 @@ namespace GroundRouteFinder.AptDat
 
         public double DistanceToTarget;
         public TaxiNode PathToTarget;
+        public double BearingToTarget;
         public string NameToTarget;
         public bool PathIsRunway;
 
-        public double Latitude;
-        public double Longitude;
         public string LatitudeString;
         public string LongitudeString;
 
@@ -43,6 +42,7 @@ namespace GroundRouteFinder.AptDat
         public double TemporaryDistance;
 
         public TaxiNode(ulong id, string latitude, string longitude)
+            : base()
         {
             Id = id;
             IncomingNodes = new List<MeasuredNode>();
@@ -67,7 +67,7 @@ namespace GroundRouteFinder.AptDat
         {
             foreach (MeasuredNode mv in IncomingNodes)
             {
-                mv.RelativeDistance = VortexMath.DistancePyth(Latitude, Longitude, mv.SourceNode.Latitude, mv.SourceNode.Longitude);
+                mv.RelativeDistance = VortexMath.DistancePyth(this, mv.SourceNode);
                 mv.Bearing = VortexMath.BearingRadians(mv.SourceNode.Latitude, mv.SourceNode.Longitude, Latitude, Longitude);
             }
         }

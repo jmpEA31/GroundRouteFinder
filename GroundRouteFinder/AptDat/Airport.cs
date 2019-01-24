@@ -110,6 +110,14 @@ namespace GroundRouteFinder.AptDat
                     // Nearest node should become 'closest to computed pushback point'
                     findShortestPaths(_taxiNodes, parking.NearestNode, size);
 
+                    //StreamWriter tnd = File.CreateText($"e:\\groundroutes\\deb-{parking.Name}.csv");
+                    //tnd.WriteLine($"lat,lon,pen,id");
+                    //foreach (TaxiNode tn in _taxiNodes)
+                    //{
+                    //    tnd.WriteLine($"{tn.Latitude*VortexMath.Rad2Deg},{tn.Longitude * VortexMath.Rad2Deg},{tn.DistanceToTarget},{tn.Id}");
+                    //}
+                    //tnd.Close();
+
                     // Pick the runway exit points for the selected size
                     foreach (Runway r in _runways)
                     {
@@ -313,7 +321,7 @@ namespace GroundRouteFinder.AptDat
                         if (link.Next.Node != null)
                         {
                             double turnAngle = 0;
-                            double nextBearing = VortexMath.BearingRadians(link.Node.Latitude, link.Node.Longitude, link.Next.Node.Latitude, link.Next.Node.Longitude);
+                            double nextBearing = VortexMath.BearingRadians(link.Node, link.Next.Node);
                             turnAngle = VortexMath.AbsTurnAngle(lastBearing, nextBearing);
                             if (turnAngle > VortexMath.PI025)
                             {
@@ -324,7 +332,7 @@ namespace GroundRouteFinder.AptDat
                                     writeNode(sw, addLat, addLon, 8, linkOperation);
                                 }
 
-                                availableDistance = VortexMath.DistanceKM(link.Node.Latitude, link.Node.Longitude, link.Next.Node.Latitude, link.Next.Node.Longitude);
+                                availableDistance = VortexMath.DistanceKM(link.Node, link.Next.Node);
                                 if (availableDistance > 0.025)
                                 {
                                     VortexMath.PointFrom(link.Node.Latitude, link.Node.Longitude, nextBearing, 0.025, ref addLat, ref addLon);
@@ -445,6 +453,7 @@ namespace GroundRouteFinder.AptDat
                 vto.SourceNode.PathToTarget = targetNode;
                 vto.SourceNode.NameToTarget = vto.LinkName;
                 vto.SourceNode.PathIsRunway = vto.IsRunway;
+                vto.SourceNode.BearingToTarget = VortexMath.BearingRadians(vto.SourceNode, targetNode);
             }
 
             //doneNodes.Add(targetNode);
@@ -456,29 +465,38 @@ namespace GroundRouteFinder.AptDat
                 double min = touchedNodes.Min(a => a.DistanceToTarget);
                 targetNode = touchedNodes.FirstOrDefault(a => a.DistanceToTarget == min);
 
-                foreach (MeasuredNode vto in targetNode.IncomingNodes)
+                foreach (MeasuredNode incoming in targetNode.IncomingNodes)
                 {
-                    if (size > vto.MaxSize)
+                    if (size > incoming.MaxSize)
                         continue;
 
                     // Try to force smaller aircraft to take their specific routes
-                    double penalizedDistance = 0; // vto.RelativeDistance * (1.0 + 2.0 * (vto.MaxSize - size));
+                    double penalizedDistance = incoming.RelativeDistance; // vto.RelativeDistance * (1.0 + 2.0 * (vto.MaxSize - size));
 
-                    if (vto.IsRunway)
+                    //double bearingToTarget = VortexMath.BearingRadians(incoming.SourceNode.Latitude, incoming.SourceNode.Longitude, targetNode.Latitude, targetNode.Longitude);
+                    //double turnToTarget = VortexMath.AbsTurnAngle(targetNode.BearingToTarget, incoming.Bearing);
+
+                        //penalizedDistance += 5.0;
+                    //else if (turnToTarget > VortexMath.PI033)
+                    //    penalizedDistance += 0.01;
+
+
+                    if (incoming.IsRunway)
                         penalizedDistance += 1.0;
 
-                    if (vto.SourceNode.DistanceToTarget > (targetNode.DistanceToTarget + penalizedDistance))
+                    if (incoming.SourceNode.DistanceToTarget > (targetNode.DistanceToTarget + penalizedDistance))
                     {
-                        if (untouchedNodes.Contains(vto.SourceNode) && !touchedNodes.Contains(vto.SourceNode))
+                        if (untouchedNodes.Contains(incoming.SourceNode) && !touchedNodes.Contains(incoming.SourceNode))
                         {
-                            untouchedNodes.Remove(vto.SourceNode);
-                            touchedNodes.Add(vto.SourceNode);
+                            untouchedNodes.Remove(incoming.SourceNode);
+                            touchedNodes.Add(incoming.SourceNode);
                         }
 
-                        vto.SourceNode.DistanceToTarget = (targetNode.DistanceToTarget + penalizedDistance);
-                        vto.SourceNode.PathToTarget = targetNode;
-                        vto.SourceNode.NameToTarget = vto.LinkName;
-                        vto.SourceNode.PathIsRunway = vto.IsRunway;
+                        incoming.SourceNode.DistanceToTarget = (targetNode.DistanceToTarget + penalizedDistance);
+                        incoming.SourceNode.PathToTarget = targetNode;
+                        incoming.SourceNode.NameToTarget = incoming.LinkName;
+                        incoming.SourceNode.PathIsRunway = incoming.IsRunway;
+                        incoming.SourceNode.BearingToTarget = incoming.Bearing;
                     }
                 }
 

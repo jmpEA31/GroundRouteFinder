@@ -13,11 +13,23 @@ namespace GroundRouteFinder
         public const double PI3 = 3.0 * Math.PI;
         public const double PI05 = 0.5 * Math.PI;
         public const double PI025 = 0.25 * Math.PI;
+        public const double PI033 = 0.33 * Math.PI;
         public const double Deg2Rad = Math.PI / 180.0;
         public const double Rad2Deg = 180.0 / Math.PI;
 
         public const double Deg100Rad = 100.0 * VortexMath.Deg2Rad;
         public const double Deg475Rad = 47.5 * VortexMath.Deg2Rad;
+
+        /// <summary>
+        /// Return the distance between two location objects in radians
+        /// </summary>
+        /// <param name="location1"></param>
+        /// <param name="location2"></param>
+        /// <returns></returns>
+        public static double DistanceRadians(LocationObject location1, LocationObject location2)
+        {
+            return DistanceRadians(location1.Latitude, location1.Longitude, location2.Latitude, location2.Longitude);
+        }
 
         /// <summary>
         /// Return the distance between two lat/lon points in radians
@@ -39,6 +51,17 @@ namespace GroundRouteFinder
 
 
         /// <summary>
+        /// Return the distance between two location objects in KMs
+        /// </summary>
+        /// <param name="location1"></param>
+        /// <param name="location2"></param>
+        /// <returns></returns>
+        public static double DistanceKM(LocationObject location1, LocationObject location2)
+        {
+            return DistanceKM(location1.Latitude, location1.Longitude, location2.Latitude, location2.Longitude);
+        }
+
+        /// <summary>
         /// Return the distance between two lat/lon points in KM's
         /// </summary>
         /// <param name="φ1">Latitude of the first point in radians</param>
@@ -49,6 +72,17 @@ namespace GroundRouteFinder
         public static double DistanceKM(double φ1, double λ1, double φ2, double λ2)
         {
             return 6371.0 * DistanceRadians(φ1,  λ1,  φ2,  λ2);
+        }
+
+        /// <summary>
+        /// Returns the pythagoran distance between two location objects
+        /// </summary>
+        /// <param name="location1"></param>
+        /// <param name="location2"></param>
+        /// <returns></returns>
+        public static double DistancePyth(LocationObject location1, LocationObject location2)
+        {
+            return DistancePyth(location1.Latitude, location1.Longitude, location2.Latitude, location2.Longitude);
         }
 
         /// <summary>
@@ -66,6 +100,16 @@ namespace GroundRouteFinder
             return Math.Sqrt(dλ * dλ + dφ * dφ);
         }
 
+        /// <summary>
+        /// Return the bearing between two location objects in radians
+        /// </summary>
+        /// <param name="location1"></param>
+        /// <param name="location2"></param>
+        /// <returns></returns>
+        public static double BearingRadians(LocationObject location1, LocationObject location2)
+        {
+            return BearingRadians(location1.Latitude, location1.Longitude, location2.Latitude, location2.Longitude);
+        }
         /// <summary>
         /// Returns the bearing from point1 to point2
         /// </summary>

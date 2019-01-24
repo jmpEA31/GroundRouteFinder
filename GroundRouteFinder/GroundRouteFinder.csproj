@@ -70,12 +70,17 @@
     <Compile Include="AptDat\RunwayExitSpot.cs" />
     <Compile Include="AptDat\TaxiEdge.cs" />
     <Compile Include="InboundResults.cs" />
+    <Compile Include="LocationObject.cs" />
+    <Compile Include="ParkingPoint.cs" />
+    <Compile Include="PushbackPoint.cs" />
     <Compile Include="ResultRoute.cs" />
     <Compile Include="AptDat\Runway.cs" />
     <Compile Include="AptDat\RunwayTakeOffSpot.cs" />
     <Compile Include="AptDat\StartPoint.cs" />
+    <Compile Include="RouteProcessor.cs" />
+    <Compile Include="RunwayPoint.cs" />
     <Compile Include="Settings.cs" />
-    <Compile Include="TargetNode.cs" />
+    <Compile Include="SteerPoint.cs" />
     <Compile Include="AptDat\TaxiNode.cs" />
     <Compile Include="Form1.cs">
       <SubType>Form</SubType>
