@@ -125,9 +125,9 @@ namespace GroundRouteFinder
                                 }
 
                                 if (link.ActiveZone)
-                                    steerPoints.Add(new RunwayPoint(link.Node.Latitude, link.Node.Longitude, 15, $"{link.Node.Id}:{link.LinkName}", $"{link.ActiveFor}"));
+                                    steerPoints.Add(new RunwayPoint(link.Node.Latitude, link.Node.Longitude, 15, $"{link.LinkName}", $"{link.ActiveFor}"));
                                 else
-                                    steerPoints.Add(new SteerPoint(link.Node.Latitude, link.Node.Longitude, 15, $"{link.Node.Id}:{link.LinkName} not active"));
+                                    steerPoints.Add(new SteerPoint(link.Node.Latitude, link.Node.Longitude, 15, $"{link.LinkName}"));
 
                                 link = link.Next;
                             }

@@ -121,6 +121,9 @@ namespace GroundRouteFinder.AptDat
                         foreach (Runway.RunwayNodeUsage use in Settings.SizeToUsage[size])
                         {
                             Runway.UsageNodes exitNodes = r.GetNodesForUsage(use);
+                            if (exitNodes == null)
+                                continue;
+
                             Runway.NodeUsage usage = exitNodes.Roles[(int)Runway.UsageNodes.Role.Left];
                             double bestDistance = double.MaxValue;
                             Runway.UsageNodes.Role bestSide = Runway.UsageNodes.Role.Max;
@@ -500,9 +503,6 @@ namespace GroundRouteFinder.AptDat
                 touchedNodes.Remove(targetNode);
             }
         }
-
-
-
 
         private void readAirportRecord(string line)
         {

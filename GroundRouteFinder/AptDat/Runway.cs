@@ -108,7 +108,10 @@ namespace GroundRouteFinder.AptDat
 
         public UsageNodes GetNodesForUsage(RunwayNodeUsage usage)
         {
-            return _usageNodes[usage];
+            if (_usageNodes.ContainsKey(usage))
+                return _usageNodes[usage];
+            else
+                return null;
         }
 
         public Runway(string designator, double latitude, double longitude, double displacement, double oppositeLatitude, double oppositeLongitude)

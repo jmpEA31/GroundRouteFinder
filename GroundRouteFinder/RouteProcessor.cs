@@ -60,7 +60,7 @@ namespace GroundRouteFinder
                     {
                         // Shift the current point a bit back
                         VortexMath.PointFrom(currentLatitude, currentLongitude, incomingBearing + VortexMath.PI, smoothingDistance, ref current.Latitude, ref current.Longitude);
-                        current.Name = "Shifted from " + current.Name;
+                        //current.Name = "Shifted from " + current.Name;
                     }
                     else
                     {
@@ -74,7 +74,7 @@ namespace GroundRouteFinder
                         // Insert an extra point
                         SteerPoint newPoint = current.Duplicate();
                         VortexMath.PointFrom(currentLatitude, currentLongitude, outgoingBearing, smoothingDistance, ref newPoint.Latitude, ref newPoint.Longitude);
-                        newPoint.Name = "Added past " + newPoint.Name;
+                        //newPoint.Name =  "Added past " + newPoint.Name;
                         steerPoints.Insert(i + 1, newPoint);
                         i++;
                     }
