@@ -51,7 +51,7 @@ namespace GroundRouteFinder
                 double outgoingBearing = VortexMath.BearingRadians(current, next);
                 double turnAngle = VortexMath.AbsTurnAngle(incomingBearing, outgoingBearing);
 
-                if (turnAngle < 3.5 * VortexMath.Deg2Rad)
+                if (!(current is RunwayPoint) && turnAngle < 3.5 * VortexMath.Deg2Rad)
                 {
                     if (previous.Name == next.Name)
                     {
@@ -78,15 +78,30 @@ namespace GroundRouteFinder
                         i--;
                     }
 
-                    if (VortexMath.DistanceKM(currentLatitude, currentLongitude, next.Latitude, next.Longitude) > smoothingDistance)
+                    double distanceToNext = VortexMath.DistanceKM(currentLatitude, currentLongitude, next.Latitude, next.Longitude);
+                    if (distanceToNext > smoothingDistance)
                     {
                         // Insert an extra point
-                        SteerPoint newPoint = current.Duplicate();
+                        SteerPoint newPoint = next.Duplicate();
                         VortexMath.PointFrom(currentLatitude, currentLongitude, outgoingBearing, smoothingDistance, ref newPoint.Latitude, ref newPoint.Longitude);
-                        //newPoint.Name =  "Added past " + newPoint.Name;
+
+                        // If room for additional speed up point, reduce acceleration on this point
+                        if (distanceToNext > 1.5 * smoothingDistance)
+                            newPoint.Speed = (newPoint.Speed * 2)/ 3;
+
                         steerPoints.Insert(i + 1, newPoint);
                         i++;
                     }
+
+                    if (distanceToNext > 1.5 * smoothingDistance)
+                    {
+                        // Insert an extra point
+                        SteerPoint newPoint = next.Duplicate();
+                        VortexMath.PointFrom(currentLatitude, currentLongitude, outgoingBearing, 1.5 * smoothingDistance, ref newPoint.Latitude, ref newPoint.Longitude);
+                        steerPoints.Insert(i + 1, newPoint);
+                        i++;
+                    }
+
                 }
             }
         }
