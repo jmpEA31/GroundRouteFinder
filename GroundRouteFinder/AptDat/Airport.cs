@@ -231,7 +231,7 @@ namespace GroundRouteFinder.AptDat
                 string allSizes = string.Join(" ", routeSizes.OrderBy(w => w));
 
                 string sizeName = (routeSizes.Count == 10) ? "all" : allSizes.Replace(" ", "");
-                string fileName = $"E:\\GroundRoutes\\Departures\\LFPG\\{parking.FileNameSafeName}_to_{runway.Designator}-{entry}_{sizeName}.txt";
+                string fileName = $"E:\\GroundRoutes\\Departure\\LFPG\\{parking.FileNameSafeName}_to_{runway.Designator}-{entry}_{sizeName}.txt";
                 File.Delete(fileName);
                 using (StreamWriter sw = File.CreateText(fileName))
                 {
@@ -243,7 +243,7 @@ namespace GroundRouteFinder.AptDat
                     sw.Write("STARTSTEERPOINTS\n");
 
                     // Write the start point
-                    sw.Write($"{parking.Latitude * VortexMath.Rad2Deg} {parking.Longitude * VortexMath.Rad2Deg} -2 {parking.Bearing * VortexMath.Rad2Deg:0} 0 0 {parking.Name}\n");
+                    sw.Write($"{parking.Latitude * VortexMath.Rad2Deg} {parking.Longitude * VortexMath.Rad2Deg} -3 {parking.Bearing * VortexMath.Rad2Deg:0} 0 0 {parking.Name}\n");
 
                     // Write Pushback node, allowing room for turn
                     double addLat = 0;
@@ -268,9 +268,11 @@ namespace GroundRouteFinder.AptDat
                         double turn = VortexMath.AbsTurnAngle(parking.Bearing, nextPushBearing);
                         double distance = 0.040 * ((VortexMath.PI - turn) / VortexMath.PI);
                         VortexMath.PointFrom(parking.PushBackLatitude, parking.PushBackLongitude, parking.Bearing, distance, ref addLat, ref addLon);
-                        sw.Write($"{addLat * VortexMath.Rad2Deg:0.00000000} {addLon * VortexMath.Rad2Deg:0.00000000} -1 -1 0 0 {link.LinkName}\n");
+                        sw.Write($"{addLat * VortexMath.Rad2Deg:0.00000000} {addLon * VortexMath.Rad2Deg:0.00000000} -2 -1 0 0 {link.LinkName}\n");
                         VortexMath.PointFrom(parking.PushBackLatitude, parking.PushBackLongitude, nextPushBearing, 0.030, ref addLat, ref addLon);
-                        sw.Write($"{addLat * VortexMath.Rad2Deg:0.00000000} {addLon * VortexMath.Rad2Deg:0.00000000} 10 -1 0 0 {link.LinkName}\n");
+                        sw.Write($"{addLat * VortexMath.Rad2Deg:0.00000000} {addLon * VortexMath.Rad2Deg:0.00000000} -2 -1 0 0 {link.LinkName}\n");
+                        VortexMath.PointFrom(parking.PushBackLatitude, parking.PushBackLongitude, nextPushBearing, 0.040, ref addLat, ref addLon);
+                        sw.Write($"{addLat * VortexMath.Rad2Deg:0.00000000} {addLon * VortexMath.Rad2Deg:0.00000000} 8 -1 0 0 {link.LinkName}\n");
                     }
 
                     bool wasOnRunway = false;
@@ -345,14 +347,14 @@ namespace GroundRouteFinder.AptDat
 
                         if (!smoothed)
                         {
-                            writeNode(sw, link.Node.LatitudeString, link.Node.LongitudeString, speed, $"-1 {linkOperation}");
+                            writeNode(sw, link.Node.LatitudeString, link.Node.LongitudeString, speed, $"{linkOperation}");
                         }
 
                         lastLatitude = link.Node.Latitude;
                         lastLongitude = link.Node.Longitude;
                         link = link.Next;
                     }
-                    writeNode(sw, takeoffSpot.TakeOffNode.LatitudeString, takeoffSpot.TakeOffNode.LongitudeString, 6, $"-1 {runway.Designator} 2");
+                    writeNode(sw, takeoffSpot.TakeOffNode.LatitudeString, takeoffSpot.TakeOffNode.LongitudeString, 8, $"-1 {runway.Designator} 2");
 
                     VortexMath.PointFrom(takeoffSpot.TakeOffNode.Latitude, takeoffSpot.TakeOffNode.Longitude, runway.Bearing, 0.022, ref addLat, ref addLon);
                     writeNode(sw, addLat, addLon, 6, $"-1 {runway.Designator} 2");
@@ -559,6 +561,9 @@ namespace GroundRouteFinder.AptDat
                 {
                     incomingEdge = new TaxiEdge(endNode, startNode, isRunway, maxSize, linkName);
                     _edges.Add(incomingEdge);
+
+                    incomingEdge.ReverseEdge = outgoingEdge;
+                    outgoingEdge.ReverseEdge = incomingEdge;
                 }
             }
 
@@ -572,9 +577,15 @@ namespace GroundRouteFinder.AptDat
         private void readTaxiEdgeOperations(string line)
         {
             string[] tokens = line.Split(_splitters, StringSplitOptions.RemoveEmptyEntries);
-            _edges.Last().ActiveZone = true;
             string[] rwys = tokens[2].Split(',');
-            _edges.Last().ActiveFor = rwys[0];
+            TaxiEdge lastEdge = _edges.Last();
+            lastEdge.ActiveZone = true;
+            lastEdge.ActiveFor = rwys[0];
+            if (lastEdge.ReverseEdge != null)
+            {
+                lastEdge.ReverseEdge.ActiveZone = true;
+                lastEdge.ReverseEdge.ActiveFor = rwys[0];
+            }
         }
 
         private void readStartPoint(string line)

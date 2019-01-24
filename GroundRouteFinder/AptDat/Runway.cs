@@ -234,7 +234,7 @@ namespace GroundRouteFinder.AptDat
             Tracking tracking = new Tracking();
             double reduced1Length = double.MaxValue;
 
-            foreach (TaxiNode onRunwayNode in RunwayNodes)
+            foreach (TaxiNode onRunwayNode in runwayNodes)
             {
                 // Find nodes that have the current runway node in an incoming edge
                 IEnumerable<TaxiEdge> exitEdges = taxiEdges.Where(edge => edge.StartNode.Id == onRunwayNode.Id);

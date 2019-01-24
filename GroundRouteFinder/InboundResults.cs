@@ -70,7 +70,7 @@ namespace GroundRouteFinder
                         string allSizes = string.Join(" ", routeSizes.OrderBy(w => w));
 
                         string sizeName = (routeSizes.Count == 10) ? "all" : allSizes.Replace(" ", "");
-                        string fileName = $"E:\\GroundRoutes\\Arrivals\\LFPG\\{route.Runway.Designator}_to_{Parking.FileNameSafeName}-{sizeRoutes.Key.Id}_{sizeName}.txt";
+                        string fileName = $"E:\\GroundRoutes\\Arrival\\LFPG\\{route.Runway.Designator}_to_{Parking.FileNameSafeName}-{sizeRoutes.Key.Id}_{sizeName}.txt";
                         File.Delete(fileName);
                         using (StreamWriter sw = File.CreateText(fileName))
                         {
@@ -133,7 +133,7 @@ namespace GroundRouteFinder
                             }
 
                             steerPoints.Add(new SteerPoint(Parking.PushBackLatitude, Parking.PushBackLongitude, 5, Parking.Name));
-                            steerPoints.Add(new ParkingPoint(Parking.Latitude, Parking.Longitude, 3, Parking.Name, Parking.Bearing));
+                            steerPoints.Add(new ParkingPoint(Parking.Latitude, Parking.Longitude, 5, Parking.Name, Parking.Bearing));
 
                             RouteProcessor.Smooth(steerPoints);
                             RouteProcessor.ProcessRunwayOperations(steerPoints);

@@ -21,6 +21,8 @@ namespace GroundRouteFinder.AptDat
         public double DistanceKM;
         public double Bearing;
 
+        public TaxiEdge ReverseEdge;
+
         public TaxiEdge(TaxiNode startNode, TaxiNode endNode, bool isRunway, int maxSize, string linkName)
         {
             StartNode = startNode;
@@ -32,6 +34,8 @@ namespace GroundRouteFinder.AptDat
 
             ActiveFor = "";
             ActiveZone = false;
+
+            ReverseEdge = null;
         }
 
         public void Compute()

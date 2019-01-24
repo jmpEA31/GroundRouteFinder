@@ -138,15 +138,22 @@ namespace GroundRouteFinder
             {
                 ulong node2 = pathNode.Id;
                 TaxiEdge edge = edges.Single(e => e.StartNode.Id == node1 && e.EndNode.Id == node2);
+
+                if (node1 == 1930 && node2 == 1891)
+                {
+                    int k = 7;
+                }
                 currentLink.Next = new LinkedNode()
                 {
                     Node = pathNode.PathToTarget,
                     Next = null,
-                    LinkName = pathNode.NameToTarget,
-                    ActiveZone = (edge != null) ? edge.ActiveZone : false,
-                    ActiveFor = (edge != null) ? edge.ActiveFor : "?",
+                    LinkName = pathNode.NameToTarget
                 };
                 node1 = node2;
+
+                currentLink.ActiveZone = (edge != null) ? edge.ActiveZone : false;
+                currentLink.ActiveFor = (edge != null) ? edge.ActiveFor : "?";
+
                 currentLink = currentLink.Next;
                 pathNode = pathNode.PathToTarget;
             }

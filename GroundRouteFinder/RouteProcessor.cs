@@ -51,7 +51,15 @@ namespace GroundRouteFinder
                 double outgoingBearing = VortexMath.BearingRadians(current, next);
                 double turnAngle = VortexMath.AbsTurnAngle(incomingBearing, outgoingBearing);
 
-                if (turnAngle > VortexMath.PI025) // 45 degrees
+                if (turnAngle < 3.5 * VortexMath.Deg2Rad)
+                {
+                    if (previous.Name == next.Name)
+                    {
+                        steerPoints.RemoveAt(i);
+                        i--;
+                    }
+                }
+                else if (turnAngle > VortexMath.PI025) // 45 degrees
                 {
                     double smoothingDistance = 0.050 * (turnAngle / VortexMath.PI); // 90 degrees = 0.5 PI / PI = 0.5 * 0.05 km = 25 meters
                     double currentLatitude = current.Latitude;
@@ -60,6 +68,7 @@ namespace GroundRouteFinder
                     {
                         // Shift the current point a bit back
                         VortexMath.PointFrom(currentLatitude, currentLongitude, incomingBearing + VortexMath.PI, smoothingDistance, ref current.Latitude, ref current.Longitude);
+                        current.Speed /= 2;
                         //current.Name = "Shifted from " + current.Name;
                     }
                     else
