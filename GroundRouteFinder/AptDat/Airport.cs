@@ -101,7 +101,7 @@ namespace GroundRouteFinder.AptDat
         {
             foreach (Parking parking in _parkings)
             {
-                InboundResults ir = new InboundResults(parking);
+                InboundResults ir = new InboundResults(_edges, parking);
                 for (int size = parking.MaxSize; size >= 0; size--)
                 {
                     // Nearest node should become 'closest to computed pushback point'
@@ -146,7 +146,7 @@ namespace GroundRouteFinder.AptDat
                             if (bestSide != Runway.UsageNodes.Role.Max)
                             {
                                 usage = exitNodes.Roles[(int)bestSide];
-                                ir.AddResult(_edges, r, usage.OnRunwayNode, usage.OffRunwayNode, size);
+                                ir.AddResult(size, usage.OnRunwayNode, usage.OffRunwayNode, r);
                             }
                         }
                     }
@@ -400,9 +400,9 @@ namespace GroundRouteFinder.AptDat
             extracted.NearestNode = nearestVertex;
             ulong node1 = extracted.NearestNode.Id;
             extracted.Distance = nearestVertex.DistanceToTarget;
-            extracted.RouteStart = new LinkedNode() { Node = nearestVertex.PathToTarget, Next = null, LinkName = nearestVertex.NameToTarget };
+            extracted.RouteStart = new LinkedNode() { Node = nearestVertex.NextNodeToTarget, Next = null, LinkName = nearestVertex.NameToTarget };
             LinkedNode currentLink = extracted.RouteStart;
-            TaxiNode pathNode = nearestVertex.PathToTarget;
+            TaxiNode pathNode = nearestVertex.NextNodeToTarget;
 
             while (pathNode != null)
             {
@@ -410,7 +410,7 @@ namespace GroundRouteFinder.AptDat
                 TaxiEdge edge = _edges.Single(e => e.StartNode.Id == node1 && e.EndNode.Id == node2);
                 currentLink.Next = new LinkedNode()
                 {
-                    Node = pathNode.PathToTarget,
+                    Node = pathNode.NextNodeToTarget,
                     Next = null,
                     LinkName = pathNode.NameToTarget,
                     ActiveZone = (edge != null) ? edge.ActiveZone : false,
@@ -418,7 +418,7 @@ namespace GroundRouteFinder.AptDat
                 };
                 node1 = node2;
                 currentLink = currentLink.Next;
-                pathNode = pathNode.PathToTarget;
+                pathNode = pathNode.NextNodeToTarget;
             }
 
             return extracted;
@@ -433,12 +433,12 @@ namespace GroundRouteFinder.AptDat
             foreach (TaxiNode node in nodes)
             {
                 node.DistanceToTarget = double.MaxValue;
-                node.PathToTarget = null;
+                node.NextNodeToTarget = null;
             }
 
             // Setup the targetnode
             targetNode.DistanceToTarget = 0;
-            targetNode.PathToTarget = null;
+            targetNode.NextNodeToTarget = null;
 
             foreach (TaxiEdge vto in targetNode.IncomingNodes)
             {
@@ -452,7 +452,7 @@ namespace GroundRouteFinder.AptDat
                 }
 
                 vto.StartNode.DistanceToTarget = vto.DistanceKM;
-                vto.StartNode.PathToTarget = targetNode;
+                vto.StartNode.NextNodeToTarget = targetNode;
                 vto.StartNode.NameToTarget = vto.LinkName;
                 vto.StartNode.PathIsRunway = vto.IsRunway;
                 vto.StartNode.BearingToTarget = VortexMath.BearingRadians(vto.StartNode, targetNode);
@@ -495,7 +495,7 @@ namespace GroundRouteFinder.AptDat
                         }
 
                         incoming.StartNode.DistanceToTarget = (targetNode.DistanceToTarget + penalizedDistance);
-                        incoming.StartNode.PathToTarget = targetNode;
+                        incoming.StartNode.NextNodeToTarget = targetNode;
                         incoming.StartNode.NameToTarget = incoming.LinkName;
                         incoming.StartNode.PathIsRunway = incoming.IsRunway;
                         incoming.StartNode.BearingToTarget = incoming.Bearing;

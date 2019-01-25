@@ -105,16 +105,23 @@ namespace GroundRouteFinder
             }
         }
 
-        public static ResultRoute ExtractRoute(IEnumerable<TaxiEdge> edges, Runway r, TaxiNode nearestNode, int size)
+        /// <summary>
+        /// Extract the route that starts at TaxiNode 'startNode'
+        /// </summary>
+        /// <param name="edges">A list of all available edges</param>
+        /// <param name="startNode">The first node of the route</param>
+        /// <param name="size">The maximum size for which this route is valid</param>
+        /// <returns>The route as a linked list of nodes with additional informationthat will be needed when writing the route to a file</returns>
+        public static ResultRoute ExtractRoute(IEnumerable<TaxiEdge> edges, TaxiNode startNode, int size)
         {
             ResultRoute extracted = new ResultRoute(size);
-            extracted.Runway = r;
-            extracted.NearestNode = nearestNode;
+            extracted.Runway = null;
+            extracted.NearestNode = startNode;
             ulong node1 = extracted.NearestNode.Id;
-            extracted.Distance = nearestNode.DistanceToTarget;
+            extracted.Distance = startNode.DistanceToTarget;
 
             TaxiNode pathNode;
-            pathNode = nearestNode.PathToTarget;
+            pathNode = startNode.NextNodeToTarget;
 
             TaxiEdge sneakEdge = null;
 
@@ -123,29 +130,56 @@ namespace GroundRouteFinder
                 sneakEdge = edges.SingleOrDefault(e => e.StartNode.Id == node1 && e.EndNode.Id == pathNode.Id);
             }
 
+            // Set up the first link
             extracted.RouteStart = new LinkedNode()
             {
-                Node = nearestNode.PathToTarget,
+                Node = startNode.NextNodeToTarget,
                 Next = null,
-                LinkName = nearestNode.NameToTarget,
+                LinkName = startNode.NameToTarget,
                 ActiveZone = (sneakEdge != null) ? sneakEdge.ActiveZone : false,
                 ActiveFor = (sneakEdge != null) ? sneakEdge.ActiveFor : "?"
             };
 
             LinkedNode currentLink = extracted.RouteStart;
 
+            // And follow the path...
             while (pathNode != null)
             {
+                double currentBearing = currentLink.Node.BearingToTarget;
                 ulong node2 = pathNode.Id;
                 TaxiEdge edge = edges.Single(e => e.StartNode.Id == node1 && e.EndNode.Id == node2);
 
-                if (node1 == 1930 && node2 == 1891)
+                // This filters out very sharp turns if an alternate exists in exchange for a longer route:
+                // todo: parameters. Now => if more than 120 degrees and alternate < 45 exists use alternate
+                if (pathNode.NextNodeToTarget != null && pathNode.NextNodeToTarget.DistanceToTarget > 0)
                 {
-                    int k = 7;
+                    double nextBearing = pathNode.NextNodeToTarget.BearingToTarget;
+                    double turn = VortexMath.AbsTurnAngle(currentBearing, nextBearing);
+                    if (turn > VortexMath.Deg120Rad)
+                    {
+                        IEnumerable<TaxiEdge> altEdges = edges.Where(e => e.StartNode.Id == pathNode.NextNodeToTarget.Id &&
+                                                                          e.EndNode.Id != pathNode.NextNodeToTarget.NextNodeToTarget.Id &&
+                                                                          e.EndNode.Id != pathNode.Id);
+
+                        foreach (TaxiEdge te in altEdges)
+                        {
+                            if (te.EndNode.DistanceToTarget < double.MaxValue)
+                            {
+                                double newTurn = VortexMath.AbsTurnAngle(currentBearing, te.EndNode.BearingToTarget);
+                                if (newTurn < VortexMath.PI025)
+                                {
+                                    // todo: Can this create a loop?????
+                                    pathNode.NextNodeToTarget.NextNodeToTarget = te.EndNode;
+                                    break;
+                                }
+                            }
+                        }
+                    }
                 }
+
                 currentLink.Next = new LinkedNode()
                 {
-                    Node = pathNode.PathToTarget,
+                    Node = pathNode.NextNodeToTarget,
                     Next = null,
                     LinkName = pathNode.NameToTarget
                 };
@@ -155,7 +189,7 @@ namespace GroundRouteFinder
                 currentLink.ActiveFor = (edge != null) ? edge.ActiveFor : "?";
 
                 currentLink = currentLink.Next;
-                pathNode = pathNode.PathToTarget;
+                pathNode = pathNode.NextNodeToTarget;
             }
 
             return extracted;

@@ -12,38 +12,51 @@ namespace GroundRouteFinder
     {
         public Parking Parking;
 
+        private IEnumerable<TaxiEdge> _edges;
         private Dictionary<TaxiNode, Dictionary<int, ResultRoute>> _results;
 
-        public InboundResults(Parking parking)
+        public InboundResults(IEnumerable<TaxiEdge> edges, Parking parking)
         {
+            _edges = edges;
             Parking = parking;
             _results = new Dictionary<TaxiNode, Dictionary<int, ResultRoute>>();
         }
 
-        public void AddResult(IEnumerable<TaxiEdge> edges, Runway r, TaxiNode runwayNode, TaxiNode origin, int maxSizeCurrentResult)
+        /// <summary>
+        /// Add a resulting route for a specific runway exit and size
+        /// </summary>
+        /// <param name="maxSizeCurrentResult">The maximum size allowed on the current route</param>
+        /// <param name="onRunwayNode">The runway node for this exit</param>
+        /// <param name="offRunwayNode">The frist node 'departing' the runway</param>
+        /// <param name="r">The runway it self</param>
+        public void AddResult(int maxSizeCurrentResult, TaxiNode onRunwayNode, TaxiNode offRunwayNode, Runway r)
         {
-            if (!_results.ContainsKey(runwayNode))
-                _results[runwayNode] = new Dictionary<int, ResultRoute>();
+            if (!_results.ContainsKey(onRunwayNode))
+                _results[onRunwayNode] = new Dictionary<int, ResultRoute>();
 
-            Dictionary<int, ResultRoute> originResults = _results[runwayNode];
+            Dictionary<int, ResultRoute> originResults = _results[onRunwayNode];
 
+            // If no results yet for this node, just add the current route
             if (originResults.Count == 0)
             {
-                originResults.Add(maxSizeCurrentResult, ResultRoute.ExtractRoute(edges, r, origin, maxSizeCurrentResult));
+                originResults.Add(maxSizeCurrentResult, ResultRoute.ExtractRoute(_edges, offRunwayNode, maxSizeCurrentResult));
+                originResults[maxSizeCurrentResult].Runway = r;
             }
             else
             {
                 int minSize = originResults.Min(or => or.Key);
-                if (originResults[minSize].Distance > origin.DistanceToTarget)
+                if (originResults[minSize].Distance > offRunwayNode.DistanceToTarget)
                 {
                     if (minSize > maxSizeCurrentResult)
                     {
-                        originResults.Add(maxSizeCurrentResult, ResultRoute.ExtractRoute(edges, r, origin, maxSizeCurrentResult));
+                        originResults.Add(maxSizeCurrentResult, ResultRoute.ExtractRoute(_edges, offRunwayNode, maxSizeCurrentResult));
+                        originResults[maxSizeCurrentResult].Runway = r;
                         originResults[minSize].MinSize = (maxSizeCurrentResult + 1);
                     }
                     else if (minSize == maxSizeCurrentResult)
                     {
-                        originResults[minSize] = ResultRoute.ExtractRoute(edges, r, origin, maxSizeCurrentResult);
+                        originResults[minSize] = ResultRoute.ExtractRoute(_edges, offRunwayNode, maxSizeCurrentResult);
+                        originResults[minSize].Runway = r;
                     }
                 }
             }

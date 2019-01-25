@@ -15,7 +15,7 @@ namespace GroundRouteFinder.AptDat
         public List<TaxiEdge> IncomingNodes;
 
         public double DistanceToTarget;
-        public TaxiNode PathToTarget;
+        public TaxiNode NextNodeToTarget;
         public double BearingToTarget;
         public string NameToTarget;
         public bool PathIsRunway;
@@ -41,7 +41,7 @@ namespace GroundRouteFinder.AptDat
             IsNonRunwayNode = false;
 
             DistanceToTarget = double.MaxValue;
-            PathToTarget = null;
+            NextNodeToTarget = null;
 
             LatitudeString = latitude;
             LongitudeString = longitude;
