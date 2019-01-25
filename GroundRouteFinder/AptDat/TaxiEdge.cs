@@ -12,7 +12,7 @@ namespace GroundRouteFinder.AptDat
         public TaxiNode EndNode;
 
         public bool ActiveZone;
-        public string ActiveFor;
+        public List<string> ActiveFor;
 
         public bool IsRunway;
         public int MaxSize;
@@ -32,10 +32,20 @@ namespace GroundRouteFinder.AptDat
             MaxSize = maxSize;
             LinkName = linkName;
 
-            ActiveFor = "";
+            ActiveFor = new List<string>();
             ActiveZone = false;
 
             ReverseEdge = null;
+        }
+
+        public string ActiveForRunway(string preferred)
+        {
+            if (ActiveFor.Count() == 0)
+                return preferred;
+            else if (ActiveFor.Contains(preferred))
+                return preferred;
+            else
+                return ActiveFor.FirstOrDefault();
         }
 
         public void Compute()

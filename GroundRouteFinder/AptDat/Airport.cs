@@ -160,11 +160,12 @@ namespace GroundRouteFinder.AptDat
             // for each runway
             foreach (Runway runway in _runways)
             {
-                _resultCache = new Dictionary<Parking, Dictionary<TaxiNode, ResultRoute>>();
+                //_resultCache = new Dictionary<Parking, Dictionary<TaxiNode, ResultRoute>>();
 
                 // for each takeoff spot
                 foreach (RunwayTakeOffSpot takeoffSpot in runway.TakeOffSpots)
                 {
+                    OutboundResults or = new OutboundResults(_edges, runway);
                     // for each size
                     for (int size = TaxiNode.Sizes - 1; size >= 0; size--)
                     {
@@ -174,256 +175,14 @@ namespace GroundRouteFinder.AptDat
                             findShortestPaths(_taxiNodes, runwayEntryNode, size);
                             foreach (Parking parking in _parkings)
                             {
-                                ResultRoute bestResultSoFar = getBestResultSoFar(runwayEntryNode, parking, size);
-                                if (bestResultSoFar.Distance > parking.NearestNode.DistanceToTarget)
-                                {
-                                    ResultRoute better = extractRoute(parking.NearestNode, size);
-                                    better.TakeoffSpot = takeoffSpot;
-                                    improveResult(runwayEntryNode, parking, size, bestResultSoFar, better);
-                                }
+                                or.AddResult(size, parking.NearestNode, parking, takeoffSpot);
                             }
                         }
                     }
-                }
-
-                // Write Results
-                foreach (KeyValuePair<Parking, Dictionary<TaxiNode, ResultRoute>> kvp in _resultCache)
-                {
-                    int currentEntry = 1;
-
-                    IEnumerable<KeyValuePair<TaxiNode, ResultRoute>> best2 = kvp.Value.OrderBy(v => v.Value.Distance).Take(2);
-                    foreach (KeyValuePair<TaxiNode, ResultRoute> kvpi in best2)
-                    {
-                        writeOutboundRoutes(runway, kvpi.Value.TakeoffSpot, currentEntry++, _taxiNodes, kvp.Key, kvpi.Value);
-                    }
+                    or.WriteRoutes();
                 }
             }
         }
-
-        private void writeOutboundRoutes(Runway runway, RunwayTakeOffSpot takeoffSpot, int entry, IEnumerable<TaxiNode> nodes, Parking parking, ResultRoute results)
-        {
-            ResultRoute route = results;
-            while (route != null)
-            {
-                if (route.Distance == double.MaxValue)
-                    continue;
-
-                LinkedNode link = route.RouteStart;
-                TaxiNode nodeToWrite = route.NearestNode;
-
-                // Map the XP 
-                List<int> routeSizes = new List<int>();
-                foreach (int size in route.ValidForSizes)
-                {
-                    // Try to skip routes for planes larger than the parking spot allows
-                    if (parking.MaxSize < size)
-                        continue;
-
-                    routeSizes.AddRange(Settings.XPlaneCategoryToWTType(size));
-                }
-
-                // If route does not apply to any size anymore, skip it
-                if (routeSizes.Count == 0)
-                    continue;
-
-                int speed = 15;
-
-                string allSizes = string.Join(" ", routeSizes.OrderBy(w => w));
-
-                string sizeName = (routeSizes.Count == 10) ? "all" : allSizes.Replace(" ", "");
-                string fileName = $"E:\\GroundRoutes\\Departure\\LFPG\\{parking.FileNameSafeName}_to_{runway.Designator}-{entry}_{sizeName}.txt";
-                File.Delete(fileName);
-                using (StreamWriter sw = File.CreateText(fileName))
-                {
-                    sw.Write($"STARTAIRCRAFTTYPE\n{allSizes}\nENDAIRCRAFTTYPE\n\n");
-                    sw.Write("STARTCARGO\n0\nENDCARGO\n\n");
-                    sw.Write("STARTMILITARY\n0\nENDMILITARY\n\n");
-                    sw.Write($"STARTRUNWAY\n{runway.Designator}\nENDRUNWAY\n\n");
-                    sw.Write("START_PARKING_CENTER\nNOSEWHEEL\nEND_PARKING_CENTER\n\n");
-                    sw.Write("STARTSTEERPOINTS\n");
-
-                    // Write the start point
-                    sw.Write($"{parking.Latitude * VortexMath.Rad2Deg} {parking.Longitude * VortexMath.Rad2Deg} -3 {parking.Bearing * VortexMath.Rad2Deg:0} 0 0 {parking.Name}\n");
-
-                    // Write Pushback node, allowing room for turn
-                    double addLat = 0;
-                    double addLon = 0;
-
-                    // See if we need to skip the first route node
-                    if (parking.AlternateAfterPushBack != null && parking.AlternateAfterPushBack == route.RouteStart.Node)
-                    {
-                        // Our pushback point is better than the first point of the route
-                        nodeToWrite = parking.AlternateAfterPushBack;
-                    }
-                    else if (VortexMath.DistancePyth(parking.PushBackLatitude, parking.PushBackLongitude, route.NearestNode.Latitude, route.NearestNode.Longitude) < 0.000000001)
-                    {
-                        // pushback node is the first route point
-                        nodeToWrite = route.NearestNode;
-                    }
-
-                    // insert one more point here where the plane is pushed a little bit away from the next point
-                    if (nodeToWrite != null)
-                    {
-                        double nextPushBearing = VortexMath.BearingRadians(nodeToWrite.Latitude, nodeToWrite.Longitude, parking.PushBackLatitude, parking.PushBackLongitude);
-                        double turn = VortexMath.AbsTurnAngle(parking.Bearing, nextPushBearing);
-                        double distance = 0.040 * ((VortexMath.PI - turn) / VortexMath.PI);
-                        VortexMath.PointFrom(parking.PushBackLatitude, parking.PushBackLongitude, parking.Bearing, distance, ref addLat, ref addLon);
-                        sw.Write($"{addLat * VortexMath.Rad2Deg:0.00000000} {addLon * VortexMath.Rad2Deg:0.00000000} -2 -1 0 0 {link.LinkName}\n");
-                        VortexMath.PointFrom(parking.PushBackLatitude, parking.PushBackLongitude, nextPushBearing, 0.030, ref addLat, ref addLon);
-                        sw.Write($"{addLat * VortexMath.Rad2Deg:0.00000000} {addLon * VortexMath.Rad2Deg:0.00000000} -2 -1 0 0 {link.LinkName}\n");
-                        VortexMath.PointFrom(parking.PushBackLatitude, parking.PushBackLongitude, nextPushBearing, 0.040, ref addLat, ref addLon);
-                        sw.Write($"{addLat * VortexMath.Rad2Deg:0.00000000} {addLon * VortexMath.Rad2Deg:0.00000000} 8 -1 0 0 {link.LinkName}\n");
-                    }
-
-                    bool wasOnRunway = false;
-
-                    double lastBearing = VortexMath.BearingRadians(parking.PushBackLatitude, parking.PushBackLongitude, nodeToWrite.Latitude, nodeToWrite.Longitude);
-                    double lastLatitude = nodeToWrite.Latitude;
-                    double lastLongitude = nodeToWrite.Longitude;
-
-                    while (link.Node != null)
-                    {
-                        bool smoothed = false;
-
-                        string linkOperation = "";
-                        string linkOperation2 = "";
-                        if (link.ActiveZone)
-                        {
-                            if (!wasOnRunway)
-                            {
-                                linkOperation = $"-1 {link.ActiveFor} 1";
-                                linkOperation2 = $"-1 {link.ActiveFor} 2";
-                                wasOnRunway = true;
-                            }
-                            else
-                            {
-                                linkOperation = $"-1 {link.ActiveFor} 2";
-                                linkOperation2 = linkOperation;
-                            }
-                        }
-                        else
-                        {
-                            wasOnRunway = false;
-                            linkOperation = $"-1 0 0 {link.LinkName}";
-                            linkOperation2 = linkOperation;
-                        }
-
-                        // todo: proper speed smoothing etc
-                        if (link.Next?.Next?.Next == null)
-                        {
-                            speed = 10;
-                        }
-                        else if (link.Next?.Next == null)
-                        {
-                            speed = 8;
-                        }
-
-
-                        // Check for corners that need to be smoothed
-                        if (link.Next.Node != null)
-                        {
-                            double turnAngle = 0;
-                            double nextBearing = VortexMath.BearingRadians(link.Node, link.Next.Node);
-                            turnAngle = VortexMath.AbsTurnAngle(lastBearing, nextBearing);
-                            if (turnAngle > VortexMath.PI025)
-                            {
-                                double availableDistance = VortexMath.DistanceKM(lastLatitude, lastLongitude, link.Node.Latitude, link.Node.Longitude);
-                                if (availableDistance > 0.025)
-                                {
-                                    VortexMath.PointFrom(link.Node.Latitude, link.Node.Longitude, lastBearing + VortexMath.PI, 0.025, ref addLat, ref addLon);
-                                    writeNode(sw, addLat, addLon, 8, linkOperation);
-                                }
-
-                                availableDistance = VortexMath.DistanceKM(link.Node, link.Next.Node);
-                                if (availableDistance > 0.025)
-                                {
-                                    VortexMath.PointFrom(link.Node.Latitude, link.Node.Longitude, nextBearing, 0.025, ref addLat, ref addLon);
-                                    writeNode(sw, addLat, addLon, speed, linkOperation2);
-                                }
-                                smoothed = true;
-                            }
-                            lastBearing = nextBearing;
-                        }
-
-                        if (!smoothed)
-                        {
-                            writeNode(sw, link.Node.LatitudeString, link.Node.LongitudeString, speed, $"{linkOperation}");
-                        }
-
-                        lastLatitude = link.Node.Latitude;
-                        lastLongitude = link.Node.Longitude;
-                        link = link.Next;
-                    }
-                    writeNode(sw, takeoffSpot.TakeOffNode.LatitudeString, takeoffSpot.TakeOffNode.LongitudeString, 8, $"-1 {runway.Designator} 2");
-
-                    VortexMath.PointFrom(takeoffSpot.TakeOffNode.Latitude, takeoffSpot.TakeOffNode.Longitude, runway.Bearing, 0.022, ref addLat, ref addLon);
-                    writeNode(sw, addLat, addLon, 6, $"-1 {runway.Designator} 2");
-
-                    sw.Write("ENDSTEERPOINTS\n");
-                }
-
-                route = route.NextSizes;
-            }
-        }
-
-        private void writeNode(StreamWriter sw, double latitude, double longitude, int speed, string tail)
-        {
-            sw.Write($"{latitude * VortexMath.Rad2Deg:0.00000000} {longitude * VortexMath.Rad2Deg:0.00000000} {speed} {tail}\n");
-        }
-
-        private void writeNode(StreamWriter sw, string latitude, string longitude, int speed, string tail)
-        {
-            sw.Write($"{latitude} {longitude} {speed} {tail}\n");
-        }
-
-
-        private ResultRoute getBestResultSoFar(TaxiNode runwayEntryNode, Parking parking, int size)
-        {
-            if (!_resultCache.ContainsKey(parking))
-                _resultCache.Add(parking, new Dictionary<TaxiNode, ResultRoute>());
-
-            if (!_resultCache[parking].ContainsKey(runwayEntryNode))
-                _resultCache[parking].Add(runwayEntryNode, new ResultRoute(size));
-
-            return _resultCache[parking][runwayEntryNode].RouteForSize(size);
-        }
-
-
-        private void improveResult(TaxiNode runwayEntryNode, Parking parking, int size, ResultRoute bestResultSoFar, ResultRoute better)
-        {
-            bestResultSoFar.ImproveResult(better);
-        }
-
-        private ResultRoute extractRoute(TaxiNode nearestVertex, int size)
-        {
-            ResultRoute extracted = new ResultRoute(size);
-            extracted.NearestNode = nearestVertex;
-            ulong node1 = extracted.NearestNode.Id;
-            extracted.Distance = nearestVertex.DistanceToTarget;
-            extracted.RouteStart = new LinkedNode() { Node = nearestVertex.NextNodeToTarget, Next = null, LinkName = nearestVertex.NameToTarget };
-            LinkedNode currentLink = extracted.RouteStart;
-            TaxiNode pathNode = nearestVertex.NextNodeToTarget;
-
-            while (pathNode != null)
-            {
-                ulong node2 = pathNode.Id;
-                TaxiEdge edge = _edges.Single(e => e.StartNode.Id == node1 && e.EndNode.Id == node2);
-                currentLink.Next = new LinkedNode()
-                {
-                    Node = pathNode.NextNodeToTarget,
-                    Next = null,
-                    LinkName = pathNode.NameToTarget,
-                    ActiveZone = (edge != null) ? edge.ActiveZone : false,
-                    ActiveFor = (edge != null) ? edge.ActiveFor : "?",
-                };
-                node1 = node2;
-                currentLink = currentLink.Next;
-                pathNode = pathNode.NextNodeToTarget;
-            }
-
-            return extracted;
-        }
-
 
         private void findShortestPaths(IEnumerable<TaxiNode> nodes, TaxiNode targetNode, int size)
         {
@@ -580,18 +339,18 @@ namespace GroundRouteFinder.AptDat
             string[] rwys = tokens[2].Split(',');
             TaxiEdge lastEdge = _edges.Last();
             lastEdge.ActiveZone = true;
-            lastEdge.ActiveFor = rwys[0];
+            lastEdge.ActiveFor.AddRange(rwys);  // todo: could create duplicates
             if (lastEdge.ReverseEdge != null)
             {
                 lastEdge.ReverseEdge.ActiveZone = true;
-                lastEdge.ReverseEdge.ActiveFor = rwys[0];
+                lastEdge.ReverseEdge.ActiveFor.AddRange(rwys); // todo: could create duplicates
             }
         }
 
         private void readStartPoint(string line)
         {
             string[] tokens = line.Split(_splitters, StringSplitOptions.RemoveEmptyEntries);
-            if (tokens[5] != "helos") // ignore helos for now
+            if (tokens[5] != "helos") // todo: helos
             {
                 Parking sp = new Parking();
                 sp.Latitude = double.Parse(tokens[1]) * VortexMath.Deg2Rad;

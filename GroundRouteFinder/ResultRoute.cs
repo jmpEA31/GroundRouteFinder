@@ -11,21 +11,18 @@ namespace GroundRouteFinder
     {
         public TaxiNode Node;
         public LinkedNode Next;
-        public string LinkName;
-        public bool ActiveZone;
-        public string ActiveFor;
+        public TaxiEdge Edge;
 
         public LinkedNode()
         {
-            LinkName = "";
-            ActiveFor = "";
-            ActiveZone = false;
         }
     }
 
     public class ResultRoute
     {
         public Runway Runway;
+        public Parking Parking;
+
         public RunwayTakeOffSpot TakeoffSpot;
         public TaxiNode TargetNode;
         public double Distance;
@@ -53,6 +50,7 @@ namespace GroundRouteFinder
 
         public ResultRoute(ResultRoute other)
         {
+            TargetNode = other.TargetNode;
             TakeoffSpot = other.TakeoffSpot;
             Distance = other.Distance;
             NearestNode = other.NearestNode;
@@ -86,6 +84,7 @@ namespace GroundRouteFinder
                     this.ValidForSizes.AddRange(better.ValidForSizes);
 
                 }
+                this.TargetNode = better.TargetNode;
                 this.Distance = better.Distance;
                 this.RouteStart = better.RouteStart;
                 this.NearestNode = better.NearestNode;
@@ -135,9 +134,7 @@ namespace GroundRouteFinder
             {
                 Node = startNode.NextNodeToTarget,
                 Next = null,
-                LinkName = startNode.NameToTarget,
-                ActiveZone = (sneakEdge != null) ? sneakEdge.ActiveZone : false,
-                ActiveFor = (sneakEdge != null) ? sneakEdge.ActiveFor : "?"
+                Edge = sneakEdge
             };
 
             LinkedNode currentLink = extracted.RouteStart;
@@ -181,14 +178,13 @@ namespace GroundRouteFinder
                 {
                     Node = pathNode.NextNodeToTarget,
                     Next = null,
-                    LinkName = pathNode.NameToTarget
                 };
                 node1 = node2;
 
-                currentLink.ActiveZone = (edge != null) ? edge.ActiveZone : false;
-                currentLink.ActiveFor = (edge != null) ? edge.ActiveFor : "?";
+                currentLink.Edge = edge;
 
                 currentLink = currentLink.Next;
+                extracted.TargetNode = pathNode;
                 pathNode = pathNode.NextNodeToTarget;
             }
 
