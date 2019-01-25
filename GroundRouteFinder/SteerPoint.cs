@@ -11,14 +11,16 @@ namespace GroundRouteFinder
     {
         public int Speed;
         public string Name;
+        public bool Protected;
 
-        public SteerPoint(double latitude, double longitude, int speed, string name)
+        public SteerPoint(double latitude, double longitude, int speed, string name, bool @protected = false)
             : base()
         {
             Latitude = latitude;
             Longitude = longitude;
             Speed = speed;
             Name = name;
+            Protected = @protected;
         }
 
         public virtual SteerPoint Duplicate()

@@ -71,6 +71,10 @@ namespace GroundRouteFinder
                     if (sizeRoutes.Value.ContainsKey(size))
                     {
                         ResultRoute route = sizeRoutes.Value[size];
+
+                        if (route.TargetNode == null)
+                            continue;
+
                         if (route.MinSize > Parking.MaxSize)
                             continue;
 
@@ -111,34 +115,10 @@ namespace GroundRouteFinder
                             steerPoints.Add(new RunwayPoint(route.NearestNode.Latitude, route.NearestNode.Longitude, 20, route.RouteStart.Edge.LinkName, route.RouteStart.Edge.ActiveForRunway(route.Runway.Designator)));
 
                             LinkedNode link = route.RouteStart;
-                            bool wasOnRunway = true;
                             while (link.Node != null)
                             {
-                                string linkOperation = "";
-                                string linkOperation2 = "";
                                 if (link.Edge.ActiveZone)
-                                {
-                                    if (!wasOnRunway)
-                                    {
-                                        linkOperation = $"-1 {link.Edge.ActiveFor} 1";
-                                        linkOperation2 = $"-1 {link.Edge.ActiveFor} 2";
-                                        wasOnRunway = true;
-                                    }
-                                    else
-                                    {
-                                        linkOperation = $"-1 {link.Edge.ActiveFor} 2";
-                                        linkOperation2 = linkOperation;
-                                    }
-                                }
-                                else
-                                {
-                                    wasOnRunway = false;
-                                    linkOperation = $"-1 0 0 {link.Edge.LinkName}";
-                                    linkOperation2 = linkOperation;
-                                }
-
-                                if (link.Edge.ActiveZone)
-                                    steerPoints.Add(new RunwayPoint(link.Node.Latitude, link.Node.Longitude, 15, $"{link.Edge.LinkName}", $"{link.Edge.ActiveFor}"));
+                                    steerPoints.Add(new RunwayPoint(link.Node.Latitude, link.Node.Longitude, 15, $"{link.Edge.LinkName}", $"{route.RouteStart.Edge.ActiveForRunway(route.Runway.Designator)}"));
                                 else
                                     steerPoints.Add(new SteerPoint(link.Node.Latitude, link.Node.Longitude, 15, $"{link.Edge.LinkName}"));
 

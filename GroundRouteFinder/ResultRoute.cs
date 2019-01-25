@@ -21,88 +21,45 @@ namespace GroundRouteFinder
     public class ResultRoute
     {
         public Runway Runway;
-        public Parking Parking;
+        public List<Parking> Parkings;
 
         public RunwayTakeOffSpot TakeoffSpot;
         public TaxiNode TargetNode;
         public double Distance;
         public TaxiNode NearestNode;
         public LinkedNode RouteStart;
-        public List<int> ValidForSizes;
-        public ResultRoute NextSizes;
-        public List<TaxiNode> Lead;
 
         public int MaxSize;
         public int MinSize;
 
         public ResultRoute(int size)
         {
-            ValidForSizes = new List<int>();
-            for (int i = 0; i <= size; i++)
-                ValidForSizes.Add(i);
+            Parkings = new List<Parking>();
 
             Distance = double.MaxValue;
-            NextSizes = null;
 
             MaxSize = size;
             MinSize = 0;
         }
 
-        public ResultRoute(ResultRoute other)
+        public void AddParking(Parking parking)
         {
-            TargetNode = other.TargetNode;
-            TakeoffSpot = other.TakeoffSpot;
-            Distance = other.Distance;
-            NearestNode = other.NearestNode;
-            RouteStart = other.RouteStart;
-            ValidForSizes = new List<int>();
-            ValidForSizes.AddRange(other.ValidForSizes);
-            NextSizes = null;
-        }
-
-        internal ResultRoute RouteForSize(int size)
-        {
-            ResultRoute resultForSize = this;
-            while (resultForSize != null)
+            if (!Parkings.Contains(parking))
             {
-                if (ValidForSizes.Contains(size))
-                    return resultForSize;
-                resultForSize = resultForSize.NextSizes;
-            }
-            return null;
-        }
-
-        internal void ImproveResult(ResultRoute better)
-        {
-            if (this.RouteStart == null || better.ValidForSizes.Max() == this.ValidForSizes.Max())
-            {
-                // Improves the current size set
-                if (this.RouteStart == null)
-                {
-                    // There was none previously, so the largest size(s) not supported
-                    this.ValidForSizes = new List<int>();
-                    this.ValidForSizes.AddRange(better.ValidForSizes);
-
-                }
-                this.TargetNode = better.TargetNode;
-                this.Distance = better.Distance;
-                this.RouteStart = better.RouteStart;
-                this.NearestNode = better.NearestNode;
-                this.TakeoffSpot = better.TakeoffSpot;
-            }
-            else
-            {
-                // Improves for a size subset
-                if (NextSizes != null)
-                    throw new ArgumentException();
-
-                NextSizes = new ResultRoute(better);
-                foreach (int size in better.ValidForSizes)
-                {
-                    ValidForSizes.Remove(size);
-                }
+                Parkings.Add(parking);
             }
         }
+
+        //public ResultRoute(ResultRoute other)
+        //{
+        //    TargetNode = other.TargetNode;
+        //    TakeoffSpot = other.TakeoffSpot;
+        //    Distance = other.Distance;
+        //    NearestNode = other.NearestNode;
+        //    RouteStart = other.RouteStart;
+        //}
+
+
 
         /// <summary>
         /// Extract the route that starts at TaxiNode 'startNode'
@@ -165,7 +122,7 @@ namespace GroundRouteFinder
                                 double newTurn = VortexMath.AbsTurnAngle(currentBearing, te.EndNode.BearingToTarget);
                                 if (newTurn < VortexMath.PI025)
                                 {
-                                    // todo: Can this create a loop?????
+                                    // todo: prevent the loop this can create
                                     pathNode.NextNodeToTarget.NextNodeToTarget = te.EndNode;
                                     break;
                                 }
@@ -187,6 +144,9 @@ namespace GroundRouteFinder
                 extracted.TargetNode = pathNode;
                 pathNode = pathNode.NextNodeToTarget;
             }
+
+            if (extracted.RouteStart.Edge == null && extracted.RouteStart.Next != null)
+                extracted.RouteStart.Edge = extracted.RouteStart.Next.Edge;
 
             return extracted;
         }

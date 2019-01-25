@@ -141,7 +141,9 @@ namespace GroundRouteFinder.AptDat
             double shortestDistance = double.MaxValue;
             double shortestDisplacedDistance = double.MaxValue;
 
-            foreach (TaxiNode node in taxiNodes.Where(v => v.IsRunwayNode))
+            IEnumerable<TaxiNode> runwayNodes = taxiEdges.Where(te=>te.IsRunway).Select(te => te.StartNode).Concat(taxiEdges.Where(te => te.IsRunway).Select(te => te.EndNode)).Distinct();
+            Console.WriteLine($"Runway nodes {runwayNodes.Count()}");
+            foreach (TaxiNode node in runwayNodes)
             {
                 double d = VortexMath.DistancePyth(node.Latitude, node.Longitude, DisplacedLatitude, DisplacedLongitude);
                 if (d < shortestDisplacedDistance)
@@ -158,10 +160,15 @@ namespace GroundRouteFinder.AptDat
                 }
             }
 
+            Console.WriteLine($"Near {NearestNode.Id} Displaced {DisplacedNode.Id}");
+
             // Find the nodes that make up this runway: first find an edge connected to the nearest node
             IEnumerable<TaxiEdge> selectedEdges = taxiEdges.Where(te => te.IsRunway && (te.EndNode.Id == NearestNode.Id || te.StartNode.Id == NearestNode.Id));
             if (selectedEdges.Count() == 0)
+            {
+                Console.WriteLine("No edges");
                 return false;
+            }
 
             // The name of the link gives the name of the runway, use it to retrieve all edges for this runway
             string edgeKey = selectedEdges.First().LinkName;
@@ -227,6 +234,8 @@ namespace GroundRouteFinder.AptDat
                     TakeOffSpots.Add(takeOffSpot);
                 }
             }
+            Console.WriteLine($"Selected Entries: {selectedNodes}");
+
         }
 
         private void findExits(IEnumerable<TaxiNode> runwayNodes, IEnumerable<TaxiNode> taxiNodes, IEnumerable<TaxiEdge> taxiEdges)
@@ -295,11 +304,6 @@ namespace GroundRouteFinder.AptDat
                     }
                 }
             }
-
-            foreach (UsageNodes usage in _usageNodes.Values)
-            {
-                // todo: find a fixed exit route out of the runway...
-            }
         }
 
         private UsageNodes getOrCreate(RunwayNodeUsage usage)
@@ -324,55 +328,6 @@ namespace GroundRouteFinder.AptDat
                     if (usage != null)
                     {
                         Console.WriteLine($"  {(UsageNodes.Role)i,5} {usage.OnRunwayNode.Id}->{usage.OffRunwayNode.Id} @{usage.EffectiveLength:0.0}km");
-/*
- * The following attempts to find a gentle path off the runway. Intention is to find the shortest route from
- * the end of the gentel path. This is to prevent routes with >90 degree turns for crossing high speed exits for example
- * 
-                        TaxiNode onRwy = taxiNodes.Single(tn => tn.Id == usage.OnRunwayNode.Id);
-                        TaxiNode offRwy = taxiNodes.Single(tn => tn.Id == usage.OffRunwayNode.Id);
-
-                        double currentBearing = VortexMath.BearingRadians(onRwy.Latitude, onRwy.Longitude, offRwy.Latitude, offRwy.Longitude);
-
-                        TaxiEdge te = taxiEdges.SingleOrDefault(tex => tex.StartNodeId == usage.OnRunwayNode.Id && tex.EndNodeId == usage.OffRunwayNode.Id);
-
-                        TaxiNode fromNode = usage.OffRunwayNode;
-                        int rep = 0;
-                        while (fromNode != null && rep < 5)
-                        {
-                            rep++;
-
-                            IEnumerable<TaxiEdge> nxs = taxiEdges.Where(tex => tex.StartNodeId == fromNode.Id);
-                            //Console.WriteLine($" {nxs.Count()} edges go from off runway point {fromNode.Id}: {string.Join(",", nxs.Select(n => n.EndNodeId))}");
-
-                            double turnAngleMin = double.MaxValue;
-                            TaxiNode bestNode = null;
-                            string activeFor = "";
-                            foreach (TaxiEdge tx in nxs)
-                            {
-                                TaxiNode nextNode = taxiNodes.Single(tn => tn.Id == tx.EndNodeId);
-                                double nextBearing = VortexMath.BearingRadians(offRwy.Latitude, offRwy.Longitude, nextNode.Latitude, nextNode.Longitude);
-
-                                double turnAngleNow = VortexMath.AbsTurnAngle(currentBearing, nextBearing);
-                                if (turnAngleMin > turnAngleNow)
-                                {
-                                    turnAngleMin = turnAngleNow;
-                                    bestNode = nextNode;
-                                    activeFor = tx.ActiveFor;
-                                }
-                            }
-
-                            if (bestNode != null)
-                            {
-                                usage.FixedPath.Add(bestNode);
-                                //Console.WriteLine($"Best: {bestNode.Id} {activeFor} {turnAngleMin}");
-                                if (turnAngleMin > VortexMath.PI05 || VortexMath.DistanceKM(usage.OnRunwayNode.Latitude, usage.OnRunwayNode.Longitude, bestNode.Latitude, bestNode.Longitude) > 0.200)
-                                {
-                                    bestNode = null;
-                                }
-                            }
-                            fromNode = bestNode;
-                        }
-*/
                     }
                     else
                     {

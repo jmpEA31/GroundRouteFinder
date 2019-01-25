@@ -23,12 +23,6 @@ namespace GroundRouteFinder.AptDat
         public string LatitudeString;
         public string LongitudeString;
 
-        // Both will be true if there are runway edges and taxiway edges coming into this node
-        // todo: figure out a cleaner way to deal with this. EDges can be rwy or twy, but also may (not) have
-        // runway operations assigned to them. It's probably best to not look at the runwayness of nodes, just edges
-        public bool IsRunwayNode;
-        public bool IsNonRunwayNode;
-
         public double TemporaryDistance;
 
         public TaxiNode(ulong id, string latitude, string longitude)
@@ -36,9 +30,6 @@ namespace GroundRouteFinder.AptDat
         {
             Id = id;
             IncomingNodes = new List<TaxiEdge>();
-
-            IsRunwayNode = false;
-            IsNonRunwayNode = false;
 
             DistanceToTarget = double.MaxValue;
             NextNodeToTarget = null;
@@ -55,11 +46,6 @@ namespace GroundRouteFinder.AptDat
 
         public void AddEdgeFrom(TaxiEdge edge)
         {
-            if (edge.IsRunway)
-                IsRunwayNode = true;
-            else
-                IsNonRunwayNode = true;
-
             IncomingNodes.Add(edge);
         }
     }

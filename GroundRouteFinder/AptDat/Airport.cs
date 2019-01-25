@@ -17,9 +17,6 @@ namespace GroundRouteFinder.AptDat
 
         private static char[] _splitters = { ' ' };
 
-        private Dictionary<Parking, Dictionary<TaxiNode, ResultRoute>> _resultCache;
-
-
         public Airport()
         {
         }
@@ -92,8 +89,8 @@ namespace GroundRouteFinder.AptDat
             //  Then find applicable nodes for entering the runway and find the nodes off the runway connected to those
             foreach (Runway r in _runways)
             {
+                Console.WriteLine($"-------------{r.Designator}----------------");
                 r.Analyze(_taxiNodes, _edges);
-                Console.WriteLine("-----------------------------");
             }
         }
 
@@ -339,11 +336,13 @@ namespace GroundRouteFinder.AptDat
             string[] rwys = tokens[2].Split(',');
             TaxiEdge lastEdge = _edges.Last();
             lastEdge.ActiveZone = true;
-            lastEdge.ActiveFor.AddRange(rwys);  // todo: could create duplicates
+            lastEdge.ActiveForRunways.AddRange(rwys);
+            lastEdge.ActiveForRunways = lastEdge.ActiveForRunways.Distinct().ToList();
             if (lastEdge.ReverseEdge != null)
             {
                 lastEdge.ReverseEdge.ActiveZone = true;
-                lastEdge.ReverseEdge.ActiveFor.AddRange(rwys); // todo: could create duplicates
+                lastEdge.ReverseEdge.ActiveForRunways.AddRange(rwys);
+                lastEdge.ReverseEdge.ActiveForRunways = lastEdge.ReverseEdge.ActiveForRunways.Distinct().ToList();
             }
         }
 

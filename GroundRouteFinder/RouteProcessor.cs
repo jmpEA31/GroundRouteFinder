@@ -23,7 +23,7 @@ namespace GroundRouteFinder
 
                     // When entering an active zone, mark it as hold short
                     // When staying in the same active zone, mark it as 'on runway'
-                    // When switching to an new active zone, try to force a hold short
+                    // When switching to a new active zone, try to force a hold short
                     // todo: will this work as intended?
                     curr.OnRunway = (prev.Operations == curr.Operations);
 
@@ -51,15 +51,15 @@ namespace GroundRouteFinder
                 double outgoingBearing = VortexMath.BearingRadians(current, next);
                 double turnAngle = VortexMath.AbsTurnAngle(incomingBearing, outgoingBearing);
 
-                if (!(current is RunwayPoint) && turnAngle < 3.5 * VortexMath.Deg2Rad)
+                if (!current.Protected && turnAngle < 3.5 * VortexMath.Deg2Rad)
                 {
-                    if (previous.Name == next.Name)
+                    if (previous.Name == next.Name && previous.Speed == next.Speed)
                     {
                         steerPoints.RemoveAt(i);
                         i--;
                     }
                 }
-                else if (turnAngle > VortexMath.PI025) // 45 degrees
+                else if (!current.Protected && turnAngle > VortexMath.PI025) // 45 degrees
                 {
                     double smoothingDistance = 0.050 * (turnAngle / VortexMath.PI); // 90 degrees = 0.5 PI / PI = 0.5 * 0.05 km = 25 meters
                     double currentLatitude = current.Latitude;

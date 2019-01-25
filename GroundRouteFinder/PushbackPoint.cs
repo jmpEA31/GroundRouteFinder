@@ -10,7 +10,7 @@ namespace GroundRouteFinder
     public class PushbackPoint : SteerPoint
     {
         public PushbackPoint(double latitude, double longitude, int speed, string name)
-            : base(latitude, longitude, speed, name)
+            : base(latitude, longitude, speed, name, true)
         {
         }
 
