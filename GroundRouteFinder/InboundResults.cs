@@ -85,9 +85,13 @@ namespace GroundRouteFinder
                         }
 
                         string allSizes = string.Join(" ", routeSizes.OrderBy(w => w));
-
                         string sizeName = (routeSizes.Count == 10) ? "all" : allSizes.Replace(" ", "");
-                        string fileName = $"E:\\GroundRoutes\\Arrival\\LFPG\\{route.Runway.Designator}_to_{Parking.FileNameSafeName}-{sizeRoutes.Key.Id}_{sizeName}.txt";
+
+                        //Debug
+                        allSizes = "0 1 2 3 4 5 6 7 8 9";
+                        sizeName = "all";
+
+                        string fileName = $"{Settings.ArrivalFolder}\\LFPG\\{route.Runway.Designator}_to_{Parking.FileNameSafeName}-{sizeRoutes.Key.Id}_{sizeName}.txt";
                         File.Delete(fileName);
                         using (StreamWriter sw = File.CreateText(fileName))
                         {
@@ -118,7 +122,7 @@ namespace GroundRouteFinder
                             while (link.Node != null)
                             {
                                 if (link.Edge.ActiveZone)
-                                    steerPoints.Add(new RunwayPoint(link.Node.Latitude, link.Node.Longitude, 15, $"{link.Edge.LinkName}", $"{route.RouteStart.Edge.ActiveForRunway(route.Runway.Designator)}"));
+                                    steerPoints.Add(new RunwayPoint(link.Node.Latitude, link.Node.Longitude, 15, $"{link.Edge.LinkName}", $"{link.Edge.ActiveForRunway(route.Runway.Designator)}"));
                                 else
                                     steerPoints.Add(new SteerPoint(link.Node.Latitude, link.Node.Longitude, 15, $"{link.Edge.LinkName}"));
 
@@ -138,6 +142,9 @@ namespace GroundRouteFinder
                             sw.Write("ENDSTEERPOINTS\n");
                         }
                     }
+                    // DEBUG: ONly one route for all sizes
+                    break;
+
                 }
             }
         }

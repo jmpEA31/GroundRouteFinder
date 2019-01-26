@@ -122,9 +122,25 @@ namespace GroundRouteFinder
                                 double newTurn = VortexMath.AbsTurnAngle(currentBearing, te.EndNode.BearingToTarget);
                                 if (newTurn < VortexMath.PI025)
                                 {
-                                    // todo: prevent the loop this can create
-                                    pathNode.NextNodeToTarget.NextNodeToTarget = te.EndNode;
-                                    break;
+                                    // Fiddling with Dijkstra results like this may generate a loop in the route
+                                    // So scan it before actually using the reroute
+                                    bool noLoop = true;
+                                    TaxiNode scanNode = te.EndNode;
+                                    while (noLoop && scanNode != null)
+                                    {
+                                        if (scanNode == pathNode)
+                                        {
+                                            noLoop = false;
+                                            break;
+                                        }
+                                        scanNode = scanNode.NextNodeToTarget;
+                                    }
+
+                                    if (noLoop)
+                                    {
+                                        pathNode.NextNodeToTarget.NextNodeToTarget = te.EndNode;
+                                        break;
+                                    }
                                 }
                             }
                         }
@@ -144,10 +160,7 @@ namespace GroundRouteFinder
                 extracted.TargetNode = pathNode;
                 pathNode = pathNode.NextNodeToTarget;
             }
-
-            if (extracted.RouteStart.Edge == null && extracted.RouteStart.Next != null)
-                extracted.RouteStart.Edge = extracted.RouteStart.Next.Edge;
-
+            
             return extracted;
         }
     }

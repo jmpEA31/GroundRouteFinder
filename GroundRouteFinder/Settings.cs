@@ -1,6 +1,7 @@
 ﻿using GroundRouteFinder.AptDat;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -11,6 +12,9 @@ namespace GroundRouteFinder
     {
         public static Dictionary<int, Runway.RunwayNodeUsage[]> SizeToUsage = new Dictionary<int, Runway.RunwayNodeUsage[]>();
 
+        public static string DepartureFolder = "";
+        public static string ArrivalFolder = "";
+
         static Settings()
         {
             SizeToUsage.Add(0, new Runway.RunwayNodeUsage[] { Runway.RunwayNodeUsage.ExitShort, Runway.RunwayNodeUsage.ExitReduced2 });
@@ -19,6 +23,17 @@ namespace GroundRouteFinder
             SizeToUsage.Add(3, new Runway.RunwayNodeUsage[] { Runway.RunwayNodeUsage.ExitReduced2, Runway.RunwayNodeUsage.ExitReduced1, Runway.RunwayNodeUsage.ExitMax });
             SizeToUsage.Add(4, new Runway.RunwayNodeUsage[] { Runway.RunwayNodeUsage.ExitReduced2, Runway.RunwayNodeUsage.ExitReduced1, Runway.RunwayNodeUsage.ExitMax });
             SizeToUsage.Add(5, new Runway.RunwayNodeUsage[] { Runway.RunwayNodeUsage.ExitReduced2, Runway.RunwayNodeUsage.ExitReduced1, Runway.RunwayNodeUsage.ExitMax });
+
+            if (Directory.Exists(@"D:\SteamLibrary\steamapps\common\X-Plane 11\ClassicJetSimUtils\WorldTraffic\GroundRoutes"))
+            {
+                DepartureFolder = @"D:\SteamLibrary\steamapps\common\X-Plane 11\ClassicJetSimUtils\WorldTraffic\GroundRoutes\Departure\";
+                ArrivalFolder = @"D:\SteamLibrary\steamapps\common\X-Plane 11\ClassicJetSimUtils\WorldTraffic\GroundRoutes\Arrival\";
+            }
+            else
+            {
+                DepartureFolder = @"E:\GroundRoutes\Departure\";
+                ArrivalFolder = @"E:\GroundRoutes\Arrival\";
+            }
         }
 
         public static List<int> XPlaneCategoryToWTType(char category)
