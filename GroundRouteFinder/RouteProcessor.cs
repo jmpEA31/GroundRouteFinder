@@ -102,7 +102,6 @@ namespace GroundRouteFinder
                         steerPoints.Insert(i + 1, newPoint);
                         i++;
                     }
-
                 }
             }
         }

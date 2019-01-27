@@ -279,7 +279,7 @@ namespace GroundRouteFinder.AptDat
 
                     if (tracking.MaxLengthNode == null || tracking.MaxLengthNode == onRunwayNode)
                     {
-                        if (Math.Abs(exitAngle) < VortexMath.Deg100Rad)
+                        if (Math.Abs(exitAngle) < VortexMath.Deg060Rad)
                         {
                             tracking.MaxLengthNode = onRunwayNode;
                             getOrCreate(RunwayNodeUsage.ExitMax).Roles[(int)(exitAngle < 0 ? UsageNodes.Role.Left : UsageNodes.Role.Right)] = new NodeUsage(onRunwayNode, offRunwayNode, exitDistance);
@@ -287,7 +287,7 @@ namespace GroundRouteFinder.AptDat
                     }
                     else if (tracking.ReducedNode1 == null || tracking.ReducedNode1 == onRunwayNode)
                     {
-                        if (Math.Abs(exitAngle) < VortexMath.Deg475Rad && exitDistance >= (Length * 0.4))
+                        if (Math.Abs(exitAngle) < VortexMath.Deg0475Rad && exitDistance >= (Length * 0.4))
                         {
                             tracking.ReducedNode1 = onRunwayNode;
                             reduced1Length = exitDistance;
@@ -296,7 +296,7 @@ namespace GroundRouteFinder.AptDat
                     }
                     else if (tracking.ReducedNode2 == null || tracking.ReducedNode2 == onRunwayNode)
                     {
-                        if (Math.Abs(exitAngle) < VortexMath.Deg475Rad && exitDistance >= (Length * 0.4) && exitDistance < reduced1Length - 0.3)
+                        if (Math.Abs(exitAngle) < VortexMath.Deg0475Rad && exitDistance >= (Length * 0.4) && exitDistance < reduced1Length - 0.3)
                         {
                             tracking.ReducedNode2 = onRunwayNode;
                             getOrCreate(RunwayNodeUsage.ExitReduced2).Roles[(int)(exitAngle < 0 ? UsageNodes.Role.Left : UsageNodes.Role.Right)] = new NodeUsage(onRunwayNode, offRunwayNode, exitDistance);

@@ -19,7 +19,8 @@ namespace GroundRouteFinder
 
         public const double Deg120Rad = 120.0 * VortexMath.Deg2Rad;
         public const double Deg100Rad = 100.0 * VortexMath.Deg2Rad;
-        public const double Deg475Rad = 47.5 * VortexMath.Deg2Rad;
+        public const double Deg060Rad = 60.0 * VortexMath.Deg2Rad;
+        public const double Deg0475Rad = 47.5 * VortexMath.Deg2Rad;
 
         /// <summary>
         /// Return the distance between two location objects in radians

@@ -108,9 +108,15 @@ namespace GroundRouteFinder
                             threshold.IsExiting = true;
                             steerPoints.Add(threshold);
 
-                            foreach (TaxiNode node in route.Runway.RunwayNodes)
+                            for (int n = 0; n < route.Runway.RunwayNodes.Count; n++)
                             {
-                                steerPoints.Add(new RunwayPoint(node.Latitude, node.Longitude, 55, $"{route.Runway.Designator}", route.RouteStart.Edge.ActiveForRunway(route.Runway.Designator)));
+                                TaxiNode node = route.Runway.RunwayNodes[n];
+                                int speed = 55;
+                                if (node == sizeRoutes.Key)
+                                {
+                                    speed = 30;
+                                }
+                                steerPoints.Add(new RunwayPoint(node.Latitude, node.Longitude, speed, $"{route.Runway.Designator}", route.RouteStart.Edge.ActiveForRunway(route.Runway.Designator)));
 
                                 if (node == sizeRoutes.Key)
                                     break;
