@@ -15,6 +15,8 @@ namespace GroundRouteFinder
         private IEnumerable<TaxiEdge> _edges;
         private Dictionary<TaxiNode, Dictionary<int, ResultRoute>> _results;
 
+        public static int MaxInPoints = 0;
+
         public InboundResults(IEnumerable<TaxiEdge> edges, Parking parking)
         {
             _edges = edges;
@@ -108,17 +110,12 @@ namespace GroundRouteFinder
                             threshold.IsExiting = true;
                             steerPoints.Add(threshold);
 
-                            for (int n = 0; n < route.Runway.RunwayNodes.Count; n++)
+                            foreach (TaxiNode node in route.Runway.RunwayNodes)
                             {
-                                TaxiNode node = route.Runway.RunwayNodes[n];
-                                int speed = 55;
-                                if (node == sizeRoutes.Key)
-                                {
-                                    speed = 30;
-                                }
+                                int speed = (node == sizeRoutes.Key) ? 30 : 55;
                                 steerPoints.Add(new RunwayPoint(node.Latitude, node.Longitude, speed, $"{route.Runway.Designator}", route.RouteStart.Edge.ActiveForRunway(route.Runway.Designator)));
 
-                                if (node == sizeRoutes.Key)
+                                if (node == sizeRoutes.Key) // Key of the dictionary is the last node on the runway centerline for this route
                                     break;
                             }
 
@@ -140,6 +137,10 @@ namespace GroundRouteFinder
 
                             RouteProcessor.Smooth(steerPoints);
                             RouteProcessor.ProcessRunwayOperations(steerPoints);
+
+                            if (MaxInPoints < steerPoints.Count)
+                                MaxInPoints = steerPoints.Count;
+
                             foreach (SteerPoint steerPoint in steerPoints)
                             {
                                 steerPoint.Write(sw);
