@@ -16,6 +16,7 @@ namespace GroundRouteFinder.AptDat
 
         public double DistanceToTarget;
         public TaxiNode NextNodeToTarget;
+        public TaxiNode OverrideToTarget;
         public double BearingToTarget;
         public string NameToTarget;
         public bool PathIsRunway;
@@ -33,6 +34,7 @@ namespace GroundRouteFinder.AptDat
 
             DistanceToTarget = double.MaxValue;
             NextNodeToTarget = null;
+            OverrideToTarget = null;
 
             LatitudeString = latitude;
             LongitudeString = longitude;
@@ -47,6 +49,11 @@ namespace GroundRouteFinder.AptDat
         public void AddEdgeFrom(TaxiEdge edge)
         {
             IncomingNodes.Add(edge);
+        }
+
+        public override string ToString()
+        {
+            return $"{Id} {Name}";
         }
     }
 }

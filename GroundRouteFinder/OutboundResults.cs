@@ -116,11 +116,6 @@ namespace GroundRouteFinder
                                 double addLat = 0;
                                 double addLon = 0;
 
-                                if (currentParking.Name == "E32")
-                                {
-                                    int k = 6;
-                                }
-
                                 // See if we need to skip the first route node
                                 if (currentParking.AlternateAfterPushBack != null && currentParking.AlternateAfterPushBack == route.RouteStart.Node)
                                 {
@@ -175,7 +170,8 @@ namespace GroundRouteFinder
                                     }
                                 }
 
-                                steerPoints.Add(new SteerPoint(nodeToWrite.Latitude, nodeToWrite.Longitude, 8, $"{link.Edge.LinkName}"));
+                                if (nodeToWrite != link.Node)
+                                    steerPoints.Add(new SteerPoint(nodeToWrite.Latitude, nodeToWrite.Longitude, 8, $"{link.Edge.LinkName}"));
 
                                 TaxiEdge lastEdge = null;
                                 while (link.Node != null)

@@ -50,17 +50,6 @@ namespace GroundRouteFinder
             }
         }
 
-        //public ResultRoute(ResultRoute other)
-        //{
-        //    TargetNode = other.TargetNode;
-        //    TakeoffSpot = other.TakeoffSpot;
-        //    Distance = other.Distance;
-        //    NearestNode = other.NearestNode;
-        //    RouteStart = other.RouteStart;
-        //}
-
-
-
         /// <summary>
         /// Extract the route that starts at TaxiNode 'startNode'
         /// </summary>
@@ -103,12 +92,13 @@ namespace GroundRouteFinder
                 ulong node2 = pathNode.Id;
                 TaxiEdge edge = edges.Single(e => e.StartNode.Id == node1 && e.EndNode.Id == node2);
 
-                // This filters out very sharp turns if an alternate exists in exchange for a longer route:
-                // todo: parameters. Now => if more than 120 degrees and alternate < 45 exists use alternate
                 if (pathNode.NextNodeToTarget != null && pathNode.NextNodeToTarget.DistanceToTarget > 0)
                 {
                     double nextBearing = pathNode.NextNodeToTarget.BearingToTarget;
                     double turn = VortexMath.AbsTurnAngle(currentBearing, nextBearing);
+
+                    // This filters out very sharp turns if an alternate exists in exchange for a longer route:
+                    // todo: parameters. Now => if more than 120 degrees and alternate < 45 exists use alternate
                     if (turn > VortexMath.Deg120Rad)
                     {
                         IEnumerable<TaxiEdge> altEdges = edges.Where(e => e.StartNode.Id == pathNode.NextNodeToTarget.Id &&
@@ -124,21 +114,33 @@ namespace GroundRouteFinder
                                 {
                                     // Fiddling with Dijkstra results like this may generate a loop in the route
                                     // So scan it before actually using the reroute
-                                    bool noLoop = true;
-                                    TaxiNode scanNode = te.EndNode;
-                                    while (noLoop && scanNode != null)
+                                    if (!hasLoop(te.EndNode, pathNode))
                                     {
-                                        if (scanNode == pathNode)
-                                        {
-                                            noLoop = false;
-                                            break;
-                                        }
-                                        scanNode = scanNode.NextNodeToTarget;
+                                        pathNode.NextNodeToTarget.OverrideToTarget = te.EndNode;
+                                        break;
                                     }
+                                }
+                            }
+                        }
+                    }
+                    else if (turn > VortexMath.Deg005Rad)   // Any turn larger than 5 degrees: if going straight does not lead to more than 250m extra distance... go straight.
+                    {
+                        IEnumerable<TaxiEdge> altEdges = edges.Where(e => e.StartNode.Id == pathNode.NextNodeToTarget.Id &&
+                                                  e.EndNode.Id != pathNode.NextNodeToTarget.NextNodeToTarget.Id &&
+                                                  e.EndNode.Id != pathNode.Id);
 
-                                    if (noLoop)
+                        foreach (TaxiEdge te in altEdges)
+                        {
+                            if (te.EndNode.DistanceToTarget < (pathNode.NextNodeToTarget.NextNodeToTarget.DistanceToTarget + 0.250))
+                            {
+                                double newTurn = VortexMath.AbsTurnAngle(currentBearing, te.EndNode.BearingToTarget);
+                                if (newTurn < VortexMath.Deg005Rad)
+                                {
+                                    // Fiddling with Dijkstra results like this may generate a loop in the route
+                                    // So scan it before actually using the reroute
+                                    if (!hasLoop(te.EndNode, pathNode))
                                     {
-                                        pathNode.NextNodeToTarget.NextNodeToTarget = te.EndNode;
+                                        pathNode.NextNodeToTarget.OverrideToTarget = te.EndNode;
                                         break;
                                     }
                                 }
@@ -147,9 +149,11 @@ namespace GroundRouteFinder
                     }
                 }
 
+                TaxiNode nextNode = (pathNode.OverrideToTarget != null) ? pathNode.OverrideToTarget : pathNode.NextNodeToTarget;
+
                 currentLink.Next = new LinkedNode()
                 {
-                    Node = pathNode.NextNodeToTarget,
+                    Node = nextNode,
                     Next = null,
                 };
                 node1 = node2;
@@ -158,10 +162,23 @@ namespace GroundRouteFinder
 
                 currentLink = currentLink.Next;
                 extracted.TargetNode = pathNode;
-                pathNode = pathNode.NextNodeToTarget;
+
+                pathNode.OverrideToTarget = null;
+                pathNode = nextNode;
             }
             
             return extracted;
+        }
+
+        private static bool hasLoop(TaxiNode startNode, TaxiNode loopNode)
+        {
+            while (startNode != null)
+            {
+                if (startNode == loopNode.NextNodeToTarget)
+                    return true;
+                startNode = startNode.NextNodeToTarget;
+            }
+            return false;
         }
     }
 }
