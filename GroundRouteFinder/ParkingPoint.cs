@@ -26,5 +26,11 @@ namespace GroundRouteFinder
             else
                 sw.Write($"{Latitude * VortexMath.Rad2Deg:0.00000000} {Longitude * VortexMath.Rad2Deg:0.00000000} {-Speed} {Bearing * VortexMath.Rad2Deg:0} 0 0 {Name}\n");
         }
+
+        public override void WriteKML(StreamWriter sw)
+        {
+            sw.WriteLine($"<Placemark><styleUrl>#Parking</styleUrl><name>{Name}</name><Point><coordinates>{Longitude * VortexMath.Rad2Deg},{Latitude * VortexMath.Rad2Deg},0</coordinates></Point></Placemark>");
+        }
+
     }
 }

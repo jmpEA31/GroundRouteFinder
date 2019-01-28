@@ -40,8 +40,8 @@ namespace GroundRouteFinder
             _airport.FindOutboundRoutes();
             logElapsed($"outbound done, max steerpoints {OutboundResults.MaxOutPoints}");
 
-            _airport.FindInboundRoutes();
-            logElapsed($"inbound done, max steerpoints {InboundResults.MaxInPoints}");
+            //_airport.FindInboundRoutes();
+            //logElapsed($"inbound done, max steerpoints {InboundResults.MaxInPoints}");
 
         }
     }

@@ -176,7 +176,7 @@ namespace GroundRouteFinder.AptDat
                             }
                         }
                     }
-                    or.WriteRoutes();
+                    or.WriteRoutesKML();
                 }
             }
         }

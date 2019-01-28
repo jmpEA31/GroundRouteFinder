@@ -51,7 +51,7 @@ namespace GroundRouteFinder
                 double outgoingBearing = VortexMath.BearingRadians(current, next);
                 double turnAngle = VortexMath.AbsTurnAngle(incomingBearing, outgoingBearing);
 
-                if (!current.Protected && turnAngle < 3.5 * VortexMath.Deg2Rad && !(current is RunwayPoint))
+                if (!current.Protected && turnAngle < 2.5 * VortexMath.Deg2Rad && !(current is RunwayPoint))
                 {
                     if (previous.Name == next.Name && previous.Speed == next.Speed)
                     {
