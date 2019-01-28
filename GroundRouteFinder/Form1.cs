@@ -37,10 +37,10 @@ namespace GroundRouteFinder
             //_airport.Load("..\\..\\..\\..\\EIDW_Scenery_Pack\\EIDW_Scenery_Pack\\Earth nav data\\apt.dat");
             logElapsed("loading done");
 
-            _airport.FindOutboundRoutes();
+            _airport.FindOutboundRoutes(rbNormal.Checked);
             logElapsed($"outbound done, max steerpoints {OutboundResults.MaxOutPoints}");
 
-            //_airport.FindInboundRoutes();
+            _airport.FindInboundRoutes(rbNormal.Checked);
             //logElapsed($"inbound done, max steerpoints {InboundResults.MaxInPoints}");
 
         }

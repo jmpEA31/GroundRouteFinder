@@ -94,7 +94,7 @@ namespace GroundRouteFinder.AptDat
             }
         }
 
-        public void FindInboundRoutes()
+        public void FindInboundRoutes(bool normalOutput)
         {
             foreach (Parking parking in _parkings)
             {
@@ -148,11 +148,15 @@ namespace GroundRouteFinder.AptDat
                         }
                     }
                 }
-                ir.WriteRoutes();
+                if (normalOutput)
+                    ir.WriteRoutes();
+                else
+                    ir.WriteRoutesKML();
+
             }
         }
 
-        public void FindOutboundRoutes()
+        public void FindOutboundRoutes(bool normalOutput)
         {
             // for each runway
             foreach (Runway runway in _runways)
@@ -176,7 +180,10 @@ namespace GroundRouteFinder.AptDat
                             }
                         }
                     }
-                    or.WriteRoutesKML();
+                    if (normalOutput)
+                        or.WriteRoutes();
+                    else
+                        or.WriteRoutesKML();
                 }
             }
         }

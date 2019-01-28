@@ -150,15 +150,11 @@ namespace GroundRouteFinder
 
                         foreach (Parking currentParking in route.Parkings)
                         {
-                            string fileName = $"{Settings.DepartureFolder}\\LFPG\\{currentParking.FileNameSafeName}_to_{Runway.Designator}-{route.TargetNode.Id}_{sizeName}.kml";
+                            string fileName = $"{Settings.DepartureFolderKML}\\LFPG\\{currentParking.FileNameSafeName}_to_{Runway.Designator}-{route.TargetNode.Id}_{sizeName}.kml";
                             File.Delete(fileName);
 
                             using (StreamWriter sw = File.CreateText(fileName))
                             {
-                                LinkedNode link = route.RouteStart;
-                                TaxiNode nodeToWrite = route.NearestNode;
-                                RunwayTakeOffSpot takeoffSpot = route.TakeoffSpot;
-
                                 sw.WriteLine("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
                                 sw.WriteLine("<kml xmlns=\"http://www.opengis.net/kml/2.2\">");
                                 sw.WriteLine("<Document>");

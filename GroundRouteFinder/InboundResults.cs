@@ -81,7 +81,7 @@ namespace GroundRouteFinder
                             continue;
 
                         List<int> routeSizes = new List<int>();
-                        for (int s = route.MinSize; s<=route.MaxSize; s++)
+                        for (int s = route.MinSize; s <= route.MaxSize; s++)
                         {
                             routeSizes.AddRange(Settings.XPlaneCategoryToWTType(s));
                         }
@@ -102,44 +102,7 @@ namespace GroundRouteFinder
                             sw.Write($"STARTRUNWAY\n{route.Runway.Designator}\nENDRUNWAY\n\n");
                             sw.Write("STARTSTEERPOINTS\n");
 
-                            List<SteerPoint> steerPoints = new List<SteerPoint>();
-
-                            // Add the start point (this one or displaced???)
-                            RunwayPoint threshold = new RunwayPoint(route.Runway.Latitude, route.Runway.Longitude, 55, $"{route.Runway.Designator} Threshold", route.RouteStart.Edge.ActiveForRunway(route.Runway.Designator));
-                            threshold.OnRunway = true;
-                            threshold.IsExiting = true;
-                            steerPoints.Add(threshold);
-
-                            foreach (TaxiNode node in route.Runway.RunwayNodes)
-                            {
-                                int speed = (node == sizeRoutes.Key) ? 30 : 55;
-                                steerPoints.Add(new RunwayPoint(node.Latitude, node.Longitude, speed, $"{route.Runway.Designator}", route.RouteStart.Edge.ActiveForRunway(route.Runway.Designator)));
-
-                                if (node == sizeRoutes.Key) // Key of the dictionary is the last node on the runway centerline for this route
-                                    break;
-                            }
-
-                            steerPoints.Add(new RunwayPoint(route.NearestNode.Latitude, route.NearestNode.Longitude, 20, route.RouteStart.Edge.LinkName, route.RouteStart.Edge.ActiveForRunway(route.Runway.Designator)));
-
-                            LinkedNode link = route.RouteStart;
-                            while (link.Node != null)
-                            {
-                                if (link.Edge.ActiveZone)
-                                    steerPoints.Add(new RunwayPoint(link.Node.Latitude, link.Node.Longitude, 15, $"{link.Edge.LinkName}", $"{link.Edge.ActiveForRunway(route.Runway.Designator)}"));
-                                else
-                                    steerPoints.Add(new SteerPoint(link.Node.Latitude, link.Node.Longitude, 15, $"{link.Edge.LinkName}"));
-
-                                link = link.Next;
-                            }
-
-                            steerPoints.Add(new SteerPoint(Parking.PushBackLatitude, Parking.PushBackLongitude, 5, Parking.Name));
-                            steerPoints.Add(new ParkingPoint(Parking.Latitude, Parking.Longitude, 5, Parking.Name, Parking.Bearing, true));
-
-                            RouteProcessor.Smooth(steerPoints);
-                            RouteProcessor.ProcessRunwayOperations(steerPoints);
-
-                            if (MaxInPoints < steerPoints.Count)
-                                MaxInPoints = steerPoints.Count;
+                            IEnumerable<SteerPoint> steerPoints = buildSteerPoints(route, sizeRoutes.Key);
 
                             foreach (SteerPoint steerPoint in steerPoints)
                             {
@@ -156,15 +119,113 @@ namespace GroundRouteFinder
             }
         }
 
-        private void writeNode(StreamWriter sw, double latitude, double longitude, int speed, string tail)
+        public void WriteRoutesKML()
         {
-            sw.Write($"{latitude * VortexMath.Rad2Deg:0.00000000} {longitude * VortexMath.Rad2Deg:0.00000000} {speed} {tail}\n");
+            foreach (KeyValuePair<TaxiNode, Dictionary<int, ResultRoute>> sizeRoutes in _results)
+            {
+                for (int size = Parking.MaxSize; size >= 0; size--)
+                {
+                    if (sizeRoutes.Value.ContainsKey(size))
+                    {
+                        ResultRoute route = sizeRoutes.Value[size];
+
+                        if (route.TargetNode == null)
+                            continue;
+
+                        if (route.MinSize > Parking.MaxSize)
+                            continue;
+
+                        List<int> routeSizes = new List<int>();
+                        for (int s = route.MinSize; s <= route.MaxSize; s++)
+                        {
+                            routeSizes.AddRange(Settings.XPlaneCategoryToWTType(s));
+                        }
+
+                        string allSizes = string.Join(" ", routeSizes.OrderBy(w => w));
+                        string sizeName = (routeSizes.Count == 10) ? "all" : allSizes.Replace(" ", "");
+
+                        //Debug
+                        allSizes = "0 1 2 3 4 5 6 7 8 9";
+                        sizeName = "all";
+
+                        string fileName = $"{Settings.ArrivalFolderKML}\\LFPG\\{route.Runway.Designator}_to_{Parking.FileNameSafeName}-{sizeRoutes.Key.Id}_{sizeName}.txt";
+                        File.Delete(fileName);
+                        using (StreamWriter sw = File.CreateText(fileName))
+                        {
+                            sw.WriteLine("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
+                            sw.WriteLine("<kml xmlns=\"http://www.opengis.net/kml/2.2\">");
+                            sw.WriteLine("<Document>");
+                            sw.WriteLine("<Style id=\"Parking\"><IconStyle><Icon><href>http://maps.google.com/mapfiles/kml/shapes/parking_lot.png</href></Icon></IconStyle></Style>");
+                            sw.WriteLine("<Style id=\"HoldShort\"><IconStyle><Icon><href>http://maps.google.com/mapfiles/kml/shapes/hospitals.png</href></Icon></IconStyle></Style>");
+                            sw.WriteLine("<Style id=\"Runway\"><IconStyle><Icon><href>http://maps.google.com/mapfiles/kml/pal4/icon49.png</href></Icon></IconStyle></Style>");
+                            sw.WriteLine("<Style id=\"Pushback\"><IconStyle><Icon><href>http://maps.google.com/mapfiles/kml/paddle/grn-stars-lv.png</href></Icon></IconStyle></Style>");
+                            sw.WriteLine("<Style id=\"TaxiNode\"><IconStyle><Icon><href>http://maps.google.com/mapfiles/kml/paddle/grn-blank-lv.png</href></Icon></IconStyle></Style>");
+                            sw.WriteLine("<Style id=\"TaxiLine\"><LineStyle><color>ff0000ff</color><width>3</width></LineStyle></Style>");
+
+                            IEnumerable<SteerPoint> steerPoints = buildSteerPoints(route, sizeRoutes.Key);
+
+                            StringBuilder coords = new StringBuilder();
+                            foreach (SteerPoint steerPoint in steerPoints)
+                            {
+                                steerPoint.WriteKML(sw);
+                                coords.Append($"  {steerPoint.Longitude * VortexMath.Rad2Deg},{steerPoint.Latitude * VortexMath.Rad2Deg},0\n");
+                            }
+
+                            sw.WriteLine($"<Placemark><styleUrl>#TaxiLine</styleUrl><LineString>\n<coordinates>\n{coords.ToString()}</coordinates>\n</LineString></Placemark>\n");
+
+                            sw.WriteLine("</Document>");
+                            sw.WriteLine("</kml>");
+                        }
+                    }
+                    // DEBUG: ONly one route for all sizes
+                    break;
+                }
+            }
         }
 
-        private void writeNode(StreamWriter sw, string latitude, string longitude, int speed, string tail)
+        private IEnumerable<SteerPoint> buildSteerPoints(ResultRoute route, TaxiNode runwayExitNode)
         {
-            sw.Write($"{latitude} {longitude} {speed} {tail}\n");
-        }
+            List<SteerPoint> steerPoints = new List<SteerPoint>();
 
+            // Add the start point (this one or displaced???)
+            RunwayPoint threshold = new RunwayPoint(route.Runway.Latitude, route.Runway.Longitude, 55, $"{route.Runway.Designator} Threshold", route.RouteStart.Edge.ActiveForRunway(route.Runway.Designator));
+            threshold.OnRunway = true;
+            threshold.IsExiting = true;
+            steerPoints.Add(threshold);
+
+            foreach (TaxiNode node in route.Runway.RunwayNodes)
+            {
+                int speed = (node == runwayExitNode) ? 30 : 55;
+                steerPoints.Add(new RunwayPoint(node.Latitude, node.Longitude, speed, $"{route.Runway.Designator}", route.RouteStart.Edge.ActiveForRunway(route.Runway.Designator)));
+
+                if (node == runwayExitNode) // Key of the dictionary is the last node on the runway centerline for this route
+                    break;
+            }
+
+            steerPoints.Add(new RunwayPoint(route.NearestNode.Latitude, route.NearestNode.Longitude, 20, route.RouteStart.Edge.LinkName, route.RouteStart.Edge.ActiveForRunway(route.Runway.Designator)));
+
+            LinkedNode link = route.RouteStart;
+            while (link.Node != null)
+            {
+                if (link.Edge.ActiveZone)
+                    steerPoints.Add(new RunwayPoint(link.Node.Latitude, link.Node.Longitude, 15, $"{link.Edge.LinkName}", $"{link.Edge.ActiveForRunway(route.Runway.Designator)}"));
+                else
+                    steerPoints.Add(new SteerPoint(link.Node.Latitude, link.Node.Longitude, 15, $"{link.Edge.LinkName}"));
+
+                link = link.Next;
+            }
+
+            steerPoints.Add(new SteerPoint(Parking.PushBackLatitude, Parking.PushBackLongitude, 5, Parking.Name));
+            steerPoints.Add(new ParkingPoint(Parking.Latitude, Parking.Longitude, 5, Parking.Name, Parking.Bearing, true));
+
+            RouteProcessor.Smooth(steerPoints);
+            RouteProcessor.ProcessRunwayOperations(steerPoints);
+
+            if (MaxInPoints < steerPoints.Count)
+                MaxInPoints = steerPoints.Count;
+
+            return steerPoints;
+        }
     }
 }
+
