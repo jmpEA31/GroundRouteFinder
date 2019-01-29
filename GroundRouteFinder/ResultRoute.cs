@@ -21,6 +21,7 @@ namespace GroundRouteFinder
     public class ResultRoute
     {
         public Runway Runway;
+        public double ExitDistance;
         public List<Parking> Parkings;
 
         public RunwayTakeOffSpot TakeoffSpot;
@@ -110,7 +111,7 @@ namespace GroundRouteFinder
                             if (te.EndNode.DistanceToTarget < double.MaxValue)
                             {
                                 double newTurn = VortexMath.AbsTurnAngle(currentBearing, te.EndNode.BearingToTarget);
-                                if (newTurn < VortexMath.PI025)
+                                if (newTurn < VortexMath.Deg100Rad)
                                 {
                                     // Fiddling with Dijkstra results like this may generate a loop in the route
                                     // So scan it before actually using the reroute

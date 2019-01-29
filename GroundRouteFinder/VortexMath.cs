@@ -18,6 +18,7 @@ namespace GroundRouteFinder
         public const double Rad2Deg = 180.0 / Math.PI;
 
         public const double Deg005Rad = 5.0 * VortexMath.Deg2Rad;
+        public const double Deg020Rad = 20.0 * VortexMath.Deg2Rad;
         public const double Deg0475Rad = 47.5 * VortexMath.Deg2Rad;
         public const double Deg060Rad = 60.0 * VortexMath.Deg2Rad;
         public const double Deg070Rad = 70.0 * VortexMath.Deg2Rad;

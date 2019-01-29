@@ -169,36 +169,30 @@ namespace GroundRouteFinder.AptDat
                     // Pick the runway exit points for the selected size
                     foreach (Runway r in _runways)
                     {
-                        foreach (Runway.RunwayNodeUsage use in Settings.SizeToUsage[size])
+                        foreach (Runway.RunwayExitNode exit in r.RunwayExits.Values)
                         {
-                            Runway.UsageNodes exitNodes = r.GetNodesForUsage(use);
-                            if (exitNodes == null)
-                                continue;
-
-                            Runway.NodeUsage usage = exitNodes.Roles[(int)Runway.UsageNodes.Role.Left];
                             double bestDistance = double.MaxValue;
-                            Runway.UsageNodes.Role bestSide = Runway.UsageNodes.Role.Max;
-                            if (usage != null)
+                            double bestTurnAngle = double.MaxValue;
+                            Runway.RunwayExit bestExit = null;
+
+                            if (exit.LeftExit != null)
                             {
-                                bestDistance = usage.OffRunwayNode.DistanceToTarget;
-                                bestSide = Runway.UsageNodes.Role.Left;
+                                bestExit = exit.LeftExit;
+                                bestDistance = exit.LeftExit.OffRunwayNode.DistanceToTarget;
+                                bestTurnAngle = exit.LeftExit.TurnAngle;
                             }
 
-                            usage = exitNodes.Roles[(int)Runway.UsageNodes.Role.Right];
-                            if (usage != null)
+                            if (exit.RightExit != null)
                             {
-                                if (usage.OffRunwayNode.DistanceToTarget < bestDistance)
+                                if ((exit.RightExit.OffRunwayNode.DistanceToTarget < (bestDistance / 1.2) || (bestTurnAngle - exit.RightExit.TurnAngle) > VortexMath.Deg020Rad) ||         // Route 20% shorter, or turn 20 degrees less sharp
+                                    (exit.RightExit.OffRunwayNode.DistanceToTarget < bestDistance && exit.RightExit.TurnAngle < bestTurnAngle))                                            // Or just shorter and less sharp
                                 {
-                                    bestDistance = usage.OffRunwayNode.DistanceToTarget;
-                                    bestSide = Runway.UsageNodes.Role.Right;
+                                    bestExit = exit.RightExit;
                                 }
                             }
 
-                            if (bestSide != Runway.UsageNodes.Role.Max)
-                            {
-                                usage = exitNodes.Roles[(int)bestSide];
-                                ir.AddResult(size, usage.OnRunwayNode, usage.OffRunwayNode, r);
-                            }
+                            if (bestExit.OffRunwayNode.NextNodeToTarget != bestExit.OnRunwayNode)
+                                ir.AddResult(size, bestExit.OnRunwayNode, bestExit.OffRunwayNode, r, bestExit.ExitDistance);
                         }
                     }
                 }

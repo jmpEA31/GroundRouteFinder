@@ -33,16 +33,17 @@ namespace GroundRouteFinder
             rtb.Clear();
 
             _airport = new Airport();
-            //_airport.Load("..\\..\\..\\..\\LFPG_Scenery_Pack\\LFPG_Scenery_Pack\\Earth nav data\\apt.dat");
-            _airport.Load("..\\..\\..\\..\\EHAM_Scenery_Pack\\EHAM_Scenery_Pack\\Earth nav data\\apt.dat");
+            _airport.Load("..\\..\\..\\..\\LFPG_Scenery_Pack\\LFPG_Scenery_Pack\\Earth nav data\\apt.dat");
+            //_airport.Load("..\\..\\..\\..\\EHAM_Scenery_Pack\\EHAM_Scenery_Pack\\Earth nav data\\apt.dat");
             //_airport.Load("..\\..\\..\\..\\EIDW_Scenery_Pack\\EIDW_Scenery_Pack\\Earth nav data\\apt.dat");
             logElapsed("loading done");
+
+            _airport.FindInboundRoutes(rbNormal.Checked);
+            logElapsed($"inbound done, max steerpoints {InboundResults.MaxInPoints}");
 
             _airport.FindOutboundRoutes(rbNormal.Checked);
             logElapsed($"outbound done, max steerpoints {OutboundResults.MaxOutPoints}");
 
-            _airport.FindInboundRoutes(rbNormal.Checked);
-            logElapsed($"inbound done, max steerpoints {InboundResults.MaxInPoints}");
 
         }
     }

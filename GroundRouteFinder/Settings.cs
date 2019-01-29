@@ -10,8 +10,6 @@ namespace GroundRouteFinder
 {
     public static class Settings
     {
-        public static Dictionary<XPlaneAircraftCategory, Runway.RunwayNodeUsage[]> SizeToUsage = new Dictionary<XPlaneAircraftCategory, Runway.RunwayNodeUsage[]>();
-
         public static string DepartureFolder = "";
         public static string ArrivalFolder = "";
         public static string ParkingDefFolder = "";
@@ -21,13 +19,6 @@ namespace GroundRouteFinder
 
         static Settings()
         {
-            SizeToUsage.Add(XPlaneAircraftCategory.A, new Runway.RunwayNodeUsage[] { Runway.RunwayNodeUsage.ExitShort, Runway.RunwayNodeUsage.ExitReduced2 });
-            SizeToUsage.Add(XPlaneAircraftCategory.B, new Runway.RunwayNodeUsage[] { Runway.RunwayNodeUsage.ExitShort, Runway.RunwayNodeUsage.ExitReduced2 });
-            SizeToUsage.Add(XPlaneAircraftCategory.C, new Runway.RunwayNodeUsage[] { Runway.RunwayNodeUsage.ExitShort, Runway.RunwayNodeUsage.ExitReduced2, Runway.RunwayNodeUsage.ExitReduced1 });
-            SizeToUsage.Add(XPlaneAircraftCategory.D, new Runway.RunwayNodeUsage[] { Runway.RunwayNodeUsage.ExitReduced2, Runway.RunwayNodeUsage.ExitReduced1, Runway.RunwayNodeUsage.ExitMax });
-            SizeToUsage.Add(XPlaneAircraftCategory.E, new Runway.RunwayNodeUsage[] { Runway.RunwayNodeUsage.ExitReduced2, Runway.RunwayNodeUsage.ExitReduced1, Runway.RunwayNodeUsage.ExitMax });
-            SizeToUsage.Add(XPlaneAircraftCategory.F, new Runway.RunwayNodeUsage[] { Runway.RunwayNodeUsage.ExitReduced2, Runway.RunwayNodeUsage.ExitReduced1, Runway.RunwayNodeUsage.ExitMax });
-
             if (Directory.Exists(@"X:\SteamLibrary\steamapps\common\X-Plane 11\ClassicJetSimUtils\WorldTraffic\GroundRoutes"))
             {
                 DepartureFolder = @"X:\SteamLibrary\steamapps\common\X-Plane 11\ClassicJetSimUtils\WorldTraffic\GroundRoutes\Departure\";

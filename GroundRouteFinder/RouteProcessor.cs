@@ -51,15 +51,15 @@ namespace GroundRouteFinder
                 double outgoingBearing = VortexMath.BearingRadians(current, next);
                 double turnAngle = VortexMath.AbsTurnAngle(incomingBearing, outgoingBearing);
 
-                //if (!current.Protected && turnAngle < 2.5 * VortexMath.Deg2Rad && !(current is RunwayPoint))
-                //{
-                //    if (previous.Name == next.Name && previous.Speed == next.Speed)
-                //    {
-                //        steerPoints.RemoveAt(i);
-                //        i--;
-                //    }
-                //}
-                //else
+                if (!current.Protected && turnAngle < 2.5 * VortexMath.Deg2Rad && !(current is RunwayPoint))
+                {
+                    if (previous.Name == next.Name && previous.Speed == next.Speed)
+                    {
+                        steerPoints.RemoveAt(i);
+                        i--;
+                    }
+                }
+                else
                 if (!current.Protected && turnAngle > VortexMath.PI025) // 45 degrees
                 {
                     double smoothingDistance = 0.050 * (turnAngle / VortexMath.PI); // 90 degrees = 0.5 PI / PI = 0.5 * 0.05 km = 25 meters
