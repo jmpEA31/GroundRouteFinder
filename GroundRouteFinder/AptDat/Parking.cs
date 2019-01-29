@@ -24,9 +24,12 @@ namespace GroundRouteFinder.AptDat
         public TaxiNode NearestNode;
 
         public string Type;
-        public string Jets;
         public string Operation;
-        public int MaxSize;
+        public IEnumerable<string> Operators;
+
+        public XPlaneAircraftCategory MaxSize;
+        public IEnumerable<XPlaneAircraftType> XpTypes;
+        public IEnumerable<WorldTrafficAircraftType> PossibleWtTypes = null;
 
         private string _name;
         public string Name
@@ -249,17 +252,21 @@ namespace GroundRouteFinder.AptDat
             }
         }
 
-
+        internal void DetermineWtTypes()
+        {
+            PossibleWtTypes = AircraftTypeConverter.WTTypesFromXPlaneLimits(XPlaneAircraftCategory.A, MaxSize, XpTypes);
+        }
 
         public override string ToString()
         {
             return Name;
         }
 
-        internal void SetLimits(int maxSize, string operation)
+        internal void SetLimits(XPlaneAircraftCategory maxSize, string operation, IEnumerable<string> operators)
         {
             MaxSize = maxSize;
             Operation = operation;
+            Operators = operators;
         }
     }
 }

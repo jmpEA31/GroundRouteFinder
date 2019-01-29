@@ -29,10 +29,10 @@ namespace GroundRouteFinder
         public TaxiNode NearestNode;
         public LinkedNode RouteStart;
 
-        public int MaxSize;
-        public int MinSize;
+        public XPlaneAircraftCategory MaxSize;
+        public XPlaneAircraftCategory MinSize;
 
-        public ResultRoute(int size)
+        public ResultRoute(XPlaneAircraftCategory size)
         {
             Parkings = new List<Parking>();
 
@@ -57,7 +57,7 @@ namespace GroundRouteFinder
         /// <param name="startNode">The first node of the route</param>
         /// <param name="size">The maximum size for which this route is valid</param>
         /// <returns>The route as a linked list of nodes with additional informationthat will be needed when writing the route to a file</returns>
-        public static ResultRoute ExtractRoute(IEnumerable<TaxiEdge> edges, TaxiNode startNode, int size)
+        public static ResultRoute ExtractRoute(IEnumerable<TaxiEdge> edges, TaxiNode startNode, XPlaneAircraftCategory size)
         {
             ResultRoute extracted = new ResultRoute(size);
             extracted.Runway = null;

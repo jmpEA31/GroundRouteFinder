@@ -67,6 +67,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AptDat\Airport.cs" />
+    <Compile Include="AptDat\Definitions.cs" />
     <Compile Include="AptDat\RunwayExitSpot.cs" />
     <Compile Include="AptDat\TaxiEdge.cs" />
     <Compile Include="InboundResults.cs" />
@@ -77,7 +78,7 @@
     <Compile Include="ResultRoute.cs" />
     <Compile Include="AptDat\Runway.cs" />
     <Compile Include="AptDat\RunwayTakeOffSpot.cs" />
-    <Compile Include="AptDat\StartPoint.cs" />
+    <Compile Include="AptDat\Parking.cs" />
     <Compile Include="RouteProcessor.cs" />
     <Compile Include="RunwayPoint.cs" />
     <Compile Include="Settings.cs" />

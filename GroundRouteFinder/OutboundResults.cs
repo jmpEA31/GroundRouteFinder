@@ -12,7 +12,7 @@ namespace GroundRouteFinder
     {
         public Runway Runway;
         private IEnumerable<TaxiEdge> _edges;
-        private Dictionary<TaxiNode, Dictionary<int, ResultRoute>> _results;
+        private Dictionary<TaxiNode, Dictionary<XPlaneAircraftCategory, ResultRoute>> _results;
 
         public static int MaxOutPoints = 0;
 
@@ -20,7 +20,7 @@ namespace GroundRouteFinder
         {
             _edges = edges;
             Runway = runway;
-            _results = new Dictionary<TaxiNode, Dictionary<int, ResultRoute>>();
+            _results = new Dictionary<TaxiNode, Dictionary<XPlaneAircraftCategory, ResultRoute>>();
         }
 
         /// <summary>
@@ -28,12 +28,12 @@ namespace GroundRouteFinder
         /// </summary>
         /// <param name="maxSizeCurrentResult">The maximum size allowed on the current route</param>
         /// <param name="parkingNode">The runway node for this exit</param>
-        public void AddResult(int maxSizeCurrentResult, TaxiNode parkingNode, Parking parking, RunwayTakeOffSpot takeOffSpot)
+        public void AddResult(XPlaneAircraftCategory maxSizeCurrentResult, TaxiNode parkingNode, Parking parking, RunwayTakeOffSpot takeOffSpot)
         {
             if (!_results.ContainsKey(parkingNode))
-                _results[parkingNode] = new Dictionary<int, ResultRoute>();
+                _results[parkingNode] = new Dictionary<XPlaneAircraftCategory, ResultRoute>();
 
-            Dictionary<int, ResultRoute> originResults = _results[parkingNode];
+            Dictionary<XPlaneAircraftCategory, ResultRoute> originResults = _results[parkingNode];
 
             // If no results yet for this node, just add the current route
             if (originResults.Count == 0)
@@ -43,7 +43,7 @@ namespace GroundRouteFinder
             }
             else
             {
-                int minSize = originResults.Min(or => or.Key);
+                XPlaneAircraftCategory minSize = originResults.Min(or => or.Key);
                 if (originResults[minSize].Distance > parkingNode.DistanceToTarget)
                 {
                     if (minSize > maxSizeCurrentResult)
@@ -61,7 +61,7 @@ namespace GroundRouteFinder
             }
 
             // Nsty overkill to make sure parkings with the same 'nearest' node will have routes generated
-            foreach (KeyValuePair<int, ResultRoute> result in originResults)
+            foreach (KeyValuePair<XPlaneAircraftCategory, ResultRoute> result in originResults)
             {
                 result.Value.AddParking(parking);
             }
@@ -69,9 +69,9 @@ namespace GroundRouteFinder
 
         public void WriteRoutes()
         {
-            foreach (KeyValuePair<TaxiNode, Dictionary<int, ResultRoute>> sizeRoutes in _results)
+            foreach (KeyValuePair<TaxiNode, Dictionary<XPlaneAircraftCategory, ResultRoute>> sizeRoutes in _results)
             {
-                for (int size = TaxiNode.Sizes - 1; size >= 0; size--)
+                for (XPlaneAircraftCategory size = XPlaneAircraftCategory.Max - 1; size >= XPlaneAircraftCategory.A; size--)
                 {
                     if (sizeRoutes.Value.ContainsKey(size))
                     {
@@ -79,14 +79,9 @@ namespace GroundRouteFinder
                         if (route.TargetNode == null)
                             continue;
 
-                        List<int> routeSizes = new List<int>();
-                        for (int s = route.MinSize; s <= route.MaxSize; s++)
-                        {
-                            routeSizes.AddRange(Settings.XPlaneCategoryToWTType(s));
-                        }
-
-                        string allSizes = string.Join(" ", routeSizes.OrderBy(w => w));
-                        string sizeName = (routeSizes.Count == 10) ? "all" : allSizes.Replace(" ", "");
+                        IEnumerable<WorldTrafficAircraftType> wtTypes = AircraftTypeConverter.WTTypesFromXPlaneLimits(XPlaneAircraftCategory.A, route.MaxSize);
+                        string allSizes = string.Join(" ", wtTypes.Select(w => (int)w).OrderBy(w => w));
+                        string sizeName = (wtTypes.Count() == 10) ? "all" : allSizes.Replace(" ", "");
 
                         //Debug
                         allSizes = "0 1 2 3 4 5 6 7 8 9";
@@ -125,9 +120,9 @@ namespace GroundRouteFinder
 
         public void WriteRoutesKML()
         {
-            foreach (KeyValuePair<TaxiNode, Dictionary<int, ResultRoute>> sizeRoutes in _results)
+            foreach (KeyValuePair<TaxiNode, Dictionary<XPlaneAircraftCategory, ResultRoute>> sizeRoutes in _results)
             {
-                for (int size = TaxiNode.Sizes - 1; size >= 0; size--)
+                for (XPlaneAircraftCategory size = XPlaneAircraftCategory.Max - 1; size >= XPlaneAircraftCategory.A; size--)
                 {
                     if (sizeRoutes.Value.ContainsKey(size))
                     {
@@ -135,14 +130,9 @@ namespace GroundRouteFinder
                         if (route.TargetNode == null)
                             continue;
 
-                        List<int> routeSizes = new List<int>();
-                        for (int s = route.MinSize; s <= route.MaxSize; s++)
-                        {
-                            routeSizes.AddRange(Settings.XPlaneCategoryToWTType(s));
-                        }
-
-                        string allSizes = string.Join(" ", routeSizes.OrderBy(w => w));
-                        string sizeName = (routeSizes.Count == 10) ? "all" : allSizes.Replace(" ", "");
+                        IEnumerable<WorldTrafficAircraftType> wtTypes = AircraftTypeConverter.WTTypesFromXPlaneLimits(XPlaneAircraftCategory.A, route.MaxSize);
+                        string allSizes = string.Join(" ", wtTypes.Select(w => (int)w).OrderBy(w => w));
+                        string sizeName = (wtTypes.Count() == 10) ? "all" : allSizes.Replace(" ", "");
 
                         //Debug
                         allSizes = "0 1 2 3 4 5 6 7 8 9";

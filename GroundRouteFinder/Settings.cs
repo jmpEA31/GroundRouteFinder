@@ -10,7 +10,7 @@ namespace GroundRouteFinder
 {
     public static class Settings
     {
-        public static Dictionary<int, Runway.RunwayNodeUsage[]> SizeToUsage = new Dictionary<int, Runway.RunwayNodeUsage[]>();
+        public static Dictionary<XPlaneAircraftCategory, Runway.RunwayNodeUsage[]> SizeToUsage = new Dictionary<XPlaneAircraftCategory, Runway.RunwayNodeUsage[]>();
 
         public static string DepartureFolder = "";
         public static string ArrivalFolder = "";
@@ -20,12 +20,12 @@ namespace GroundRouteFinder
 
         static Settings()
         {
-            SizeToUsage.Add(0, new Runway.RunwayNodeUsage[] { Runway.RunwayNodeUsage.ExitShort, Runway.RunwayNodeUsage.ExitReduced2 });
-            SizeToUsage.Add(1, new Runway.RunwayNodeUsage[] { Runway.RunwayNodeUsage.ExitShort, Runway.RunwayNodeUsage.ExitReduced2 });
-            SizeToUsage.Add(2, new Runway.RunwayNodeUsage[] { Runway.RunwayNodeUsage.ExitShort, Runway.RunwayNodeUsage.ExitReduced2, Runway.RunwayNodeUsage.ExitReduced1 });
-            SizeToUsage.Add(3, new Runway.RunwayNodeUsage[] { Runway.RunwayNodeUsage.ExitReduced2, Runway.RunwayNodeUsage.ExitReduced1, Runway.RunwayNodeUsage.ExitMax });
-            SizeToUsage.Add(4, new Runway.RunwayNodeUsage[] { Runway.RunwayNodeUsage.ExitReduced2, Runway.RunwayNodeUsage.ExitReduced1, Runway.RunwayNodeUsage.ExitMax });
-            SizeToUsage.Add(5, new Runway.RunwayNodeUsage[] { Runway.RunwayNodeUsage.ExitReduced2, Runway.RunwayNodeUsage.ExitReduced1, Runway.RunwayNodeUsage.ExitMax });
+            SizeToUsage.Add(XPlaneAircraftCategory.A, new Runway.RunwayNodeUsage[] { Runway.RunwayNodeUsage.ExitShort, Runway.RunwayNodeUsage.ExitReduced2 });
+            SizeToUsage.Add(XPlaneAircraftCategory.B, new Runway.RunwayNodeUsage[] { Runway.RunwayNodeUsage.ExitShort, Runway.RunwayNodeUsage.ExitReduced2 });
+            SizeToUsage.Add(XPlaneAircraftCategory.C, new Runway.RunwayNodeUsage[] { Runway.RunwayNodeUsage.ExitShort, Runway.RunwayNodeUsage.ExitReduced2, Runway.RunwayNodeUsage.ExitReduced1 });
+            SizeToUsage.Add(XPlaneAircraftCategory.D, new Runway.RunwayNodeUsage[] { Runway.RunwayNodeUsage.ExitReduced2, Runway.RunwayNodeUsage.ExitReduced1, Runway.RunwayNodeUsage.ExitMax });
+            SizeToUsage.Add(XPlaneAircraftCategory.E, new Runway.RunwayNodeUsage[] { Runway.RunwayNodeUsage.ExitReduced2, Runway.RunwayNodeUsage.ExitReduced1, Runway.RunwayNodeUsage.ExitMax });
+            SizeToUsage.Add(XPlaneAircraftCategory.F, new Runway.RunwayNodeUsage[] { Runway.RunwayNodeUsage.ExitReduced2, Runway.RunwayNodeUsage.ExitReduced1, Runway.RunwayNodeUsage.ExitMax });
 
             if (Directory.Exists(@"X:\SteamLibrary\steamapps\common\X-Plane 11\ClassicJetSimUtils\WorldTraffic\GroundRoutes"))
             {
@@ -37,44 +37,6 @@ namespace GroundRouteFinder
                 DepartureFolder = @"E:\GroundRoutes\Departure\";
                 ArrivalFolder = @"E:\GroundRoutes\Arrival\";
             }
-        }
-
-        public static List<int> XPlaneCategoryToWTType(char category)
-        {
-            if (category > 'z')
-                category -= (char)('a' - 'A');
-
-            return XPlaneCategoryToWTType(category - 'A');
-        }
-
-        public static List<int> XPlaneCategoryToWTType(int category)
-        {
-            List<int> wtTypes = new List<int>();
-
-            switch (category)
-            {
-                case 0: // XPlane type A 'wingspan < 15'
-                    wtTypes.AddRange(new int[] { 0, 7, 8, 9 }); // Fighter, Light Jet, Light Prop, Helicopter
-                    break;
-                case 1: // XPlane type B 'wingspan < 24'
-                    wtTypes.AddRange(new int[] { 5, 6 }); // Medium Jet, Medium Prop
-                    break;
-                case 2: // XPlane type C 'wingspan < 36'
-                    wtTypes.Add(3); // Large Jet
-                    break;
-                case 3: // XPlane type D 'wingspan < 52'
-                    wtTypes.Add(4); // Large Prop
-                    break;
-                case 4: // XPlane type E 'wingspan < 65'
-                    wtTypes.Add(2); // Heavy Jet
-                    break;
-                case 5: // XPlane type F 'wingspan < 80'
-                default:
-                    wtTypes.Add(1); // Supah Heavy Jet
-                    break;
-            }
-
-            return wtTypes;
         }
     }
 }

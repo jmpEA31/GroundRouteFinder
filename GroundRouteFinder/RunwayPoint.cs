@@ -40,7 +40,7 @@ namespace GroundRouteFinder
         public override void WriteKML(StreamWriter sw)
         {
             if (IsExiting)
-                base.Write(sw);
+                base.WriteKML(sw);
             else if (OnRunway)
                 sw.WriteLine($"<Placemark><styleUrl>#Runway</styleUrl><name>{Name}</name><Point><coordinates>{Longitude * VortexMath.Rad2Deg},{Latitude * VortexMath.Rad2Deg},0</coordinates></Point></Placemark>");
             else

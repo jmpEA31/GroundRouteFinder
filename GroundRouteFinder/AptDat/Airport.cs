@@ -54,7 +54,10 @@ namespace GroundRouteFinder.AptDat
                 else if (lines[i].StartsWith("1301 "))
                 {
                     string[] tokens = lines[i].Split(_splitters, StringSplitOptions.RemoveEmptyEntries);
-                    _parkings.Last().SetLimits((int)(tokens[1][0] - 'A'), tokens[2]);
+                    _parkings.Last().SetLimits(
+                                    (XPlaneAircraftCategory)(tokens[1][0] - 'A'), 
+                                    tokens[2],
+                                    tokens.Skip(3));
                 }
             }
 
@@ -80,10 +83,16 @@ namespace GroundRouteFinder.AptDat
 
             // Damn you X plane for not requiring parking spots/gate to be linked
             // to the taxi route network. Why???????
-            foreach (Parking sp in _parkings)
+
+            StreamWriter sw = File.CreateText("D:\\pushbacknodes.csv");
+            sw.WriteLine("lat,lon,name");
+            foreach (Parking parking in _parkings)
             {
-                sp.DetermineTaxiOutLocation(_taxiNodes);
+                parking.DetermineWtTypes();
+                parking.DetermineTaxiOutLocation(_taxiNodes);
+                sw.WriteLine($"{parking.PushBackLatitude * VortexMath.Rad2Deg},{parking.PushBackLongitude * VortexMath.Rad2Deg},{parking.Name}");
             }
+            sw.Close();
 
             // Find taxi links that are the actual runways
             //  Then find applicable nodes for entering the runway and find the nodes off the runway connected to those
@@ -99,7 +108,7 @@ namespace GroundRouteFinder.AptDat
             foreach (Parking parking in _parkings)
             {
                 InboundResults ir = new InboundResults(_edges, parking);
-                for (int size = parking.MaxSize; size >= 0; size--)
+                for (XPlaneAircraftCategory size = parking.MaxSize; size >= XPlaneAircraftCategory.A; size--)
                 {
                     // Nearest node should become 'closest to computed pushback point'
                     findShortestPaths(_taxiNodes, parking.NearestNode, size);
@@ -168,7 +177,7 @@ namespace GroundRouteFinder.AptDat
                 {
                     OutboundResults or = new OutboundResults(_edges, runway);
                     // for each size
-                    for (int size = TaxiNode.Sizes - 1; size >= 0; size--)
+                    for (XPlaneAircraftCategory size = XPlaneAircraftCategory.F; size >= XPlaneAircraftCategory.A; size--)
                     {
                         // find shortest path from each parking to each takeoff spot considering each entrypoint
                         foreach (TaxiNode runwayEntryNode in takeoffSpot.EntryPoints)
@@ -188,7 +197,7 @@ namespace GroundRouteFinder.AptDat
             }
         }
 
-        private void findShortestPaths(IEnumerable<TaxiNode> nodes, TaxiNode targetNode, int size)
+        private void findShortestPaths(IEnumerable<TaxiNode> nodes, TaxiNode targetNode, XPlaneAircraftCategory size)
         {
             List<TaxiNode> untouchedNodes = nodes.ToList();
             List<TaxiNode> touchedNodes = new List<TaxiNode>();
@@ -297,7 +306,7 @@ namespace GroundRouteFinder.AptDat
             ulong vb = ulong.Parse(tokens[2]);
             bool isRunway = (tokens[4][0] != 't');
             bool isTwoWay = (tokens[3][0] == 't');
-            int maxSize = isRunway ? 5 : (int)(tokens[4][8] - 'A'); // todo: make more robust / future proof
+            XPlaneAircraftCategory maxSize = isRunway ? (XPlaneAircraftCategory.Max-1) : (XPlaneAircraftCategory)(tokens[4][8] - 'A');
             string linkName = tokens.Length > 5 ? string.Join(" ", tokens.Skip(5)) : "";
 
             TaxiNode startNode = _nodeDict[va];
@@ -306,7 +315,7 @@ namespace GroundRouteFinder.AptDat
             TaxiEdge outgoingEdge = _edges.SingleOrDefault(e => (e.StartNode.Id == va && e.EndNode.Id == vb));
             if (outgoingEdge != null)
                 // todo: report warning
-                outgoingEdge.MaxSize = Math.Max(outgoingEdge.MaxSize, maxSize);
+                outgoingEdge.MaxSize = (XPlaneAircraftCategory)Math.Max((int)outgoingEdge.MaxSize, (int)maxSize);
             else
             {
                 outgoingEdge = new TaxiEdge(startNode, endNode, isRunway, maxSize, linkName);
@@ -319,7 +328,7 @@ namespace GroundRouteFinder.AptDat
                 incomingEdge = _edges.SingleOrDefault(e => (e.StartNode.Id == vb && e.EndNode.Id == va));
                 if (incomingEdge != null)
                     // todo: report warning
-                    incomingEdge.MaxSize = Math.Max(incomingEdge.MaxSize, maxSize);
+                    incomingEdge.MaxSize = (XPlaneAircraftCategory)Math.Max((int)incomingEdge.MaxSize, (int)maxSize);
                 else
                 {
                     incomingEdge = new TaxiEdge(endNode, startNode, isRunway, maxSize, linkName);
@@ -356,17 +365,16 @@ namespace GroundRouteFinder.AptDat
         private void readStartPoint(string line)
         {
             string[] tokens = line.Split(_splitters, StringSplitOptions.RemoveEmptyEntries);
-            if (tokens[5] != "helos") // todo: helos
-            {
-                Parking sp = new Parking();
-                sp.Latitude = double.Parse(tokens[1]) * VortexMath.Deg2Rad;
-                sp.Longitude = double.Parse(tokens[2]) * VortexMath.Deg2Rad;
-                sp.Bearing = ((double.Parse(tokens[3]) + 540) * VortexMath.Deg2Rad) % (VortexMath.PI2) - Math.PI;
-                sp.Type = tokens[4];
-                sp.Jets = tokens[5];
-                sp.Name = string.Join(" ", tokens.Skip(6));
-                _parkings.Add(sp);
-            }
+            string[] xpTypes = tokens[5].Split('|');
+
+            Parking sp = new Parking();
+            sp.Latitude = double.Parse(tokens[1]) * VortexMath.Deg2Rad;
+            sp.Longitude = double.Parse(tokens[2]) * VortexMath.Deg2Rad;
+            sp.Bearing = ((double.Parse(tokens[3]) + 540) * VortexMath.Deg2Rad) % (VortexMath.PI2) - Math.PI;
+            sp.Type = tokens[4];
+            sp.XpTypes = AircraftTypeConverter.XPlaneTypesFromStrings(xpTypes);
+            sp.Name = string.Join(" ", tokens.Skip(6));
+            _parkings.Add(sp);
         }
     }
 }

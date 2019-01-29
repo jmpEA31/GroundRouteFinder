@@ -13,7 +13,7 @@ namespace GroundRouteFinder
         public Parking Parking;
 
         private IEnumerable<TaxiEdge> _edges;
-        private Dictionary<TaxiNode, Dictionary<int, ResultRoute>> _results;
+        private Dictionary<TaxiNode, Dictionary<XPlaneAircraftCategory, ResultRoute>> _results;
 
         public static int MaxInPoints = 0;
 
@@ -21,7 +21,7 @@ namespace GroundRouteFinder
         {
             _edges = edges;
             Parking = parking;
-            _results = new Dictionary<TaxiNode, Dictionary<int, ResultRoute>>();
+            _results = new Dictionary<TaxiNode, Dictionary<XPlaneAircraftCategory, ResultRoute>>();
         }
 
         /// <summary>
@@ -31,12 +31,12 @@ namespace GroundRouteFinder
         /// <param name="runwayExitNode">The runway node for this exit</param>
         /// <param name="pathStartNode">The frist node 'departing' the runway</param>
         /// <param name="r">The runway it self</param>
-        public void AddResult(int maxSizeCurrentResult, TaxiNode runwayExitNode, TaxiNode pathStartNode, Runway r)
+        public void AddResult(XPlaneAircraftCategory maxSizeCurrentResult, TaxiNode runwayExitNode, TaxiNode pathStartNode, Runway r)
         {
             if (!_results.ContainsKey(runwayExitNode))
-                _results[runwayExitNode] = new Dictionary<int, ResultRoute>();
+                _results[runwayExitNode] = new Dictionary<XPlaneAircraftCategory, ResultRoute>();
 
-            Dictionary<int, ResultRoute> originResults = _results[runwayExitNode];
+            Dictionary<XPlaneAircraftCategory, ResultRoute> originResults = _results[runwayExitNode];
 
             // If no results yet for this node, just add the current route
             if (originResults.Count == 0)
@@ -46,7 +46,7 @@ namespace GroundRouteFinder
             }
             else
             {
-                int minSize = originResults.Min(or => or.Key);
+                XPlaneAircraftCategory minSize = originResults.Min(or => or.Key);
                 if (originResults[minSize].Distance > pathStartNode.DistanceToTarget)
                 {
                     if (minSize > maxSizeCurrentResult)
@@ -66,10 +66,15 @@ namespace GroundRouteFinder
 
         public void WriteRoutes()
         {
-            foreach (KeyValuePair<TaxiNode, Dictionary<int, ResultRoute>> sizeRoutes in _results)
+            foreach (KeyValuePair<TaxiNode, Dictionary<XPlaneAircraftCategory, ResultRoute>> sizeRoutes in _results)
             {
-                for (int size = Parking.MaxSize; size >= 0; size--)
+                for (XPlaneAircraftCategory size = Parking.MaxSize; size >= XPlaneAircraftCategory.A; size--)
                 {
+                    if (sizeRoutes.Value.Count > 1)
+                    {
+                        int k = 6;
+                    }
+
                     if (sizeRoutes.Value.ContainsKey(size))
                     {
                         ResultRoute route = sizeRoutes.Value[size];
@@ -77,21 +82,18 @@ namespace GroundRouteFinder
                         if (route.TargetNode == null)
                             continue;
 
-                        if (route.MinSize > Parking.MaxSize)
+                        if (Parking.MaxSize < route.MinSize)
                             continue;
 
-                        List<int> routeSizes = new List<int>();
-                        for (int s = route.MinSize; s <= route.MaxSize; s++)
-                        {
-                            routeSizes.AddRange(Settings.XPlaneCategoryToWTType(s));
-                        }
+                        XPlaneAircraftCategory validMax = (XPlaneAircraftCategory)Math.Min((int)route.MaxSize, (int)Parking.MaxSize);
+                        IEnumerable<WorldTrafficAircraftType> wtTypes = AircraftTypeConverter.WTTypesFromXPlaneLimits(route.MinSize, validMax, Parking.XpTypes);
 
-                        string allSizes = string.Join(" ", routeSizes.OrderBy(w => w));
-                        string sizeName = (routeSizes.Count == 10) ? "all" : allSizes.Replace(" ", "");
+                        string allSizes = string.Join(" ", wtTypes.Select(w=>(int)w).OrderBy(w => w));
+                        string sizeName = (wtTypes.Count() == 10) ? "all" : allSizes.Replace(" ", "");
 
-                        //Debug
-                        allSizes = "0 1 2 3 4 5 6 7 8 9";
-                        sizeName = "all";
+                        ////Debug
+                        //allSizes = "0 1 2 3 4 5 6 7 8 9";
+                        //sizeName = "all";
 
                         string fileName = $"{Settings.ArrivalFolder}\\LFPG\\{route.Runway.Designator}_to_{Parking.FileNameSafeName}-{sizeRoutes.Key.Id}_{sizeName}.txt";
                         File.Delete(fileName);
@@ -112,8 +114,8 @@ namespace GroundRouteFinder
                             sw.Write("ENDSTEERPOINTS\n");
                         }
                     }
-                    // DEBUG: ONly one route for all sizes
-                    break;
+                    //// DEBUG: ONly one route for all sizes
+                    //break;
 
                 }
             }
@@ -121,9 +123,9 @@ namespace GroundRouteFinder
 
         public void WriteRoutesKML()
         {
-            foreach (KeyValuePair<TaxiNode, Dictionary<int, ResultRoute>> sizeRoutes in _results)
+            foreach (KeyValuePair<TaxiNode, Dictionary<XPlaneAircraftCategory, ResultRoute>> sizeRoutes in _results)
             {
-                for (int size = Parking.MaxSize; size >= 0; size--)
+                for (XPlaneAircraftCategory size = Parking.MaxSize; size >= XPlaneAircraftCategory.A; size--)
                 {
                     if (sizeRoutes.Value.ContainsKey(size))
                     {
@@ -135,20 +137,14 @@ namespace GroundRouteFinder
                         if (route.MinSize > Parking.MaxSize)
                             continue;
 
-                        List<int> routeSizes = new List<int>();
-                        for (int s = route.MinSize; s <= route.MaxSize; s++)
-                        {
-                            routeSizes.AddRange(Settings.XPlaneCategoryToWTType(s));
-                        }
-
-                        string allSizes = string.Join(" ", routeSizes.OrderBy(w => w));
-                        string sizeName = (routeSizes.Count == 10) ? "all" : allSizes.Replace(" ", "");
+                        string allSizes = string.Join(" ", Parking.PossibleWtTypes.Select(w => (int)w).OrderBy(w => w));
+                        string sizeName = (Parking.PossibleWtTypes.Count() == 10) ? "all" : allSizes.Replace(" ", "");
 
                         //Debug
                         allSizes = "0 1 2 3 4 5 6 7 8 9";
                         sizeName = "all";
 
-                        string fileName = $"{Settings.ArrivalFolderKML}\\LFPG\\{route.Runway.Designator}_to_{Parking.FileNameSafeName}-{sizeRoutes.Key.Id}_{sizeName}.txt";
+                        string fileName = $"{Settings.ArrivalFolderKML}\\LFPG\\{route.Runway.Designator}_to_{Parking.FileNameSafeName}-{sizeRoutes.Key.Id}_{sizeName}.kml";
                         File.Delete(fileName);
                         using (StreamWriter sw = File.CreateText(fileName))
                         {

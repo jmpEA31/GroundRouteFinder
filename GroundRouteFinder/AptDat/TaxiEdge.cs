@@ -15,7 +15,7 @@ namespace GroundRouteFinder.AptDat
         public List<string> ActiveForRunways;
 
         public bool IsRunway;
-        public int MaxSize;
+        public XPlaneAircraftCategory MaxSize;
         public string LinkName;
 
         public double DistanceKM;
@@ -23,7 +23,7 @@ namespace GroundRouteFinder.AptDat
 
         public TaxiEdge ReverseEdge;
 
-        public TaxiEdge(TaxiNode startNode, TaxiNode endNode, bool isRunway, int maxSize, string linkName)
+        public TaxiEdge(TaxiNode startNode, TaxiNode endNode, bool isRunway, XPlaneAircraftCategory maxSize, string linkName)
         {
             StartNode = startNode;
             EndNode = endNode;
