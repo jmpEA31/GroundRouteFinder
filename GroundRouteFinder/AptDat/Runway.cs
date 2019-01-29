@@ -235,7 +235,7 @@ namespace GroundRouteFinder.AptDat
 
                 // Now inspect the current node
                 bool selectedOne = false;
-                foreach (TaxiEdge mn in node.IncomingNodes)
+                foreach (TaxiEdge mn in node.IncomingEdges)
                 {
                     if (mn.IsRunway)
                         continue;
@@ -273,7 +273,7 @@ namespace GroundRouteFinder.AptDat
                 foreach (TaxiEdge exit in exitEdges)
                 {
                     TaxiNode offRunwayNode = taxiNodes.Single(tn => tn.Id == exit.EndNode.Id);
-                    TaxiEdge mn = offRunwayNode.IncomingNodes.SingleOrDefault(inc => inc.StartNode.Id == onRunwayNode.Id);
+                    TaxiEdge mn = offRunwayNode.IncomingEdges.SingleOrDefault(inc => inc.StartNode.Id == onRunwayNode.Id);
                     if (mn == null)
                         continue;
 
@@ -341,7 +341,7 @@ namespace GroundRouteFinder.AptDat
                 foreach (TaxiEdge exit in exitEdges)
                 {
                     TaxiNode offRunwayNode = taxiNodes.Single(tn => tn.Id == exit.EndNode.Id);
-                    TaxiEdge mn = offRunwayNode.IncomingNodes.SingleOrDefault(inc => inc.StartNode.Id == onRunwayNode.Id);
+                    TaxiEdge mn = offRunwayNode.IncomingEdges.SingleOrDefault(inc => inc.StartNode.Id == onRunwayNode.Id);
                     if (mn == null)
                         continue;
 

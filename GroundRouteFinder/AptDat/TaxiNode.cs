@@ -8,11 +8,11 @@ namespace GroundRouteFinder.AptDat
 {
     public class TaxiNode : LocationObject
     {
-        public ulong Id;
+        public uint Id;
         public string Name;
         public const int Sizes = 6;
 
-        public List<TaxiEdge> IncomingNodes;
+        public List<TaxiEdge> IncomingEdges;
 
         public double DistanceToTarget;
         public TaxiNode NextNodeToTarget;
@@ -26,11 +26,11 @@ namespace GroundRouteFinder.AptDat
 
         public double TemporaryDistance;
 
-        public TaxiNode(ulong id, string latitude, string longitude)
+        public TaxiNode(uint id, string latitude, string longitude)
             : base()
         {
             Id = id;
-            IncomingNodes = new List<TaxiEdge>();
+            IncomingEdges = new List<TaxiEdge>();
 
             DistanceToTarget = double.MaxValue;
             NextNodeToTarget = null;
@@ -48,7 +48,7 @@ namespace GroundRouteFinder.AptDat
 
         public void AddEdgeFrom(TaxiEdge edge)
         {
-            IncomingNodes.Add(edge);
+            IncomingEdges.Add(edge);
         }
 
         public override string ToString()

@@ -9,7 +9,9 @@ namespace GroundRouteFinder.AptDat
 {
     public class Airport
     {
-        private Dictionary<ulong, TaxiNode> _nodeDict;
+        public string ICAO;
+
+        private Dictionary<uint, TaxiNode> _nodeDict;
         private IEnumerable<TaxiNode> _taxiNodes;
         private List<Parking> _parkings; /* could be gate, helo, tie down, ... but 'parking' improved readability of some of the code */
         private List<Runway> _runways;
@@ -19,11 +21,12 @@ namespace GroundRouteFinder.AptDat
 
         public Airport()
         {
+            ICAO = "";
         }
 
         public void Load(string name)
         {
-            _nodeDict = new Dictionary<ulong, TaxiNode>();
+            _nodeDict = new Dictionary<uint, TaxiNode>();
             _parkings = new List<Parking>();
             _runways = new List<Runway>();
             _edges = new List<TaxiEdge>();
@@ -31,9 +34,13 @@ namespace GroundRouteFinder.AptDat
             string[] lines = File.ReadAllLines(name);
             for (int i = 0; i < lines.Length; i++)
             {
-                if (lines[i].StartsWith("100 "))
+                if (lines[i].StartsWith("1 "))
                 {
                     readAirportRecord(lines[i]);
+                }
+                else if (lines[i].StartsWith("100 "))
+                {
+                    readRunwayRecord(lines[i]);
                 }
                 else if (lines[i].StartsWith("1201 "))
                 {
@@ -54,7 +61,7 @@ namespace GroundRouteFinder.AptDat
                 else if (lines[i].StartsWith("1301 "))
                 {
                     string[] tokens = lines[i].Split(_splitters, StringSplitOptions.RemoveEmptyEntries);
-                    _parkings.Last().SetLimits(
+                    _parkings.Last().SetMetaData(
                                     (XPlaneAircraftCategory)(tokens[1][0] - 'A'), 
                                     tokens[2],
                                     tokens.Skip(3));
@@ -67,7 +74,15 @@ namespace GroundRouteFinder.AptDat
         private void preprocess()
         {
             // Filter out nodes with links (probably nodes for the vehicle network)
-            _taxiNodes = _nodeDict.Values.Where(v => v.IncomingNodes.Count > 0);
+            _taxiNodes = _nodeDict.Values.Where(v => v.IncomingEdges.Count > 0);
+
+            // Filter out parkings with operation type none.
+            _parkings = _parkings.Where(p => p.Operation != OperationType.None).ToList();
+
+            if (_parkings.Select(p => p.Name).Distinct().Count() != _parkings.Count())
+            {
+                Console.WriteLine($"WARN Duplicate parking names in apt source!");
+            }
 
             // With unneeded nodes gone, parse the lat/lon string and convert the values to radians
             foreach (TaxiNode v in _taxiNodes)
@@ -81,18 +96,16 @@ namespace GroundRouteFinder.AptDat
                 edge.Compute();
             }
 
-            // Damn you X plane for not requiring parking spots/gate to be linked
-            // to the taxi route network. Why???????
+            // Parking preprocessing
+            string parkingDefPath = Path.Combine(Settings.ParkingDefFolder, ICAO);
+            Settings.DeleteDirectoryContents(parkingDefPath);
 
-            StreamWriter sw = File.CreateText("D:\\pushbacknodes.csv");
-            sw.WriteLine("lat,lon,name");
             foreach (Parking parking in _parkings)
             {
                 parking.DetermineWtTypes();
-                parking.DetermineTaxiOutLocation(_taxiNodes);
-                sw.WriteLine($"{parking.PushBackLatitude * VortexMath.Rad2Deg},{parking.PushBackLongitude * VortexMath.Rad2Deg},{parking.Name}");
+                parking.DetermineTaxiOutLocation(_taxiNodes); // Move this to first if we need pushback info in the parking def
+                parking.WriteDef();
             }
-            sw.Close();
 
             // Find taxi links that are the actual runways
             //  Then find applicable nodes for entering the runway and find the nodes off the runway connected to those
@@ -105,6 +118,10 @@ namespace GroundRouteFinder.AptDat
 
         public void FindInboundRoutes(bool normalOutput)
         {
+            string outputPath = normalOutput ? Settings.ArrivalFolder : Settings.ArrivalFolderKML;
+            outputPath = Path.Combine(outputPath, ICAO);
+            Settings.DeleteDirectoryContents(outputPath);
+
             foreach (Parking parking in _parkings)
             {
                 InboundResults ir = new InboundResults(_edges, parking);
@@ -112,14 +129,6 @@ namespace GroundRouteFinder.AptDat
                 {
                     // Nearest node should become 'closest to computed pushback point'
                     findShortestPaths(_taxiNodes, parking.NearestNode, size);
-
-                    //StreamWriter tnd = File.CreateText($"e:\\groundroutes\\deb-{parking.Name}.csv");
-                    //tnd.WriteLine($"lat,lon,pen,id");
-                    //foreach (TaxiNode tn in _taxiNodes)
-                    //{
-                    //    tnd.WriteLine($"{tn.Latitude*VortexMath.Rad2Deg},{tn.Longitude * VortexMath.Rad2Deg},{tn.DistanceToTarget},{tn.Id}");
-                    //}
-                    //tnd.Close();
 
                     // Pick the runway exit points for the selected size
                     foreach (Runway r in _runways)
@@ -157,21 +166,24 @@ namespace GroundRouteFinder.AptDat
                         }
                     }
                 }
+
                 if (normalOutput)
-                    ir.WriteRoutes();
+                    ir.WriteRoutes(outputPath);
                 else
-                    ir.WriteRoutesKML();
+                    ir.WriteRoutesKML(outputPath);
 
             }
         }
 
         public void FindOutboundRoutes(bool normalOutput)
         {
+            string outputPath = normalOutput ? Settings.DepartureFolder : Settings.DepartureFolderKML;
+            outputPath = Path.Combine(outputPath, ICAO);
+            Settings.DeleteDirectoryContents(outputPath);
+
             // for each runway
             foreach (Runway runway in _runways)
             {
-                //_resultCache = new Dictionary<Parking, Dictionary<TaxiNode, ResultRoute>>();
-
                 // for each takeoff spot
                 foreach (RunwayTakeOffSpot takeoffSpot in runway.TakeOffSpots)
                 {
@@ -190,18 +202,37 @@ namespace GroundRouteFinder.AptDat
                         }
                     }
                     if (normalOutput)
-                        or.WriteRoutes();
+                        or.WriteRoutes(outputPath);
                     else
-                        or.WriteRoutesKML();
+                        or.WriteRoutesKML(outputPath);
                 }
             }
         }
 
-        private void findShortestPaths(IEnumerable<TaxiNode> nodes, TaxiNode targetNode, XPlaneAircraftCategory size)
+        /// <summary>
+        /// IComparer for sorting the nodes by distance
+        /// </summary>
+        private class ShortestPathComparer : IComparer<TaxiNode>
+        {
+            public int Compare(TaxiNode a, TaxiNode b)
+            {
+                return a.DistanceToTarget.CompareTo(b.DistanceToTarget);
+            }
+        }
+
+        /// <summary>
+        /// Dijkstra... goes through the full network finding shortest path from every node to the target so
+        /// that afterwards we can cherrypick the starting nodes we are actually interested in.
+        /// </summary>
+        /// <param name="nodes">The node network</param>
+        /// <param name="targetNode">Here do we go now</param>
+        /// <param name="targetCategory">Minimum Cat (A-F) that needs to be supported by the route</param>
+        private void findShortestPaths(IEnumerable<TaxiNode> nodes, TaxiNode targetNode, XPlaneAircraftCategory targetCategory)
         {
             List<TaxiNode> untouchedNodes = nodes.ToList();
             List<TaxiNode> touchedNodes = new List<TaxiNode>();
 
+            // Reset previously found paths
             foreach (TaxiNode node in nodes)
             {
                 node.DistanceToTarget = double.MaxValue;
@@ -212,73 +243,87 @@ namespace GroundRouteFinder.AptDat
             targetNode.DistanceToTarget = 0;
             targetNode.NextNodeToTarget = null;
 
-            foreach (TaxiEdge vto in targetNode.IncomingNodes)
+            // Assign distances to all incoming edges of the target
+            foreach (TaxiEdge incoming in targetNode.IncomingEdges)
             {
-                if (size > vto.MaxSize)
+                // Skip taxiways that are too small
+                if (targetCategory > incoming.MaxCategory)
                     continue;
 
-                if (untouchedNodes.Contains(vto.StartNode) && !touchedNodes.Contains(vto.StartNode))
+                // Mark the other side of the incoming edge as touched...
+                if (untouchedNodes.Contains(incoming.StartNode) && !touchedNodes.Contains(incoming.StartNode))
                 {
-                    untouchedNodes.Remove(vto.StartNode);
-                    touchedNodes.Add(vto.StartNode);
+                    untouchedNodes.Remove(incoming.StartNode);
+                    touchedNodes.Add(incoming.StartNode);
                 }
 
-                vto.StartNode.DistanceToTarget = vto.DistanceKM;
-                vto.StartNode.NextNodeToTarget = targetNode;
-                vto.StartNode.NameToTarget = vto.LinkName;
-                vto.StartNode.PathIsRunway = vto.IsRunway;
-                vto.StartNode.BearingToTarget = VortexMath.BearingRadians(vto.StartNode, targetNode);
+                // And set the properties of the path
+                incoming.StartNode.DistanceToTarget = incoming.DistanceKM;
+                incoming.StartNode.NextNodeToTarget = targetNode;
+                incoming.StartNode.NameToTarget = incoming.LinkName;
+                incoming.StartNode.PathIsRunway = incoming.IsRunway;
+                incoming.StartNode.BearingToTarget = VortexMath.BearingRadians(incoming.StartNode, targetNode);
             }
 
-            //doneNodes.Add(targetNode);
+            // Remove the target node completely, it's done.
             untouchedNodes.Remove(targetNode);
 
-            // and branch out from there
+            // instantiate the comparer for taxinode list sorting
+            ShortestPathComparer spc = new ShortestPathComparer();
+
+            // Now rinse and repeat will we still have 'touched nodes' (unprocessed nodes with a path to the target)
             while (touchedNodes.Count() > 0)
             {
-                double min = touchedNodes.Min(a => a.DistanceToTarget);
-                targetNode = touchedNodes.FirstOrDefault(a => a.DistanceToTarget == min);
+                // Pick the next( touched but not finished) node to process, that is: the one which currently has the shortest path to the target
+                touchedNodes.Sort(spc);
+                TaxiNode currentNode = touchedNodes.First();
 
-                foreach (TaxiEdge incoming in targetNode.IncomingNodes)
+                // And set the distances for the nodes with link towards the current node
+                foreach (TaxiEdge incoming in currentNode.IncomingEdges)
                 {
-                    if (size > incoming.MaxSize)
+                    // Skip taxiways that are too small
+                    if (targetCategory > incoming.MaxCategory)
                         continue;
 
-                    // Try to force smaller aircraft to take their specific routes
-                    double penalizedDistance = incoming.DistanceKM; // vto.RelativeDistance * (1.0 + 2.0 * (vto.MaxSize - size));
-
-                    //double bearingToTarget = VortexMath.BearingRadians(incoming.SourceNode.Latitude, incoming.SourceNode.Longitude, targetNode.Latitude, targetNode.Longitude);
-                    //double turnToTarget = VortexMath.AbsTurnAngle(targetNode.BearingToTarget, incoming.Bearing);
-
-                        //penalizedDistance += 5.0;
-                    //else if (turnToTarget > VortexMath.PI033)
-                    //    penalizedDistance += 0.01;
-
-
+                    // Avoid runways unless they are the only option.
+                    double distanceToCurrent = incoming.DistanceKM; 
                     if (incoming.IsRunway)
-                        penalizedDistance += 1.0;
+                        distanceToCurrent += 1.0;
 
-                    if (incoming.StartNode.DistanceToTarget > (targetNode.DistanceToTarget + penalizedDistance))
+                    // If the incoming link + the distance from the current node to the target is smaller
+                    // than the so far shortest distance from the node on the otherside of the incoming link to
+                    // the target... reroute the path from the otherside through the current node.
+                    if ((distanceToCurrent + currentNode.DistanceToTarget) < incoming.StartNode.DistanceToTarget)
                     {
                         if (untouchedNodes.Contains(incoming.StartNode) && !touchedNodes.Contains(incoming.StartNode))
                         {
+                            // The 'otherside' node is now ready to be processed
                             untouchedNodes.Remove(incoming.StartNode);
                             touchedNodes.Add(incoming.StartNode);
                         }
 
-                        incoming.StartNode.DistanceToTarget = (targetNode.DistanceToTarget + penalizedDistance);
-                        incoming.StartNode.NextNodeToTarget = targetNode;
+                        // Update the path properties
+                        incoming.StartNode.DistanceToTarget = (currentNode.DistanceToTarget + distanceToCurrent);
+                        incoming.StartNode.NextNodeToTarget = currentNode;
                         incoming.StartNode.NameToTarget = incoming.LinkName;
                         incoming.StartNode.PathIsRunway = incoming.IsRunway;
                         incoming.StartNode.BearingToTarget = incoming.Bearing;
                     }
                 }
 
-                touchedNodes.Remove(targetNode);
+                // And the current is done. 
+                touchedNodes.Remove(currentNode);
             }
         }
 
         private void readAirportRecord(string line)
+        {
+            string[] tokens = line.Split(_splitters, StringSplitOptions.RemoveEmptyEntries);
+
+            ICAO = tokens[4];
+        }
+
+        private void readRunwayRecord(string line)
         {
             string[] tokens = line.Split(_splitters, StringSplitOptions.RemoveEmptyEntries);
 
@@ -294,7 +339,7 @@ namespace GroundRouteFinder.AptDat
         private void readTaxiNode(string line)
         {
             string[] tokens = line.Split(_splitters, StringSplitOptions.RemoveEmptyEntries);
-            ulong id = ulong.Parse(tokens[4]);
+            uint id = uint.Parse(tokens[4]);
             _nodeDict[id] = new TaxiNode(id, tokens[1], tokens[2]);
             _nodeDict[id].Name = string.Join(" ", tokens.Skip(5));
         }
@@ -302,10 +347,11 @@ namespace GroundRouteFinder.AptDat
         private void readTaxiEdge(string line)
         {
             string[] tokens = line.Split(_splitters, StringSplitOptions.RemoveEmptyEntries);
-            ulong va = ulong.Parse(tokens[1]);
-            ulong vb = ulong.Parse(tokens[2]);
-            bool isRunway = (tokens[4][0] != 't');
-            bool isTwoWay = (tokens[3][0] == 't');
+            uint va = uint.Parse(tokens[1]);
+            uint vb = uint.Parse(tokens[2]);
+            bool isRunway = (tokens[4][0] != 't');  // taxiway_X or runway
+            bool isTwoWay = (tokens[3][0] == 't');  // oneway or twoway
+
             XPlaneAircraftCategory maxSize = isRunway ? (XPlaneAircraftCategory.Max-1) : (XPlaneAircraftCategory)(tokens[4][8] - 'A');
             string linkName = tokens.Length > 5 ? string.Join(" ", tokens.Skip(5)) : "";
 
@@ -315,7 +361,7 @@ namespace GroundRouteFinder.AptDat
             TaxiEdge outgoingEdge = _edges.SingleOrDefault(e => (e.StartNode.Id == va && e.EndNode.Id == vb));
             if (outgoingEdge != null)
                 // todo: report warning
-                outgoingEdge.MaxSize = (XPlaneAircraftCategory)Math.Max((int)outgoingEdge.MaxSize, (int)maxSize);
+                outgoingEdge.MaxCategory = (XPlaneAircraftCategory)Math.Max((int)outgoingEdge.MaxCategory, (int)maxSize);
             else
             {
                 outgoingEdge = new TaxiEdge(startNode, endNode, isRunway, maxSize, linkName);
@@ -328,7 +374,7 @@ namespace GroundRouteFinder.AptDat
                 incomingEdge = _edges.SingleOrDefault(e => (e.StartNode.Id == vb && e.EndNode.Id == va));
                 if (incomingEdge != null)
                     // todo: report warning
-                    incomingEdge.MaxSize = (XPlaneAircraftCategory)Math.Max((int)incomingEdge.MaxSize, (int)maxSize);
+                    incomingEdge.MaxCategory = (XPlaneAircraftCategory)Math.Max((int)incomingEdge.MaxCategory, (int)maxSize);
                 else
                 {
                     incomingEdge = new TaxiEdge(endNode, startNode, isRunway, maxSize, linkName);
@@ -367,7 +413,7 @@ namespace GroundRouteFinder.AptDat
             string[] tokens = line.Split(_splitters, StringSplitOptions.RemoveEmptyEntries);
             string[] xpTypes = tokens[5].Split('|');
 
-            Parking sp = new Parking();
+            Parking sp = new Parking(this);
             sp.Latitude = double.Parse(tokens[1]) * VortexMath.Deg2Rad;
             sp.Longitude = double.Parse(tokens[2]) * VortexMath.Deg2Rad;
             sp.Bearing = ((double.Parse(tokens[3]) + 540) * VortexMath.Deg2Rad) % (VortexMath.PI2) - Math.PI;

@@ -41,9 +41,39 @@ namespace GroundRouteFinder.AptDat
         Helo = 9,
         Ground = 10
     }
-   
 
-    public static class AircraftTypeConverter
+    public enum OperationType
+    {
+        None,
+        GeneralAviation,
+        Airline,
+        Cargo,
+        Military
+    }
+
+    public static class OperationTypeConverter
+    {
+        public static OperationType FromString(string operationType)
+        {
+            switch (operationType)
+            {
+                case "none":
+                    return OperationType.None;
+                case "general_aviation":
+                    return OperationType.GeneralAviation;
+                case "airline":
+                    return OperationType.Airline;
+                case "cargo":
+                    return OperationType.Cargo;
+                case "military":
+                    return OperationType.Military;
+                default:
+                    throw new NotSupportedException($"OperationType <{operationType}> is not supported.");
+            }
+        }
+    }
+
+        public static class AircraftTypeConverter
     {
         private static Dictionary<XPlaneAircraftCategory, Dictionary<XPlaneAircraftType, WorldTrafficAircraftType>> _typeMapping;
 

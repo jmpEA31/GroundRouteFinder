@@ -15,7 +15,7 @@ namespace GroundRouteFinder.AptDat
         public List<string> ActiveForRunways;
 
         public bool IsRunway;
-        public XPlaneAircraftCategory MaxSize;
+        public XPlaneAircraftCategory MaxCategory;
         public string LinkName;
 
         public double DistanceKM;
@@ -29,7 +29,7 @@ namespace GroundRouteFinder.AptDat
             EndNode = endNode;
 
             IsRunway = isRunway;
-            MaxSize = maxSize;
+            MaxCategory = maxSize;
             LinkName = linkName;
 
             ActiveForRunways = new List<string>();

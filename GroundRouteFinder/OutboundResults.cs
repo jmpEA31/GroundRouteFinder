@@ -67,7 +67,7 @@ namespace GroundRouteFinder
             }
         }
 
-        public void WriteRoutes()
+        public void WriteRoutes(string outputPath)
         {
             foreach (KeyValuePair<TaxiNode, Dictionary<XPlaneAircraftCategory, ResultRoute>> sizeRoutes in _results)
             {
@@ -89,14 +89,17 @@ namespace GroundRouteFinder
 
                         foreach (Parking currentParking in route.Parkings)
                         {
-                            string fileName = $"{Settings.DepartureFolder}\\LFPG\\{currentParking.FileNameSafeName}_to_{Runway.Designator}-{route.TargetNode.Id}_{sizeName}.txt";
+                            string fileName = $"{outputPath}\\{currentParking.FileNameSafeName}_to_{Runway.Designator}-{route.TargetNode.Id}_{sizeName}.txt";
                             File.Delete(fileName);
 
                             using (StreamWriter sw = File.CreateText(fileName))
                             {
+                                int military = (currentParking.Operation == OperationType.Military) ? 1 : 0;
+                                int cargo = (currentParking.Operation == OperationType.Cargo) ? 1 : 0;
+
                                 sw.Write($"STARTAIRCRAFTTYPE\n{allSizes}\nENDAIRCRAFTTYPE\n\n");
-                                sw.Write("STARTCARGO\n0\nENDCARGO\n\n");
-                                sw.Write("STARTMILITARY\n0\nENDMILITARY\n\n");
+                                sw.Write($"STARTCARGO\n{cargo}\nENDCARGO\n\n");
+                                sw.Write($"STARTMILITARY\n{military}\nENDMILITARY\n\n");
                                 sw.Write($"STARTRUNWAY\n{Runway.Designator}\nENDRUNWAY\n\n");
                                 sw.Write("START_PARKING_CENTER\nNOSEWHEEL\nEND_PARKING_CENTER\n\n");
                                 sw.Write("STARTSTEERPOINTS\n");
@@ -118,7 +121,7 @@ namespace GroundRouteFinder
             }
         }
 
-        public void WriteRoutesKML()
+        public void WriteRoutesKML(string outputPath)
         {
             foreach (KeyValuePair<TaxiNode, Dictionary<XPlaneAircraftCategory, ResultRoute>> sizeRoutes in _results)
             {
@@ -140,7 +143,7 @@ namespace GroundRouteFinder
 
                         foreach (Parking currentParking in route.Parkings)
                         {
-                            string fileName = $"{Settings.DepartureFolderKML}\\LFPG\\{currentParking.FileNameSafeName}_to_{Runway.Designator}-{route.TargetNode.Id}_{sizeName}.kml";
+                            string fileName = $"{outputPath}\\{currentParking.FileNameSafeName}_to_{Runway.Designator}-{route.TargetNode.Id}_{sizeName}.kml";
                             File.Delete(fileName);
 
                             using (StreamWriter sw = File.CreateText(fileName))

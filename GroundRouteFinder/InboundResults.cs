@@ -64,7 +64,7 @@ namespace GroundRouteFinder
             }
         }
 
-        public void WriteRoutes()
+        public void WriteRoutes(string outputPath)
         {
             foreach (KeyValuePair<TaxiNode, Dictionary<XPlaneAircraftCategory, ResultRoute>> sizeRoutes in _results)
             {
@@ -87,6 +87,10 @@ namespace GroundRouteFinder
 
                         XPlaneAircraftCategory validMax = (XPlaneAircraftCategory)Math.Min((int)route.MaxSize, (int)Parking.MaxSize);
                         IEnumerable<WorldTrafficAircraftType> wtTypes = AircraftTypeConverter.WTTypesFromXPlaneLimits(route.MinSize, validMax, Parking.XpTypes);
+                        if (wtTypes.Count() == 0)
+                        {
+                            Console.WriteLine($"WARN {Parking.Name} (Max)Cat {Parking.MaxSize} Types: {string.Join(" ", Parking.XpTypes)} does not map to any WT types.");
+                        }
 
                         string allSizes = string.Join(" ", wtTypes.Select(w=>(int)w).OrderBy(w => w));
                         string sizeName = (wtTypes.Count() == 10) ? "all" : allSizes.Replace(" ", "");
@@ -95,7 +99,7 @@ namespace GroundRouteFinder
                         //allSizes = "0 1 2 3 4 5 6 7 8 9";
                         //sizeName = "all";
 
-                        string fileName = $"{Settings.ArrivalFolder}\\LFPG\\{route.Runway.Designator}_to_{Parking.FileNameSafeName}-{sizeRoutes.Key.Id}_{sizeName}.txt";
+                        string fileName = $"{outputPath}\\{route.Runway.Designator}_to_{Parking.FileNameSafeName}-{sizeRoutes.Key.Id}_{sizeName}.txt";
                         File.Delete(fileName);
                         using (StreamWriter sw = File.CreateText(fileName))
                         {
@@ -121,7 +125,7 @@ namespace GroundRouteFinder
             }
         }
 
-        public void WriteRoutesKML()
+        public void WriteRoutesKML(string outputPath)
         {
             foreach (KeyValuePair<TaxiNode, Dictionary<XPlaneAircraftCategory, ResultRoute>> sizeRoutes in _results)
             {
@@ -144,7 +148,7 @@ namespace GroundRouteFinder
                         allSizes = "0 1 2 3 4 5 6 7 8 9";
                         sizeName = "all";
 
-                        string fileName = $"{Settings.ArrivalFolderKML}\\LFPG\\{route.Runway.Designator}_to_{Parking.FileNameSafeName}-{sizeRoutes.Key.Id}_{sizeName}.kml";
+                        string fileName = $"{outputPath}\\{route.Runway.Designator}_to_{Parking.FileNameSafeName}-{sizeRoutes.Key.Id}_{sizeName}.kml";
                         File.Delete(fileName);
                         using (StreamWriter sw = File.CreateText(fileName))
                         {
