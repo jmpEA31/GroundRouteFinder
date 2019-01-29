@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace GroundRouteFinder.AptDat
@@ -62,7 +63,7 @@ namespace GroundRouteFinder.AptDat
                 {
                     string[] tokens = lines[i].Split(_splitters, StringSplitOptions.RemoveEmptyEntries);
                     _parkings.Last().SetMetaData(
-                                    (XPlaneAircraftCategory)(tokens[1][0] - 'A'), 
+                                    (XPlaneAircraftCategory)(tokens[1][0] - 'A'),
                                     tokens[2],
                                     tokens.Skip(3));
                 }
@@ -122,6 +123,41 @@ namespace GroundRouteFinder.AptDat
             outputPath = Path.Combine(outputPath, ICAO);
             Settings.DeleteDirectoryContents(outputPath);
 
+            /*
+             * A first go at multithreading. 
+             * 
+             * Probably best to use existing mechanisms in stead of manually spawning threads
+             * 
+             * 
+                        int pc = Environment.ProcessorCount;
+                        int ppt = _parkings.Count / pc;
+
+                        List<Parking>[] parkingLists = new List<Parking>[pc];
+                        Thread[] finders = new Thread[pc];
+
+                        int index = 0;
+                        for (int i = 0; i < pc; i++)
+                        {
+                            if (i == (pc - 1))
+                            {
+                                ppt = _parkings.Count - index;
+                            }
+                            parkingLists[i] = _parkings.GetRange(index, ppt);
+                            index += ppt;
+
+                            finders[i] = new Thread(Airport.FindInboundRoutesThread);
+
+                            FindThreadParams ftp = new FindThreadParams();
+                            ftp.thrEdges = _edges;
+                            ftp.thrNodes = new List<TaxiNode>();
+                            ftp.thrNodes.AddRange(_taxiNodes);          // wrong, do not need a copy of the list, need a copy of the objects
+                            ftp.thrParkings = parkingLists[i];
+                            ftp.thrRunways = _runways;
+                            ftp.outputPath = outputPath;
+                            finders[i].Start(ftp);
+                        }
+            */
+
             foreach (Parking parking in _parkings)
             {
                 InboundResults ir = new InboundResults(_edges, parking);
@@ -171,9 +207,78 @@ namespace GroundRouteFinder.AptDat
                     ir.WriteRoutes(outputPath);
                 else
                     ir.WriteRoutesKML(outputPath);
-
             }
         }
+    
+
+/* 
+ * Multi threading experiment:
+ * 
+        private class FindThreadParams
+        {
+            public string outputPath;
+            public List<Parking> thrParkings;
+            public List<TaxiEdge> thrEdges;
+            public List<TaxiNode> thrNodes;
+            public List<Runway> thrRunways;
+        }
+
+        private static void FindInboundRoutesThread(object para)
+        {
+            FindThreadParams inParam = para as FindThreadParams;
+
+            foreach (Parking parking in inParam.thrParkings)
+            {
+                InboundResults ir = new InboundResults(inParam.thrEdges, parking);
+                for (XPlaneAircraftCategory size = parking.MaxSize; size >= XPlaneAircraftCategory.A; size--)
+                {
+                    // Nearest node should become 'closest to computed pushback point'
+                    findShortestPaths(inParam.thrNodes, parking.NearestNode, size);
+
+                    // Pick the runway exit points for the selected size
+                    foreach (Runway r in inParam.thrRunways)
+                    {
+                        foreach (Runway.RunwayNodeUsage use in Settings.SizeToUsage[size])
+                        {
+                            Runway.UsageNodes exitNodes = r.GetNodesForUsage(use);
+                            if (exitNodes == null)
+                                continue;
+
+                            Runway.NodeUsage usage = exitNodes.Roles[(int)Runway.UsageNodes.Role.Left];
+                            double bestDistance = double.MaxValue;
+                            Runway.UsageNodes.Role bestSide = Runway.UsageNodes.Role.Max;
+                            if (usage != null)
+                            {
+                                bestDistance = usage.OffRunwayNode.DistanceToTarget;
+                                bestSide = Runway.UsageNodes.Role.Left;
+                            }
+
+                            usage = exitNodes.Roles[(int)Runway.UsageNodes.Role.Right];
+                            if (usage != null)
+                            {
+                                if (usage.OffRunwayNode.DistanceToTarget < bestDistance)
+                                {
+                                    bestDistance = usage.OffRunwayNode.DistanceToTarget;
+                                    bestSide = Runway.UsageNodes.Role.Right;
+                                }
+                            }
+
+                            if (bestSide != Runway.UsageNodes.Role.Max)
+                            {
+                                usage = exitNodes.Roles[(int)bestSide];
+                                ir.AddResult(size, usage.OnRunwayNode, usage.OffRunwayNode, r);
+                            }
+                        }
+                    }
+                }
+
+                //if (normalOutput)
+                ir.WriteRoutes(inParam.outputPath);
+                //else
+                //    ir.WriteRoutesKML(outputPath);
+            }
+        }
+*/
 
         public void FindOutboundRoutes(bool normalOutput)
         {
@@ -227,7 +332,7 @@ namespace GroundRouteFinder.AptDat
         /// <param name="nodes">The node network</param>
         /// <param name="targetNode">Here do we go now</param>
         /// <param name="targetCategory">Minimum Cat (A-F) that needs to be supported by the route</param>
-        private void findShortestPaths(IEnumerable<TaxiNode> nodes, TaxiNode targetNode, XPlaneAircraftCategory targetCategory)
+        private static void findShortestPaths(IEnumerable<TaxiNode> nodes, TaxiNode targetNode, XPlaneAircraftCategory targetCategory)
         {
             List<TaxiNode> untouchedNodes = nodes.ToList();
             List<TaxiNode> touchedNodes = new List<TaxiNode>();
