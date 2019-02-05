@@ -257,7 +257,7 @@ namespace GroundRouteFinder.AptDat
 
         internal void DetermineWtTypes()
         {
-            PossibleWtTypes = AircraftTypeConverter.WTTypesFromXPlaneLimits(XPlaneAircraftCategory.A, MaxSize, XpTypes);
+            PossibleWtTypes = AircraftTypeConverter.WTTypesFromXPlaneLimits(XPlaneAircraftCategory.A, MaxSize, Operation);
         }
 
         public override string ToString()

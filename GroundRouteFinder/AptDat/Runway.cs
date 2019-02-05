@@ -46,6 +46,22 @@ namespace GroundRouteFinder.AptDat
 
         public Dictionary<uint, RunwayExitNode> RunwayExits;
 
+        private bool _availableForLanding = true;
+        public bool AvailableForLanding
+        {
+            get { return _availableForLanding || AvailableForVFR;  }
+            set { _availableForLanding = value;  }
+        }
+
+        private bool _availableForTakeOff = true;
+        public bool AvailableForTakeOff
+        {
+            get { return _availableForTakeOff || AvailableForVFR; }
+            set { _availableForTakeOff = value; }
+        }
+
+        public bool AvailableForVFR = true;
+
         public Runway(string designator, double latitude, double longitude, double displacement, double oppositeLatitude, double oppositeLongitude)
             : base(latitude, longitude)
         {
@@ -67,6 +83,8 @@ namespace GroundRouteFinder.AptDat
 
         public bool Analyze(IEnumerable<TaxiNode> taxiNodes, IEnumerable<TaxiEdge> taxiEdges)
         {
+            Log($"Analyzing Runway {Designator}");
+
             RunwayExits = new Dictionary<uint, RunwayExitNode>();
 
             // Find the taxi nodes closest to the start of the runway and the displaced start
@@ -108,8 +126,11 @@ namespace GroundRouteFinder.AptDat
 
             RunwayNodes = findNodeChain(taxiNodes, selectedEdges);
 
-            findEntries();
-            findExits2(RunwayNodes.Reverse<TaxiNode>(), taxiNodes, taxiEdges);
+            if (AvailableForTakeOff)
+                findEntries();
+
+            if (AvailableForLanding)
+                findExits(RunwayNodes.Reverse<TaxiNode>(), taxiNodes, taxiEdges);
 
             return true;
         }
@@ -118,6 +139,7 @@ namespace GroundRouteFinder.AptDat
         {
             int selectedNodes = 0;
             bool displacedNodeFound = false;
+            double lastSelectedRemainingDistance = double.MaxValue;
 
             // Look for entries into taxinodes along the runway. We want to select all possible entries from
             // the first two nodes with at least 1 entry
@@ -128,33 +150,37 @@ namespace GroundRouteFinder.AptDat
 
                 // If the take off spot has been displaced, do not select entries at the start of the runway
                 // todo: start with these, but keep search and replace them if better ones are found.
-                if (!displacedNodeFound)
-                {
-                    if (node == DisplacedNode)
-                        displacedNodeFound = true;
-                    else if (VortexMath.DistanceKM(node.Latitude, node.Longitude, DisplacedLatitude, DisplacedLongitude) < 0.150)
-                        displacedNodeFound = true;
-                    else
-                        continue;
-                }
+                //if (!displacedNodeFound)
+                //{
+                //    if (node == DisplacedNode)
+                //        displacedNodeFound = true;
+                //    else if (VortexMath.DistanceKM(node.Latitude, node.Longitude, DisplacedLatitude, DisplacedLongitude) < 0.150)
+                //        displacedNodeFound = true;
+                //    else
+                //        continue;
+                //}
 
                 RunwayTakeOffSpot takeOffSpot = new RunwayTakeOffSpot();
                 takeOffSpot.TakeOffNode = node;
-
-                displacedNodeFound = true;
+                double remainingLength = VortexMath.DistanceKM(OppositeLatitude, OppositeLongitude, takeOffSpot.TakeOffNode.Latitude, takeOffSpot.TakeOffNode.Longitude);
 
                 // Now inspect the current node
                 bool selectedOne = false;
-                foreach (TaxiEdge mn in node.IncomingEdges)
+                foreach (TaxiEdge edge in node.IncomingEdges)
                 {
-                    if (mn.IsRunway)
+                    if (edge.IsRunway)
                         continue;
 
-                    double entryAngle = VortexMath.AbsTurnAngle(mn.Bearing, Bearing);
-                    if (entryAngle <= 0.6 * VortexMath.PI) // allow a turn of roughly 100 degrees, todo: maybe lower this?
+                    double entryAngle = VortexMath.AbsTurnAngle(edge.Bearing, Bearing);
+                    if (remainingLength > VortexMath.Feet4000Km &&  entryAngle <= VortexMath.Deg120Rad) // allow a turn of roughly 100 degrees, todo: maybe lower this?
                     {
-                        selectedOne = true;
-                        takeOffSpot.EntryPoints.Add(mn.StartNode);
+                        // Skip entries that are close to the last selected one
+                        // Hmm, this can go 1 loop higher
+                        if (lastSelectedRemainingDistance - remainingLength > 0.2)
+                        {
+                            selectedOne = true;
+                            takeOffSpot.EntryPoints.Add(edge.StartNode);
+                        }
                     }
                 }
 
@@ -163,10 +189,14 @@ namespace GroundRouteFinder.AptDat
                 {
                     selectedNodes++;
                     TakeOffSpots.Add(takeOffSpot);
+                    lastSelectedRemainingDistance = remainingLength;
                 }
             }
-            Console.WriteLine($"Selected Entries: {selectedNodes}");
 
+            foreach (RunwayTakeOffSpot tos in TakeOffSpots)
+            {
+                Log($" Entry to <{tos.TakeOffNode.Id}> from <{string.Join(", ", tos.EntryPoints.Select(ep=>ep.Id)),-10}> length: {VortexMath.DistanceKM(OppositeLatitude, OppositeLongitude, tos.TakeOffNode.Latitude, tos.TakeOffNode.Longitude)/VortexMath.Foot2Km:0}ft");
+            }
         }
 
         public class RunwayExitNode
@@ -210,7 +240,7 @@ namespace GroundRouteFinder.AptDat
             }
         }
 
-        private void findExits2(IEnumerable<TaxiNode> runwayNodes, IEnumerable<TaxiNode> taxiNodes, IEnumerable<TaxiEdge> taxiEdges)
+        private void findExits(IEnumerable<TaxiNode> runwayNodes, IEnumerable<TaxiNode> taxiNodes, IEnumerable<TaxiEdge> taxiEdges)
         {
             ExitLengthComparer exitLengthComparer = new ExitLengthComparer();
             List<RunwayExit> exitsLeft = new List<RunwayExit>();
@@ -244,7 +274,7 @@ namespace GroundRouteFinder.AptDat
                         break;
 
                     double exitDistance = VortexMath.DistanceKM(this, onRunwayNode);
-                    if (exitDistance < VortexMath.Feet2000Km)
+                    if (exitDistance < VortexMath.Feet3000Km)
                         break;
 
                     if (exitAngle > 0)

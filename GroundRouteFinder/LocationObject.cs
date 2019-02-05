@@ -6,12 +6,13 @@ using System.Threading.Tasks;
 
 namespace GroundRouteFinder
 {
-    public class LocationObject
+    public class LocationObject : LogEmitter
     {
         public double Latitude;
         public double Longitude;
 
         public LocationObject()
+            : base()
         {
             Latitude = 0;
             Longitude = 0;

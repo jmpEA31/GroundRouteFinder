@@ -75,35 +75,9 @@ namespace GroundRouteFinder.AptDat
 
         public static class AircraftTypeConverter
     {
-        private static Dictionary<XPlaneAircraftCategory, Dictionary<XPlaneAircraftType, WorldTrafficAircraftType>> _typeMapping;
 
         static AircraftTypeConverter()
         {
-            _typeMapping = new Dictionary<XPlaneAircraftCategory, Dictionary<XPlaneAircraftType, WorldTrafficAircraftType>>();
-
-            _typeMapping[XPlaneAircraftCategory.A] = new Dictionary<XPlaneAircraftType, WorldTrafficAircraftType>();
-            _typeMapping[XPlaneAircraftCategory.A][XPlaneAircraftType.Jet] = WorldTrafficAircraftType.LightJet;
-            _typeMapping[XPlaneAircraftCategory.A][XPlaneAircraftType.TurboProp] = WorldTrafficAircraftType.LightProp;
-            _typeMapping[XPlaneAircraftCategory.A][XPlaneAircraftType.Prop] = WorldTrafficAircraftType.LightProp;
-            _typeMapping[XPlaneAircraftCategory.A][XPlaneAircraftType.Helo] = WorldTrafficAircraftType.Helo;
-            _typeMapping[XPlaneAircraftCategory.A][XPlaneAircraftType.Fighter] = WorldTrafficAircraftType.Fighter;
-
-            _typeMapping[XPlaneAircraftCategory.B] = new Dictionary<XPlaneAircraftType, WorldTrafficAircraftType>();
-            _typeMapping[XPlaneAircraftCategory.B][XPlaneAircraftType.Jet] = WorldTrafficAircraftType.MediumJet;
-            _typeMapping[XPlaneAircraftCategory.B][XPlaneAircraftType.TurboProp] = WorldTrafficAircraftType.MediumProp;
-
-            _typeMapping[XPlaneAircraftCategory.C] = new Dictionary<XPlaneAircraftType, WorldTrafficAircraftType>();
-            _typeMapping[XPlaneAircraftCategory.C][XPlaneAircraftType.Jet] = WorldTrafficAircraftType.LargeJet;
-
-            _typeMapping[XPlaneAircraftCategory.D] = new Dictionary<XPlaneAircraftType, WorldTrafficAircraftType>();
-            _typeMapping[XPlaneAircraftCategory.D][XPlaneAircraftType.HeavyJet] = WorldTrafficAircraftType.HeavyJet;
-            _typeMapping[XPlaneAircraftCategory.D][XPlaneAircraftType.TurboProp] = WorldTrafficAircraftType.LargeProp;
-
-            _typeMapping[XPlaneAircraftCategory.E] = new Dictionary<XPlaneAircraftType, WorldTrafficAircraftType>();
-            _typeMapping[XPlaneAircraftCategory.E][XPlaneAircraftType.HeavyJet] = WorldTrafficAircraftType.HeavyJet;
-
-            _typeMapping[XPlaneAircraftCategory.F] = new Dictionary<XPlaneAircraftType, WorldTrafficAircraftType>();
-            _typeMapping[XPlaneAircraftCategory.F][XPlaneAircraftType.HeavyJet] = WorldTrafficAircraftType.SuperHeavy;
         }
 
         public static IEnumerable<XPlaneAircraftType> XPlaneTypesFromStrings(string [] stringTypes)
@@ -147,31 +121,104 @@ namespace GroundRouteFinder.AptDat
             return converted.Distinct();
         }
 
-        public static IEnumerable<WorldTrafficAircraftType> WTTypesFromXPlaneLimits(XPlaneAircraftCategory minCategory, XPlaneAircraftCategory maxCategory, IEnumerable<XPlaneAircraftType> xPlaneTypes = null)
+        public static IEnumerable<WorldTrafficAircraftType> WTTypesFromXPlaneLimits(XPlaneAircraftCategory minCategory, XPlaneAircraftCategory maxCategory, OperationType operationType)
         {
-            List<WorldTrafficAircraftType> wtTypes = new List<WorldTrafficAircraftType>();
+            List<WorldTrafficAircraftType> wtTypes = new List<WorldTrafficAircraftType>() { WorldTrafficAircraftType.Fighter };
 
             for (XPlaneAircraftCategory cat = minCategory; cat <= maxCategory; cat++)
             {
-                if (!_typeMapping.ContainsKey(cat))
-                    continue;
-
-                if (xPlaneTypes != null)
+                switch (cat)
                 {
-                    foreach (XPlaneAircraftType xplaneType in xPlaneTypes)
-                    {
-                        if (!_typeMapping[cat].ContainsKey(xplaneType))
-                            continue;
-
-                        wtTypes.Add(_typeMapping[cat][xplaneType]);
-                    }
-                }
-                else
-                {
-                    foreach (var vcvx in _typeMapping[cat])
-                    {
-                        wtTypes.Add(vcvx.Value);
-                    }
+                    case XPlaneAircraftCategory.A:
+                        switch (operationType)
+                        {
+                            case OperationType.Airline:
+                            case OperationType.Cargo:
+                            case OperationType.GeneralAviation:
+                                wtTypes.AddRange(new WorldTrafficAircraftType[] { WorldTrafficAircraftType.LightJet, WorldTrafficAircraftType.LightProp });
+                                break;
+                            case OperationType.Military:
+                                wtTypes.AddRange(new WorldTrafficAircraftType[] { WorldTrafficAircraftType.LightJet, WorldTrafficAircraftType.LightProp, WorldTrafficAircraftType.Fighter });
+                                break;
+                            case OperationType.None:
+                            default:
+                                break;
+                        }
+                        break;
+                    case XPlaneAircraftCategory.B:
+                        switch (operationType)
+                        {
+                            case OperationType.Airline:
+                            case OperationType.Cargo:
+                            case OperationType.GeneralAviation:
+                                wtTypes.AddRange(new WorldTrafficAircraftType[] { WorldTrafficAircraftType.MediumJet, WorldTrafficAircraftType.MediumProp, WorldTrafficAircraftType.LightJet, WorldTrafficAircraftType.LightProp });
+                                break;
+                            case OperationType.Military:
+                                wtTypes.AddRange(new WorldTrafficAircraftType[] { WorldTrafficAircraftType.MediumJet, WorldTrafficAircraftType.MediumProp, WorldTrafficAircraftType.LightJet, WorldTrafficAircraftType.LightProp, WorldTrafficAircraftType.Fighter });
+                                break;
+                            case OperationType.None:
+                            default:
+                                break;
+                        }
+                        break;
+                    case XPlaneAircraftCategory.C:
+                        switch (operationType)
+                        {
+                            case OperationType.Airline:
+                            case OperationType.Cargo:
+                                wtTypes.AddRange(new WorldTrafficAircraftType[] { WorldTrafficAircraftType.LargeJet, WorldTrafficAircraftType.LargeProp });
+                                break;
+                            case OperationType.GeneralAviation:
+                            case OperationType.Military:
+                                wtTypes.AddRange(new WorldTrafficAircraftType[] { WorldTrafficAircraftType.MediumJet, WorldTrafficAircraftType.MediumProp, WorldTrafficAircraftType.LargeJet, WorldTrafficAircraftType.LargeProp });
+                                break;
+                            case OperationType.None:
+                            default:
+                                break;
+                        }
+                        break;
+                    case XPlaneAircraftCategory.D:
+                        switch (operationType)
+                        {
+                            case OperationType.Airline:
+                            case OperationType.Cargo:
+                            case OperationType.GeneralAviation:
+                            case OperationType.Military:
+                                wtTypes.AddRange(new WorldTrafficAircraftType[] { WorldTrafficAircraftType.LargeJet, WorldTrafficAircraftType.HeavyJet, WorldTrafficAircraftType.LargeProp });
+                                break;
+                            case OperationType.None:
+                            default:
+                                break;
+                        }
+                        break;
+                    case XPlaneAircraftCategory.E:
+                        switch (operationType)
+                        {
+                            case OperationType.Airline:
+                            case OperationType.Cargo:
+                            case OperationType.GeneralAviation:
+                            case OperationType.Military:
+                                wtTypes.AddRange(new WorldTrafficAircraftType[] { WorldTrafficAircraftType.HeavyJet, WorldTrafficAircraftType.LargeProp });
+                                break;
+                            case OperationType.None:
+                            default:
+                                break;
+                        }
+                        break;
+                    case XPlaneAircraftCategory.F:
+                        switch (operationType)
+                        {
+                            case OperationType.Airline:
+                            case OperationType.Cargo:
+                            case OperationType.GeneralAviation:
+                            case OperationType.Military:
+                                wtTypes.AddRange(new WorldTrafficAircraftType[] { WorldTrafficAircraftType.HeavyJet, WorldTrafficAircraftType.SuperHeavy });
+                                break;
+                            case OperationType.None:
+                            default:
+                                break;
+                        }
+                        break;
                 }
             }
             return wtTypes.Distinct();

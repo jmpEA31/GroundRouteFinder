@@ -8,24 +8,42 @@ using System.Threading.Tasks;
 
 namespace GroundRouteFinder.AptDat
 {
-    public class Airport
+    public class Airport : LogEmitter
     {
         public string ICAO;
-
+        
         private Dictionary<uint, TaxiNode> _nodeDict;
         private IEnumerable<TaxiNode> _taxiNodes;
         private List<Parking> _parkings; /* could be gate, helo, tie down, ... but 'parking' improved readability of some of the code */
         private List<Runway> _runways;
         private List<TaxiEdge> _edges;
 
+        private bool hasFlowRules = false;
+        private bool hasVfrRules = false;
+
         private static char[] _splitters = { ' ' };
 
         public Airport()
+            : base()
         {
             ICAO = "";
         }
 
+        internal bool Analyze(string file, string icao)
+        {
+            load(file);
+
+            return ((_nodeDict.Count > 0) && (_edges.Count > 0) && (_parkings.Count > 0));
+        }
+
+
         public void Load(string name)
+        {
+            load(name);
+            preprocess();
+        }
+
+        private void load(string name)
         {
             _nodeDict = new Dictionary<uint, TaxiNode>();
             _parkings = new List<Parking>();
@@ -42,6 +60,14 @@ namespace GroundRouteFinder.AptDat
                 else if (lines[i].StartsWith("100 "))
                 {
                     readRunwayRecord(lines[i]);
+                }
+                else if (lines[i].StartsWith("1100 "))
+                {
+                    readRunwayUseRecord(lines[i]);
+                }
+                else if (lines[i].StartsWith("1101 "))
+                {
+                    readRunwayVfrRecord(lines[i]);
                 }
                 else if (lines[i].StartsWith("1201 "))
                 {
@@ -69,10 +95,10 @@ namespace GroundRouteFinder.AptDat
                 }
             }
 
-            preprocess();
+            Log($"{ICAO} Parkings: {_parkings.Count} Runways: {_runways.Count} Nodes: {_nodeDict.Count()} TaxiPaths: {_edges.Count}");
         }
 
-        private void preprocess()
+        public void preprocess()
         {
             // Filter out nodes with links (probably nodes for the vehicle network)
             _taxiNodes = _nodeDict.Values.Where(v => v.IncomingEdges.Count > 0);
@@ -97,16 +123,24 @@ namespace GroundRouteFinder.AptDat
                 edge.Compute();
             }
 
-            // Parking preprocessing
-            string parkingDefPath = Path.Combine(Settings.ParkingDefFolder, ICAO);
-            Settings.DeleteDirectoryContents(parkingDefPath);
+            Dictionary<XPlaneAircraftCategory, int> numberOfParkingsPerCategory = new Dictionary<XPlaneAircraftCategory, int>();
+            for (XPlaneAircraftCategory cat = XPlaneAircraftCategory.A; cat < XPlaneAircraftCategory.Max;cat++)
+            {
+                numberOfParkingsPerCategory[cat] = 0;
+            }
 
             foreach (Parking parking in _parkings)
             {
                 parking.DetermineWtTypes();
                 parking.DetermineTaxiOutLocation(_taxiNodes); // Move this to first if we need pushback info in the parking def
-                parking.WriteDef();
+                numberOfParkingsPerCategory[parking.MaxSize]++;
             }
+
+            for (XPlaneAircraftCategory cat = XPlaneAircraftCategory.A; cat < XPlaneAircraftCategory.Max; cat++)
+            {
+                Log($"Cat {cat}: {numberOfParkingsPerCategory[cat]} parkings");
+            }
+
 
             // Find taxi links that are the actual runways
             //  Then find applicable nodes for entering the runway and find the nodes off the runway connected to those
@@ -114,6 +148,18 @@ namespace GroundRouteFinder.AptDat
             {
                 Console.WriteLine($"-------------{r.Designator}----------------");
                 r.Analyze(_taxiNodes, _edges);
+            }
+        }
+
+        public void WriteParkingDefs()
+        {
+            // Parking preprocessing
+            string parkingDefPath = Path.Combine(Settings.ParkingDefFolder, ICAO);
+            Settings.DeleteDirectoryContents(parkingDefPath);
+
+            foreach (Parking parking in _parkings)
+            {
+                parking.WriteDef();
             }
         }
 
@@ -293,10 +339,11 @@ namespace GroundRouteFinder.AptDat
                         // find shortest path from each parking to each takeoff spot considering each entrypoint
                         foreach (TaxiNode runwayEntryNode in takeoffSpot.EntryPoints)
                         {
+                            double remainingRunway = VortexMath.DistanceKM(runwayEntryNode.Latitude, runwayEntryNode.Longitude, runway.OppositeLatitude, runway.OppositeLongitude);
                             findShortestPaths(_taxiNodes, runwayEntryNode, size);
                             foreach (Parking parking in _parkings)
                             {
-                                or.AddResult(size, parking.NearestNode, parking, takeoffSpot);
+                                or.AddResult(size, parking.NearestNode, parking, takeoffSpot, remainingRunway);
                             }
                         }
                     }
@@ -387,7 +434,7 @@ namespace GroundRouteFinder.AptDat
                     // Avoid runways unless they are the only option.
                     double distanceToCurrent = incoming.DistanceKM; 
                     if (incoming.IsRunway)
-                        distanceToCurrent += 1.0;
+                        distanceToCurrent += 2.0;
 
                     // If the incoming link + the distance from the current node to the target is smaller
                     // than the so far shortest distance from the node on the otherside of the incoming link to
@@ -432,7 +479,64 @@ namespace GroundRouteFinder.AptDat
             double longitude2 = double.Parse(tokens[19]) * VortexMath.Deg2Rad;
 
             _runways.Add(new Runway(tokens[8], latitude1, longitude1, double.Parse(tokens[11]) / 1000.0, latitude2, longitude2));
+            _runways.Last().LogMessage += RelayMessage;
             _runways.Add(new Runway(tokens[17], latitude2, longitude2, double.Parse(tokens[20]) / 1000.0, latitude1, longitude1));
+            _runways.Last().LogMessage += RelayMessage;
+        }
+
+        private void readRunwayVfrRecord(string line)
+        {
+            string[] tokens = line.Split(_splitters, StringSplitOptions.RemoveEmptyEntries);
+
+            if (!hasVfrRules)
+            {
+                foreach (Runway rw in _runways)
+                {
+                    rw.AvailableForVFR = false;
+                }
+                hasVfrRules = true;
+            }
+
+
+            Runway r = _runways.SingleOrDefault(rw => rw.Designator == tokens[1]);
+            if (r != null)
+            {
+                r.AvailableForLanding = true;
+                r.AvailableForTakeOff = true;
+            }
+        }
+
+        /// <summary>
+        /// If there is at least one flow rule, only activate runways if they are in a flow
+        /// </summary>
+        /// <param name="line"></param>
+        private void readRunwayUseRecord(string line)
+        {
+            string[] tokens = line.Split(_splitters, StringSplitOptions.RemoveEmptyEntries);
+            if (tokens[1] == "Generated") // WTAF???
+                return;
+
+            // All runways assumed in use for everything, unless there is at least one usage rule,
+            // then mark all false before enabling them again based upon flow rules
+            if (!hasFlowRules)
+            {
+                foreach (Runway rw in _runways)
+                {
+                    rw.AvailableForLanding = false;
+                    rw.AvailableForTakeOff = false;
+                }
+                hasFlowRules = true;
+            }
+
+            Runway r = _runways.SingleOrDefault(rw => rw.Designator == tokens[1]);
+            if (r != null)
+            {
+                if (tokens[3].Contains("arr"))
+                    r.AvailableForLanding = true;
+
+                if (tokens[3].Contains("dep"))
+                    r.AvailableForTakeOff = true;
+            }
         }
 
         private void readTaxiNode(string line)

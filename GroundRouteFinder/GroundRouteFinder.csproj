@@ -72,6 +72,7 @@
     <Compile Include="AptDat\TaxiEdge.cs" />
     <Compile Include="InboundResults.cs" />
     <Compile Include="LocationObject.cs" />
+    <Compile Include="LogEmitter.cs" />
     <Compile Include="OutboundResults.cs" />
     <Compile Include="ParkingPoint.cs" />
     <Compile Include="PushbackPoint.cs" />

@@ -28,7 +28,7 @@ namespace GroundRouteFinder
         /// </summary>
         /// <param name="maxSizeCurrentResult">The maximum size allowed on the current route</param>
         /// <param name="parkingNode">The runway node for this exit</param>
-        public void AddResult(XPlaneAircraftCategory maxSizeCurrentResult, TaxiNode parkingNode, Parking parking, RunwayTakeOffSpot takeOffSpot)
+        public void AddResult(XPlaneAircraftCategory maxSizeCurrentResult, TaxiNode parkingNode, Parking parking, RunwayTakeOffSpot takeOffSpot, double availableRunwayLength)
         {
             if (!_results.ContainsKey(parkingNode))
                 _results[parkingNode] = new Dictionary<XPlaneAircraftCategory, ResultRoute>();
@@ -40,6 +40,7 @@ namespace GroundRouteFinder
             {
                 originResults.Add(maxSizeCurrentResult, ResultRoute.ExtractRoute(_edges, parkingNode, maxSizeCurrentResult));
                 originResults[maxSizeCurrentResult].TakeoffSpot = takeOffSpot;
+                originResults[maxSizeCurrentResult].AvailableRunwayLength = availableRunwayLength;
             }
             else
             {
@@ -50,12 +51,15 @@ namespace GroundRouteFinder
                     {
                         originResults.Add(maxSizeCurrentResult, ResultRoute.ExtractRoute(_edges, parkingNode, maxSizeCurrentResult));
                         originResults[maxSizeCurrentResult].TakeoffSpot = takeOffSpot;
+                        originResults[maxSizeCurrentResult].AvailableRunwayLength = availableRunwayLength;
+
                         originResults[minSize].MinSize = (maxSizeCurrentResult + 1);
                     }
                     else if (minSize == maxSizeCurrentResult)
                     {
                         originResults[minSize] = ResultRoute.ExtractRoute(_edges, parkingNode, maxSizeCurrentResult);
                         originResults[minSize].TakeoffSpot = takeOffSpot;
+                        originResults[minSize].AvailableRunwayLength = availableRunwayLength;
                     }
                 }
             }
@@ -79,18 +83,15 @@ namespace GroundRouteFinder
                         if (route.TargetNode == null)
                             continue;
 
-                        IEnumerable<WorldTrafficAircraftType> wtTypes = AircraftTypeConverter.WTTypesFromXPlaneLimits(XPlaneAircraftCategory.A, route.MaxSize);
-                        string allSizes = string.Join(" ", wtTypes.Select(w => (int)w).OrderBy(w => w));
-                        string sizeName = (wtTypes.Count() == 10) ? "all" : allSizes.Replace(" ", "");
-
-                        //Debug
-                        allSizes = "0 1 2 3 4 5 6 7 8 9";
-                        sizeName = "all";
-
                         foreach (Parking currentParking in route.Parkings)
                         {
-                            string fileName = $"{outputPath}\\{currentParking.FileNameSafeName}_to_{Runway.Designator}-{route.TargetNode.Id}_{sizeName}.txt";
-                            File.Delete(fileName);
+                            IEnumerable<WorldTrafficAircraftType> wtTypes = AircraftTypeConverter.WTTypesFromXPlaneLimits(XPlaneAircraftCategory.A, route.MaxSize, currentParking.Operation);
+                            if (wtTypes.Count() == 0)
+                                continue;
+
+                            string allSizes = string.Join(" ", wtTypes.Select(w => (int)w).OrderBy(w => w));
+                            string sizeName = (wtTypes.Count() == 10) ? "all" : allSizes.Replace(" ", "");
+                            string fileName = $"{outputPath}\\{currentParking.FileNameSafeName}_to_{Runway.Designator}-{route.AvailableRunwayLength*1000:0}m_{sizeName}.txt";
 
                             using (StreamWriter sw = File.CreateText(fileName))
                             {
@@ -114,8 +115,6 @@ namespace GroundRouteFinder
                                 sw.Write("ENDSTEERPOINTS\n");
                             }
                         }
-                        // DEBUG: ONly one route for all sizes
-                        break;
                     }
                 }
             }
@@ -133,18 +132,43 @@ namespace GroundRouteFinder
                         if (route.TargetNode == null)
                             continue;
 
-                        IEnumerable<WorldTrafficAircraftType> wtTypes = AircraftTypeConverter.WTTypesFromXPlaneLimits(XPlaneAircraftCategory.A, route.MaxSize);
-                        string allSizes = string.Join(" ", wtTypes.Select(w => (int)w).OrderBy(w => w));
-                        string sizeName = (wtTypes.Count() == 10) ? "all" : allSizes.Replace(" ", "");
-
-                        //Debug
-                        allSizes = "0 1 2 3 4 5 6 7 8 9";
-                        sizeName = "all";
+                        if (route.AvailableRunwayLength < VortexMath.Feet3000Km)
+                        {
+                            continue;
+                        }
 
                         foreach (Parking currentParking in route.Parkings)
                         {
+                            IEnumerable<WorldTrafficAircraftType> wtTypes = AircraftTypeConverter.WTTypesFromXPlaneLimits(XPlaneAircraftCategory.A, route.MaxSize, currentParking.Operation);
+
+                            if (route.AvailableRunwayLength < VortexMath.Feet9000Km)
+                            {
+                                WorldTrafficAircraftType[] big = { WorldTrafficAircraftType.SuperHeavy, WorldTrafficAircraftType.HeavyJet };
+                                wtTypes = wtTypes.Except(big);
+                            }
+                            if (route.AvailableRunwayLength < VortexMath.Feet6500Km)
+                            {
+                                WorldTrafficAircraftType[] big = { WorldTrafficAircraftType.LargeJet };
+                                wtTypes = wtTypes.Except(big);
+                            }
+                            if (route.AvailableRunwayLength < VortexMath.Feet5000Km)
+                            {
+                                WorldTrafficAircraftType[] big = { WorldTrafficAircraftType.MediumJet, WorldTrafficAircraftType.LightJet };
+                                wtTypes = wtTypes.Except(big);
+                            }
+                            if (route.AvailableRunwayLength < VortexMath.Feet4000Km)
+                            {
+                                WorldTrafficAircraftType[] big = { WorldTrafficAircraftType.LargeProp, WorldTrafficAircraftType.MediumProp };
+                                wtTypes = wtTypes.Except(big);
+                            }
+
+
+                            if (wtTypes.Count() == 0)
+                                continue;
+
+                            string allSizes = string.Join(" ", wtTypes.Select(w => (int)w).OrderBy(w => w));
+                            string sizeName = (wtTypes.Count() == 10) ? "all" : allSizes.Replace(" ", "");
                             string fileName = $"{outputPath}\\{currentParking.FileNameSafeName}_to_{Runway.Designator}-{route.TargetNode.Id}_{sizeName}.kml";
-                            File.Delete(fileName);
 
                             using (StreamWriter sw = File.CreateText(fileName))
                             {
@@ -173,8 +197,6 @@ namespace GroundRouteFinder
                                 sw.WriteLine("</kml>");
                             }
                         }
-                        // DEBUG: ONly one route for all sizes
-                        break;
                     }
                 }
             }

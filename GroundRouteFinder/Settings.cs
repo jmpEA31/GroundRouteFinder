@@ -1,4 +1,5 @@
 ﻿using GroundRouteFinder.AptDat;
+using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -17,8 +18,41 @@ namespace GroundRouteFinder
         public static string DepartureFolderKML = @"E:\GroundRoutes\Departure\";
         public static string ArrivalFolderKML = @"E:\GroundRoutes\Arrival\";
 
+        private static string _xplaneLocation;
+        public static string XPlaneLocation
+        {
+            get
+            {
+                RegistryKey key = openReg();
+                string val = key.GetValue("XPlaneLocation") as string;
+                key.Close();
+                return val != null ? val : "";
+            }
+
+            set
+            {
+                RegistryKey key = openReg(); ;
+                key.SetValue("XPlaneLocation", value);
+                key.Close();
+            }
+        }
+
+        private static RegistryKey openReg()
+        {
+            return Registry.CurrentUser.OpenSubKey(@"Software\Vortex\GRF", true);
+        }
+
         static Settings()
         {
+            RegistryKey software = Registry.CurrentUser.OpenSubKey("Software", true);
+            RegistryKey vortex = software.OpenSubKey(@"Vortex\GRF", true);
+            if (vortex == null)
+            {
+                vortex = software.CreateSubKey(@"Vortex\GRF", true);
+            }
+            vortex.Close();
+            software.Close();
+
             if (Directory.Exists(@"X:\SteamLibrary\steamapps\common\X-Plane 11\ClassicJetSimUtils\WorldTraffic\GroundRoutes"))
             {
                 DepartureFolder = @"X:\SteamLibrary\steamapps\common\X-Plane 11\ClassicJetSimUtils\WorldTraffic\GroundRoutes\Departure\";
@@ -32,6 +66,10 @@ namespace GroundRouteFinder
                 ParkingDefFolder = @"E:\GroundRoutes\ParkingDefs\";
             }
         }
+
+
+
+
 
         public static void DeleteDirectoryContents(string target_dir, bool deleteDirAsWell = false)
         {

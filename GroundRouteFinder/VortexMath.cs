@@ -28,9 +28,12 @@ namespace GroundRouteFinder
 
         public const double Foot2Km = 0.0003048;
         public const double Feet2000Km = 2000.0 * Foot2Km;
+        public const double Feet3000Km = 3000.0 * Foot2Km;
+        public const double Feet4000Km = 4000.0 * Foot2Km;
         public const double Feet5000Km = 5000.0 * Foot2Km;
         public const double Feet6500Km = 6500.0 * Foot2Km;
         public const double Feet8000Km = 8000.0 * Foot2Km;
+        public const double Feet9000Km = 9000.0 * Foot2Km;
 
         /// <summary>
         /// Return the distance between two location objects in radians

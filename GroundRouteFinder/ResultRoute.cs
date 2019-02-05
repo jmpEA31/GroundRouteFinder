@@ -21,7 +21,7 @@ namespace GroundRouteFinder
     public class ResultRoute
     {
         public Runway Runway;
-        public double ExitDistance;
+        public double AvailableRunwayLength;
         public List<Parking> Parkings;
 
         public RunwayTakeOffSpot TakeoffSpot;
@@ -97,7 +97,7 @@ namespace GroundRouteFinder
                 {
                     double nextBearing = pathNode.NextNodeToTarget.BearingToTarget;
                     double turn = VortexMath.AbsTurnAngle(currentBearing, nextBearing);
-
+/*
                     // This filters out very sharp turns if an alternate exists in exchange for a longer route:
                     // todo: parameters. Now => if more than 120 degrees and alternate < 45 exists use alternate
                     if (turn > VortexMath.Deg120Rad)
@@ -148,6 +148,7 @@ namespace GroundRouteFinder
                             }
                         }
                     }
+*/
                 }
 
                 TaxiNode nextNode = (pathNode.OverrideToTarget != null) ? pathNode.OverrideToTarget : pathNode.NextNodeToTarget;
