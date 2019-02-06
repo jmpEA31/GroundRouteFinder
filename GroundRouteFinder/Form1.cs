@@ -12,12 +12,13 @@ using GroundRouteFinder.AptDat;
 
 namespace GroundRouteFinder
 {
-    public partial class Form1 : Form
+    public partial class MainForm : Form
     {
         private Airport _airport;
         private DateTime _start;
+        private bool _askForConfirmation = false;
 
-        public Form1()
+        public MainForm()
         {
             InitializeComponent();
             Setup();
@@ -26,6 +27,7 @@ namespace GroundRouteFinder
         public void Setup()
         {
             setXPlaneLocation();
+            btnGenerate.Enabled = false;
         }
 
         private void setXPlaneLocation()
@@ -56,6 +58,7 @@ namespace GroundRouteFinder
         private void logElapsed(string message = "")
         {
             rtb.AppendText($"{(DateTime.Now - _start).TotalSeconds:0000.000} {message}\n");
+            rtb.ScrollToCaret();
             rtb.Update();
         }
 
@@ -91,13 +94,173 @@ namespace GroundRouteFinder
 
         private static char[] _splitters = { ' ' };
 
-        private bool scanAptDat(string filename, string forIcao)
+        private void btnAnalyze_Click(object sender, EventArgs e)
         {
-            //logElapsed($"scanning {filename}");
+            _start = DateTime.Now;
+            rtb.Clear();
+            string icao = txtIcao.Text.ToUpper();
+
+            bool found = scanCustomSceneries(icao);
+            if (found)
+            {
+                _airport = new Airport();
+                if (!_airport.Analyze(Path.Combine(Settings.DataFolder, $"{icao}.tmp"), icao))
+                {
+                    rtb.AppendText("Customized airport does not contain the minimal data requiered to generate routes (parkings + atc taxi network).\n");
+                    found = false;
+                    _airport = null;
+                }
+            }
+
+            if (!found)
+            {
+                found = scanDefaultAptDat(icao);
+                if (found)
+                {
+                    _airport = new Airport();
+                    if (!_airport.Analyze(Path.Combine(Settings.DataFolder, $"{icao}.tmp"), icao))
+                    {
+                        rtb.AppendText("Default airport does not contain the minimal data requiered to generate routes (parkings + atc taxi network).\n");
+                        found = false;
+                        _airport = null;
+                        return;
+                    }
+                }
+            }
+
+            rtb.AppendText("Parkings and ATC taxi network are present.\n");
+
+            int worldTrafficCheck = checkWorldTrafficFolders(icao);
+            switch (worldTrafficCheck)
+            {
+                case -1:
+                    return;
+                case 0:
+                    _askForConfirmation = false;
+                    break;
+                case 1:
+                default:
+                    _askForConfirmation = true;
+                    break;
+            }
+
+            btnGenerate.Enabled = true;
+        }
+
+        private int checkWorldTrafficFolders(string icao)
+        {
+            bool needOverwriteConfirmation = false;
+            if (!Directory.Exists(Settings.WorldTrafficLocation))
+            {
+                rtb.AppendText("World Traffic folder not found.\n");
+                return -1;
+            }
+
+            if (!Directory.Exists(Path.Combine(Settings.WorldTrafficGroundRoutes, "Departure", icao)))
+            {
+                Directory.CreateDirectory(Path.Combine(Settings.WorldTrafficGroundRoutes, "Departure", icao));
+            }
+            else if (Directory.EnumerateFiles(Path.Combine(Settings.WorldTrafficGroundRoutes, "Departure", icao)).Count() != 0)
+            {
+                rtb.AppendText($"* Departure ground routes already exist for {icao}!\n");
+                needOverwriteConfirmation = true;
+            }
+
+            if (!Directory.Exists(Path.Combine(Settings.WorldTrafficGroundRoutes, "Arrival", icao)))
+            {
+                Directory.CreateDirectory(Path.Combine(Settings.WorldTrafficGroundRoutes, "Arrival", icao));
+            }
+            else if (Directory.EnumerateFiles(Path.Combine(Settings.WorldTrafficGroundRoutes, "Arrival", icao)).Count() != 0)
+            {
+                rtb.AppendText($"* Arrival ground routes already exist for {icao}!\n");
+                needOverwriteConfirmation = true;
+            }
+
+            if (!Directory.Exists(Path.Combine(Settings.WorldTrafficParkingDefs, icao)))
+            {
+                Directory.CreateDirectory(Path.Combine(Settings.WorldTrafficParkingDefs, icao));
+            }
+            else if (Directory.EnumerateFiles(Path.Combine(Settings.WorldTrafficParkingDefs, icao)).Count() != 0)
+            {
+                rtb.AppendText($"* Parking definitions already exist for {icao}!\n");
+                needOverwriteConfirmation = true;
+            }
+
+            if (!Directory.Exists(Settings.WorldTrafficOperations))
+            {
+                Directory.CreateDirectory(Settings.WorldTrafficOperations);
+            }
+            else if (File.Exists(Path.Combine(Settings.WorldTrafficOperations, $"{icao}.txt")))
+            {
+                rtb.AppendText($"* Operations already exist for {icao}!\n");
+                needOverwriteConfirmation = true;
+            }
+
+            return needOverwriteConfirmation ? 1 : 0;
+        }
+
+        private bool scanCustomSceneries(string icao)
+        {
+            bool found = false;
+            string customSceneries = Settings.XPlaneLocation + @"\Custom Scenery\scenery_packs.ini";
+
+            if (!File.Exists(customSceneries))
+            {
+                rtb.AppendText("scenery_packs.ini not found, customized airports will not be checked.\n");
+                return false;
+            }
+
+            string[] customs = File.ReadAllLines(customSceneries);
+            foreach (string custom in customs)
+            {
+                string[] tokens = custom.Split(new char[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
+                if (tokens.Length == 0)
+                    continue;
+
+                if (tokens[0] == "SCENERY_PACK")
+                {
+                    string path = Path.Combine(Settings.XPlaneLocation, string.Join(" ", tokens.Skip(1)), "Earth nav data", "apt.dat").Replace("/", "\\");
+                    if (!File.Exists(path))
+                        continue;
+
+                    found = scanAirportFile(path, icao);
+                    if (found)
+                    {
+                        rtb.AppendText($"{icao} found in {path}.\n");
+                        break;
+                    }
+                }
+            }
+            return found;
+        }
+
+        private bool scanDefaultAptDat(string icao)
+        {
+            string defaultAptDat = Settings.XPlaneLocation + @"\Custom Scenery\Global Airports\Earth nav data\apt.dat";
+            if (!File.Exists(defaultAptDat))
+            {
+                rtb.AppendText($"Default apt.dat not found. Unable to find {icao}.\n");
+                return false;
+            }
+
+            bool found = scanAirportFile(defaultAptDat, icao);
+            if (found)
+            {
+                rtb.AppendText($"{icao} found in default apt.dat.\n");
+            }
+            else
+            {
+                rtb.AppendText($"{icao} not found in default apt.dat.\n");
+            }
+            return found;
+        }
+
+        private bool scanAirportFile(string filename, string forIcao)
+        {
             bool found = false;
 
             StreamReader sr = File.OpenText(filename);
-            StreamWriter sw = File.CreateText($".\\{forIcao}.dat");
+            StreamWriter sw = File.CreateText(Path.Combine(Settings.DataFolder, $"{forIcao}.tmp"));
             while (!sr.EndOfStream)
             {
                 string line = sr.ReadLine();
@@ -106,7 +269,6 @@ namespace GroundRouteFinder
                     string[] tokens = line.Split(_splitters, StringSplitOptions.RemoveEmptyEntries);
                     if (tokens[4] == forIcao)
                     {
-                        logElapsed("found\n");
                         found = true;
                     }
                 }
@@ -126,123 +288,21 @@ namespace GroundRouteFinder
             return found;
         }
 
-        private void btnStart_Click(object sender, EventArgs e)
+
+        private void btnGenerate_Click(object sender, EventArgs e)
         {
-            _start = DateTime.Now;
             rtb.Clear();
-            bool found = false;
+            _start = DateTime.Now;
+            logElapsed($"Starting generation.");
 
-            string icao = txtIcao.Text.ToUpper();
+            _airport.LogMessage += _airport_LogMessage;
+            _airport.Process();
 
-            string customSceneries = Settings.XPlaneLocation + @"\Custom Scenery\scenery_packs.ini";
-            string[] customs = File.ReadAllLines(customSceneries);
-            foreach (string custom in customs)
-            {
-                string[] tokens = custom.Split(new char[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
-                if (tokens.Length == 0)
-                    continue;
-
-                if (tokens[0] == "SCENERY_PACK")
-                {
-                    string path = Path.Combine(Settings.XPlaneLocation, string.Join(" ", tokens.Skip(1)), "Earth nav data", "apt.dat").Replace("/", "\\");
-                    if (!File.Exists(path))
-                        continue;
-
-                    found = scanAptDat(path, icao);
-                    if (found)
-                    {
-                        logElapsed($"Found in {path}");
-                        break;
-                    }
-                }
-            }
-
-            if (!found)
-            {
-                found = scanAptDat(Settings.XPlaneLocation + @"\Custom Scenery\Global Airports\Earth nav data\apt.dat", icao);
-                if (found)
-                {
-                    logElapsed($"Found in default apt.dat");
-                }
-            }
-
-            logElapsed("scan done");
-
-            if (found)
-            {
-                _airport = new Airport();
-                _airport.LogMessage += _airport_LogMessage;
-                if (_airport.Analyze($".\\{icao}.dat", icao))
-                {
-                    logElapsed("airport has taxi nodes, routes and parkings");
-                    _airport.preprocess();
-                }
-                else
-                {
-                    logElapsed("airport is missing taxi nodes, routes or parkings");
-                }
-            }
-
-            string depFolder = Path.Combine(Settings.DepartureFolder, icao);
-            if (Directory.Exists(depFolder))
-            {
-                if (Directory.EnumerateFiles(depFolder).Count() > 0)
-                {
-                    logElapsed("Departure ground routes exist");
-                }
-                else
-                {
-                    logElapsed("No departure ground routes exist");
-                }
-            }
-            else
-            {
-                Directory.CreateDirectory(depFolder);
-                logElapsed("No departure ground routes exist");
-            }
-
-            string arrFolder = Path.Combine(Settings.ArrivalFolder, icao);
-            if (Directory.Exists(arrFolder))
-            {
-                if (Directory.EnumerateFiles(arrFolder).Count() > 0)
-                {
-                    logElapsed("Arrival ground routes exist");
-                }
-                else
-                {
-                    logElapsed("No Arrival ground routes exist");
-                }
-            }
-            else
-            {
-                Directory.CreateDirectory(arrFolder);
-                logElapsed("No Arrival ground routes exist");
-            }
-
-            string parkingFolder = Path.Combine(Settings.ParkingDefFolder, icao);
-            if (Directory.Exists(parkingFolder))
-            {
-                if (Directory.EnumerateFiles(parkingFolder).Count() > 0)
-                {
-                    logElapsed("Parking Defs exist");
-                }
-                else
-                {
-                    logElapsed("No Parking Defs exist");
-                }
-            }
-            else
-            {
-                Directory.CreateDirectory(parkingFolder);
-                logElapsed("No parking defs exist");
-            }
-
-        }
-
-        private void btnConfirm_Click(object sender, EventArgs e)
-        {
             _airport.WriteParkingDefs();
             logElapsed($"parking defs done");
+
+            _airport.WriteOperations();
+            logElapsed($"operations done");
 
             _airport.FindOutboundRoutes(rbNormal.Checked);
             logElapsed($"outbound done, max steerpoints {OutboundResults.MaxOutPoints}");
@@ -250,7 +310,7 @@ namespace GroundRouteFinder
             _airport.FindInboundRoutes(rbNormal.Checked);
             logElapsed($"inbound done, max steerpoints {InboundResults.MaxInPoints}");
 
-
+            _airport.LogMessage -= _airport_LogMessage;
         }
 
         private void btnBrowse_Click(object sender, EventArgs e)
@@ -379,6 +439,11 @@ namespace GroundRouteFinder
             else //if (span < 24)
                 return "F";
 
+        }
+
+        private void btnExit_Click(object sender, EventArgs e)
+        {
+            Close();
         }
     }
 }

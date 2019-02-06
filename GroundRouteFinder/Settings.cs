@@ -37,6 +37,7 @@ namespace GroundRouteFinder
         public static string WorldTrafficLocation { get { return Path.Combine(XPlaneLocation, @"ClassicJetSimUtils\WorldTraffic"); }  }
         public static string WorldTrafficGroundRoutes { get { return Path.Combine(XPlaneLocation, @"ClassicJetSimUtils\WorldTraffic\GroundRoutes"); } }
         public static string WorldTrafficParkingDefs { get { return Path.Combine(XPlaneLocation, @"ClassicJetSimUtils\WorldTraffic\ParkingDefs"); } }
+        public static string WorldTrafficOperations { get { return Path.Combine(XPlaneLocation, @"ClassicJetSimUtils\WorldTraffic\AirportOperations"); } }
 
         private static RegistryKey openReg()
         {

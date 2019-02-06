@@ -10,6 +10,7 @@ namespace GroundRouteFinder.AptDat
     {
         public TaxiNode TakeOffNode;
         public List<TaxiNode> EntryPoints;
+        public double TakeOffLengthRemaining;
 
         public RunwayTakeOffSpot()
         {

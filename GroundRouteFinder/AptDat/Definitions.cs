@@ -39,7 +39,7 @@ namespace GroundRouteFinder.AptDat
         LightJet = 7,
         LightProp = 8,
         Helo = 9,
-        Ground = 10
+        Ground = 10,
     }
 
     public enum OperationType
@@ -73,14 +73,14 @@ namespace GroundRouteFinder.AptDat
         }
     }
 
-        public static class AircraftTypeConverter
+    public static class AircraftTypeConverter
     {
 
         static AircraftTypeConverter()
         {
         }
 
-        public static IEnumerable<XPlaneAircraftType> XPlaneTypesFromStrings(string [] stringTypes)
+        public static IEnumerable<XPlaneAircraftType> XPlaneTypesFromStrings(string[] stringTypes)
         {
             List<XPlaneAircraftType> converted = new List<XPlaneAircraftType>();
             foreach (string xpString in stringTypes)
@@ -218,6 +218,43 @@ namespace GroundRouteFinder.AptDat
                             default:
                                 break;
                         }
+                        break;
+                }
+            }
+            return wtTypes.Distinct();
+        }
+
+        public static IEnumerable<WorldTrafficAircraftType> WTTypesFromXPlaneTypes(IEnumerable<XPlaneAircraftType> xpTypes)
+        {
+            List<WorldTrafficAircraftType> wtTypes = new List<WorldTrafficAircraftType>();
+
+            foreach (XPlaneAircraftType xpType in xpTypes)
+            {
+                switch (xpType)
+                {
+                    case XPlaneAircraftType.Fighter:
+                        wtTypes.Add(WorldTrafficAircraftType.Fighter);
+                        break;
+                    case XPlaneAircraftType.Helo:
+                        wtTypes.Add(WorldTrafficAircraftType.Helo);
+                        break;
+                    case XPlaneAircraftType.Prop:
+                        wtTypes.Add(WorldTrafficAircraftType.LightProp);
+                        wtTypes.Add(WorldTrafficAircraftType.LightJet);
+                        break;
+                    case XPlaneAircraftType.TurboProp:
+                        wtTypes.Add(WorldTrafficAircraftType.MediumProp);
+                        break;
+                    case XPlaneAircraftType.Jet:
+                        wtTypes.Add(WorldTrafficAircraftType.MediumJet);
+                        wtTypes.Add(WorldTrafficAircraftType.LargeJet);
+                        wtTypes.Add(WorldTrafficAircraftType.LargeProp);
+                        break;
+                    case XPlaneAircraftType.HeavyJet:
+                        wtTypes.Add(WorldTrafficAircraftType.HeavyJet);
+                        wtTypes.Add(WorldTrafficAircraftType.SuperHeavy);
+                        break;
+                    default:
                         break;
                 }
             }

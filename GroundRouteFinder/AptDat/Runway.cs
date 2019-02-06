@@ -83,7 +83,7 @@ namespace GroundRouteFinder.AptDat
 
         public bool Analyze(IEnumerable<TaxiNode> taxiNodes, IEnumerable<TaxiEdge> taxiEdges)
         {
-            Log($"Analyzing Runway {Designator}");
+            //Log($"Analyzing Runway {Designator}");
 
             RunwayExits = new Dictionary<uint, RunwayExitNode>();
 
@@ -92,7 +92,7 @@ namespace GroundRouteFinder.AptDat
             double shortestDisplacedDistance = double.MaxValue;
 
             IEnumerable<TaxiNode> runwayNodes = taxiEdges.Where(te=>te.IsRunway).Select(te => te.StartNode).Concat(taxiEdges.Where(te => te.IsRunway).Select(te => te.EndNode)).Distinct();
-            Console.WriteLine($"Runway nodes {runwayNodes.Count()}");
+            //Console.WriteLine($"Runway nodes {runwayNodes.Count()}");
             foreach (TaxiNode node in runwayNodes)
             {
                 double d = VortexMath.DistancePyth(node.Latitude, node.Longitude, DisplacedLatitude, DisplacedLongitude);
@@ -110,13 +110,13 @@ namespace GroundRouteFinder.AptDat
                 }
             }
 
-            Console.WriteLine($"Near {NearestNode.Id} Displaced {DisplacedNode.Id}");
+            //Console.WriteLine($"Near {NearestNode.Id} Displaced {DisplacedNode.Id}");
 
             // Find the nodes that make up this runway: first find an edge connected to the nearest node
             IEnumerable<TaxiEdge> selectedEdges = taxiEdges.Where(te => te.IsRunway && (te.EndNode.Id == NearestNode.Id || te.StartNode.Id == NearestNode.Id));
             if (selectedEdges.Count() == 0)
             {
-                Console.WriteLine("No edges");
+                //Console.WriteLine("No edges");
                 return false;
             }
 
@@ -162,7 +162,7 @@ namespace GroundRouteFinder.AptDat
 
                 RunwayTakeOffSpot takeOffSpot = new RunwayTakeOffSpot();
                 takeOffSpot.TakeOffNode = node;
-                double remainingLength = VortexMath.DistanceKM(OppositeLatitude, OppositeLongitude, takeOffSpot.TakeOffNode.Latitude, takeOffSpot.TakeOffNode.Longitude);
+                takeOffSpot.TakeOffLengthRemaining = VortexMath.DistanceKM(OppositeLatitude, OppositeLongitude, takeOffSpot.TakeOffNode.Latitude, takeOffSpot.TakeOffNode.Longitude);
 
                 // Now inspect the current node
                 bool selectedOne = false;
@@ -172,11 +172,11 @@ namespace GroundRouteFinder.AptDat
                         continue;
 
                     double entryAngle = VortexMath.AbsTurnAngle(edge.Bearing, Bearing);
-                    if (remainingLength > VortexMath.Feet4000Km &&  entryAngle <= VortexMath.Deg120Rad) // allow a turn of roughly 100 degrees, todo: maybe lower this?
+                    if (takeOffSpot.TakeOffLengthRemaining > VortexMath.Feet4000Km &&  entryAngle <= VortexMath.Deg120Rad) // allow a turn of roughly 100 degrees, todo: maybe lower this?
                     {
                         // Skip entries that are close to the last selected one
                         // Hmm, this can go 1 loop higher
-                        if (lastSelectedRemainingDistance - remainingLength > 0.2)
+                        if (lastSelectedRemainingDistance - takeOffSpot.TakeOffLengthRemaining > 0.2)
                         {
                             selectedOne = true;
                             takeOffSpot.EntryPoints.Add(edge.StartNode);
@@ -189,13 +189,8 @@ namespace GroundRouteFinder.AptDat
                 {
                     selectedNodes++;
                     TakeOffSpots.Add(takeOffSpot);
-                    lastSelectedRemainingDistance = remainingLength;
+                    lastSelectedRemainingDistance = takeOffSpot.TakeOffLengthRemaining;
                 }
-            }
-
-            foreach (RunwayTakeOffSpot tos in TakeOffSpots)
-            {
-                Log($" Entry to <{tos.TakeOffNode.Id}> from <{string.Join(", ", tos.EntryPoints.Select(ep=>ep.Id)),-10}> length: {VortexMath.DistanceKM(OppositeLatitude, OppositeLongitude, tos.TakeOffNode.Latitude, tos.TakeOffNode.Longitude)/VortexMath.Foot2Km:0}ft");
             }
         }
 
