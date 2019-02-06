@@ -70,6 +70,7 @@
     <Compile Include="AptDat\Definitions.cs" />
     <Compile Include="AptDat\RunwayExitSpot.cs" />
     <Compile Include="AptDat\TaxiEdge.cs" />
+    <Compile Include="AptDat\TrafficFlow.cs" />
     <Compile Include="InboundResults.cs" />
     <Compile Include="LocationObject.cs" />
     <Compile Include="LogEmitter.cs" />

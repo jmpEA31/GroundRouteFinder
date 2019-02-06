@@ -255,6 +255,45 @@ namespace GroundRouteFinder.AptDat
             }
         }
 
+        internal void FindNearestLine(List<LineElement> _lines)
+        {
+            double minDist = double.MaxValue;
+            LineElement leBEst = null;
+
+            foreach (LineElement line in _lines)
+            {
+                LineElement from = line;
+                foreach (LineElement seg in line.Segments)
+                {
+                    LineElement to = seg;
+
+                    double dStart = VortexMath.DistanceKM(this, from);
+                    if (dStart < minDist)
+                    {
+                        double lineBearing = VortexMath.BearingRadians(from, to);
+                        double turn = VortexMath.AbsTurnAngle(lineBearing, Bearing);
+
+                        //if (turn < VortexMath.Deg005Rad || turn > VortexMath.PI - VortexMath.Deg005Rad)
+                        {
+                            leBEst = line;
+                            minDist = dStart;
+                        }
+                    }
+
+                    from = to;
+                }
+            }
+
+            if (leBEst != null)
+            {
+                Console.WriteLine($"{Name} has a line node at {minDist * 1000:0.000} meters: {leBEst.Latitude * VortexMath.Rad2Deg} {leBEst.Longitude * VortexMath.Rad2Deg}");
+            }
+            else
+            {
+                Console.WriteLine($"{Name} has no nearby line node");
+            }
+        }
+
         internal void DetermineWtTypes()
         {
             PossibleWtTypes = AircraftTypeConverter.WTTypesFromXPlaneLimits(XPlaneAircraftCategory.A, MaxSize, Operation);

@@ -8,6 +8,16 @@ using System.Threading.Tasks;
 
 namespace GroundRouteFinder.AptDat
 {
+    public class LineElement : LocationObject
+    {
+        public List<LineElement> Segments;
+        public LineElement()
+            : base()
+        {
+            Segments = new List<LineElement>();
+        }
+    }
+
     public class Airport : LogEmitter
     {
         public string ICAO;
@@ -21,7 +31,14 @@ namespace GroundRouteFinder.AptDat
         private bool hasFlowRules = false;
         private bool hasVfrRules = false;
 
+        public List<LineElement> _lines;
+        public bool inLine = false;
+
         private static char[] _splitters = { ' ' };
+
+        LineElement cle = null;
+
+        public TrafficFlow Flows = new TrafficFlow();
 
         public Airport()
             : base()
@@ -49,6 +66,8 @@ namespace GroundRouteFinder.AptDat
             _parkings = new List<Parking>();
             _runways = new List<Runway>();
             _edges = new List<TaxiEdge>();
+            _lines = new List<LineElement>();
+
 
             string[] lines = File.ReadAllLines(name);
             for (int i = 0; i < lines.Length; i++)
@@ -68,6 +87,22 @@ namespace GroundRouteFinder.AptDat
                 else if (lines[i].StartsWith("1101 "))
                 {
                     readRunwayVfrRecord(lines[i]);
+                }
+                else if (lines[i].StartsWith("120 "))
+                {
+                    inLine = true;
+                }
+                else if (inLine && (lines[i].StartsWith("111 ") || lines[i].StartsWith("112 ")))
+                {
+                    readLineSegment(lines[i]);
+                }
+                else if (inLine && (lines[i].StartsWith("115 ") || lines[i].StartsWith("116 ")))
+                {
+                    readLineEnd(lines[i]);
+                }
+                else if (lines[i].StartsWith("100 "))
+                {
+                    readRunwayRecord(lines[i]);
                 }
                 else if (lines[i].StartsWith("1201 "))
                 {
@@ -93,6 +128,10 @@ namespace GroundRouteFinder.AptDat
                                     tokens[2],
                                     tokens.Skip(3));
                 }
+                else
+                {
+                    Flows.ParseInfo(lines[i]);
+                }
             }
 
             Log($"{ICAO} Parkings: {_parkings.Count} Runways: {_runways.Count} Nodes: {_nodeDict.Count()} TaxiPaths: {_edges.Count}");
@@ -100,6 +139,8 @@ namespace GroundRouteFinder.AptDat
 
         public void preprocess()
         {
+            Flows.Analyze();
+
             // Filter out nodes with links (probably nodes for the vehicle network)
             _taxiNodes = _nodeDict.Values.Where(v => v.IncomingEdges.Count > 0);
 
@@ -134,6 +175,8 @@ namespace GroundRouteFinder.AptDat
                 parking.DetermineWtTypes();
                 parking.DetermineTaxiOutLocation(_taxiNodes); // Move this to first if we need pushback info in the parking def
                 numberOfParkingsPerCategory[parking.MaxSize]++;
+                parking.FindNearestLine(_lines); // Move this to first if we need pushback info in the parking def
+                parking.WriteDef();
             }
 
             for (XPlaneAircraftCategory cat = XPlaneAircraftCategory.A; cat < XPlaneAircraftCategory.Max; cat++)
@@ -538,6 +581,41 @@ namespace GroundRouteFinder.AptDat
                     r.AvailableForTakeOff = true;
             }
         }
+
+        private void readLineSegment(string line)
+        {
+            if (cle == null)
+            {
+                cle = new LineElement();
+                string[] tokens = line.Split(_splitters, StringSplitOptions.RemoveEmptyEntries);
+                double latitude1 = double.Parse(tokens[1]) * VortexMath.Deg2Rad;
+                double longitude1 = double.Parse(tokens[2]) * VortexMath.Deg2Rad;
+                cle.Latitude = latitude1;
+                cle.Longitude = longitude1;
+                _lines.Add(cle);
+            }
+            else
+            {
+                // skipping intermediates now.
+            }
+        }
+
+        private void readLineEnd(string line)
+        {
+            if (inLine)
+            {
+                string[] tokens = line.Split(_splitters, StringSplitOptions.RemoveEmptyEntries);
+                LineElement le = new LineElement();
+                double latitude1 = double.Parse(tokens[1]) * VortexMath.Deg2Rad;
+                double longitude1 = double.Parse(tokens[2]) * VortexMath.Deg2Rad;
+                le.Latitude = latitude1;
+                le.Longitude = longitude1;
+                cle.Segments.Add(le);
+                cle = null;
+                inLine = false;
+            }
+        }
+
 
         private void readTaxiNode(string line)
         {
