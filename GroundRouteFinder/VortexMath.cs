@@ -202,6 +202,11 @@ namespace GroundRouteFinder
             return true;
         }
 
+        public static void PointFrom(LocationObject location, double θ, double distance, ref double φo, ref double λo)
+        {
+            PointFrom(location.Latitude, location.Longitude, θ,  distance, ref  φo, ref  λo);
+        }
+
         public static void PointFrom(double φ1, double λ1, double θ, double distance, ref double φo, ref double λo)
         {
             double dR = distance / 6371.0;

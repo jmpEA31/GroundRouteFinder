@@ -216,33 +216,38 @@ namespace GroundRouteFinder
         {
             List<SteerPoint> steerPoints = new List<SteerPoint>();
 
-            // Add the start point (this one or displaced???)
-            RunwayPoint threshold = new RunwayPoint(route.Runway.Latitude, route.Runway.Longitude, 55, $"{route.Runway.Designator} Threshold", route.RouteStart.Edge.ActiveForRunway(route.Runway.Designator));
+            // Route should start at the (displaced) threshold
+            RunwayPoint threshold = new RunwayPoint(route.Runway.DisplacedNode, 55, $"{route.Runway.Designator} Threshold", route.RouteStart.Edge.ActiveForRunway(route.Runway.Designator));
             threshold.OnRunway = true;
             threshold.IsExiting = true;
             steerPoints.Add(threshold);
 
             foreach (TaxiNode node in route.Runway.RunwayNodes)
             {
-                int speed = (node == runwayExitNode) ? 30 : 55;
+                int speed = (node == runwayExitNode) ? 35 : 55;
                 steerPoints.Add(new RunwayPoint(node.Latitude, node.Longitude, speed, $"{route.Runway.Designator}", route.RouteStart.Edge.ActiveForRunway(route.Runway.Designator)));
 
                 if (node == runwayExitNode) // Key of the dictionary is the last node on the runway centerline for this route
                     break;
             }
 
-            steerPoints.Add(new RunwayPoint(route.NearestNode.Latitude, route.NearestNode.Longitude, 20, route.RouteStart.Edge.LinkName, route.RouteStart.Edge.ActiveForRunway(route.Runway.Designator)));
+            // This is the first node off the runway centerline
+            steerPoints.Add(new RunwayPoint(route.StartNode, 30, route.RouteStart.Edge.LinkName, route.RouteStart.Edge.ActiveForRunway(route.Runway.Designator)));
 
             LinkedNode link = route.RouteStart;
             while (link.Node != null)
             {
                 if (link.Edge.ActiveZone)
-                    steerPoints.Add(new RunwayPoint(link.Node.Latitude, link.Node.Longitude, 15, $"{link.Edge.LinkName}", $"{link.Edge.ActiveForRunway(route.Runway.Designator)}"));
+                    steerPoints.Add(new RunwayPoint(link.Node, 15, $"{link.Edge.LinkName}", $"{link.Edge.ActiveForRunway(route.Runway.Designator)}"));
                 else
-                    steerPoints.Add(new SteerPoint(link.Node.Latitude, link.Node.Longitude, 15, $"{link.Edge.LinkName}"));
+                    steerPoints.Add(new SteerPoint(link.Node, 15, $"{link.Edge.LinkName}"));
 
                 link = link.Next;
             }
+
+            // todo: remove last point if it takes us past the 'pushback point'
+            // todo: how does this all work with freaky pushback points?
+            // todo: tie downs
 
             steerPoints.Add(new SteerPoint(Parking.PushBackLatitude, Parking.PushBackLongitude, 5, Parking.Name));
             steerPoints.Add(new ParkingPoint(Parking.Latitude, Parking.Longitude, 5, Parking.Name, Parking.Bearing, true));

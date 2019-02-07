@@ -23,6 +23,12 @@ namespace GroundRouteFinder
             Protected = @protected;
         }
 
+        public SteerPoint(LocationObject location, int speed, string name, bool @protected = false)
+            : this(location.Latitude, location.Longitude, speed, name, @protected)
+        {
+        }
+
+
         public virtual SteerPoint Duplicate()
         {
             return new SteerPoint(this.Latitude, this.Longitude, this.Speed, this.Name);

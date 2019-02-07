@@ -24,10 +24,10 @@ namespace GroundRouteFinder
         public double AvailableRunwayLength;
         public List<Parking> Parkings;
 
-        public RunwayTakeOffSpot TakeoffSpot;
+        public EntryPoint RunwayEntryPoint;
         public TaxiNode TargetNode;
         public double Distance;
-        public TaxiNode NearestNode;
+        public TaxiNode StartNode;
         public LinkedNode RouteStart;
 
         public XPlaneAircraftCategory MaxSize;
@@ -62,8 +62,8 @@ namespace GroundRouteFinder
         {
             ResultRoute extracted = new ResultRoute(size);
             extracted.Runway = null;
-            extracted.NearestNode = startNode;
-            ulong node1 = extracted.NearestNode.Id;
+            extracted.StartNode = startNode;
+            ulong node1 = extracted.StartNode.Id;
             extracted.Distance = startNode.DistanceToTarget;
 
             TaxiNode pathNode;
@@ -97,7 +97,7 @@ namespace GroundRouteFinder
                 {
                     double nextBearing = pathNode.NextNodeToTarget.BearingToTarget;
                     double turn = VortexMath.AbsTurnAngle(currentBearing, nextBearing);
-/*
+
                     // This filters out very sharp turns if an alternate exists in exchange for a longer route:
                     // todo: parameters. Now => if more than 120 degrees and alternate < 45 exists use alternate
                     if (turn > VortexMath.Deg120Rad)
@@ -148,7 +148,6 @@ namespace GroundRouteFinder
                             }
                         }
                     }
-*/
                 }
 
                 TaxiNode nextNode = (pathNode.OverrideToTarget != null) ? pathNode.OverrideToTarget : pathNode.NextNodeToTarget;

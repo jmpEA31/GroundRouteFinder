@@ -7,6 +7,14 @@ using System.Threading.Tasks;
 
 namespace GroundRouteFinder.AptDat
 {
+    public class EntryPoint
+    {
+        public TaxiNode OffRunwayNode;
+        public TaxiNode OnRunwayNode;
+        public double RunwayLengthRemaining;
+        public double TurnAngle;
+    }
+
     public class Runway : LocationObject
     {
         private static char[] _invalidChars = Path.GetInvalidFileNameChars();
@@ -34,12 +42,25 @@ namespace GroundRouteFinder.AptDat
         public double DisplacedLongitude;
         public TaxiNode DisplacedNode;
 
-        public double OppositeLatitude;
-        public double OppositeLongitude;
+        private Runway _oppositeEnd;
+        public Runway OppositeEnd
+        {
+            get { return _oppositeEnd; }
+            set
+            {
+                _oppositeEnd = value;
+                if (_oppositeEnd != null)
+                {
+                    Bearing = VortexMath.BearingRadians(this, _oppositeEnd);
+                    Length = VortexMath.DistanceKM(DisplacedLatitude, DisplacedLongitude, _oppositeEnd.Latitude, _oppositeEnd.Longitude);
+                }
+            }
+        }
 
         public double Length;
 
-        public List<RunwayTakeOffSpot> TakeOffSpots;
+//        public List<RunwayTakeOffSpot> TakeOffSpots;
+        public Dictionary<TaxiNode, List<EntryPoint>> EntryGroups;
         public List<TaxiNode> RunwayNodes;
 
         public double Bearing;
@@ -62,23 +83,22 @@ namespace GroundRouteFinder.AptDat
 
         public bool AvailableForVFR = true;
 
-        public Runway(string designator, double latitude, double longitude, double displacement, double oppositeLatitude, double oppositeLongitude)
+        public Runway(string designator, double latitude, double longitude, double displacement)
             : base(latitude, longitude)
         {
             NearestNode = null;
             DisplacedNode = null;
-            TakeOffSpots = new List<RunwayTakeOffSpot>();
+            EntryGroups = new Dictionary<TaxiNode, List<EntryPoint>>();
+
+            //            TakeOffSpots = new List<RunwayTakeOffSpot>();
 
             Designator = designator;
             Latitude = latitude;
             Longitude = longitude;
             Displacement = displacement;
-            OppositeLatitude = oppositeLatitude;
-            OppositeLongitude = oppositeLongitude;
-
-            Bearing = VortexMath.BearingRadians(Latitude, Longitude, OppositeLatitude, OppositeLongitude);
             VortexMath.PointFrom(Latitude, Longitude, Bearing, Displacement, ref DisplacedLatitude, ref DisplacedLongitude);
-            Length = VortexMath.DistanceKM(DisplacedLatitude, DisplacedLongitude, OppositeLatitude, OppositeLongitude);
+
+            OppositeEnd = null;
         }
 
         public bool Analyze(IEnumerable<TaxiNode> taxiNodes, IEnumerable<TaxiEdge> taxiEdges)
@@ -137,61 +157,126 @@ namespace GroundRouteFinder.AptDat
 
         private void findEntries()
         {
-            int selectedNodes = 0;
-            bool displacedNodeFound = false;
-            double lastSelectedRemainingDistance = double.MaxValue;
+            EntryGroups.Clear();
 
             // Look for entries into taxinodes along the runway. We want to select all possible entries from
             // the first two nodes with at least 1 entry
+
+            // Change: group close together nodes with entries from both sides of the runway
+            //
+            // Thinking:
+            // - Pick the first node on the runway that has 'off' runway edges leading into it, add each entry node
+            // - Add nodes that are within 250?m
+            // - Pick the longest entries for both left/right OR pick the 'smoothest' entries for both left/right
+            // - Repeat for the first node > 250?m from the first node
+            // When creating routes, evaluate both the left and right entries per parking, only generate actual route for the shortest
+
+            TaxiNode groupStartNode = null;
+            bool foundGroups = false;
+
+            // Nodes are ordered, longest remaining runway to runway end
             foreach (TaxiNode node in RunwayNodes)
             {
-                if (selectedNodes > 1)
+                double distanceRemaining = VortexMath.DistanceKM(node, OppositeEnd);
+                if (distanceRemaining < VortexMath.Feet4000Km)
                     break;
 
-                // If the take off spot has been displaced, do not select entries at the start of the runway
-                // todo: start with these, but keep search and replace them if better ones are found.
-                //if (!displacedNodeFound)
-                //{
-                //    if (node == DisplacedNode)
-                //        displacedNodeFound = true;
-                //    else if (VortexMath.DistanceKM(node.Latitude, node.Longitude, DisplacedLatitude, DisplacedLongitude) < 0.150)
-                //        displacedNodeFound = true;
-                //    else
-                //        continue;
-                //}
-
-                RunwayTakeOffSpot takeOffSpot = new RunwayTakeOffSpot();
-                takeOffSpot.TakeOffNode = node;
-                takeOffSpot.TakeOffLengthRemaining = VortexMath.DistanceKM(OppositeLatitude, OppositeLongitude, takeOffSpot.TakeOffNode.Latitude, takeOffSpot.TakeOffNode.Longitude);
-
-                // Now inspect the current node
-                bool selectedOne = false;
                 foreach (TaxiEdge edge in node.IncomingEdges)
                 {
                     if (edge.IsRunway)
                         continue;
 
-                    double entryAngle = VortexMath.AbsTurnAngle(edge.Bearing, Bearing);
-                    if (takeOffSpot.TakeOffLengthRemaining > VortexMath.Feet4000Km &&  entryAngle <= VortexMath.Deg120Rad) // allow a turn of roughly 100 degrees, todo: maybe lower this?
+                    double entryAngle = VortexMath.TurnAngle(edge.Bearing, Bearing);
+                    if (Math.Abs(entryAngle) > VortexMath.Deg120Rad)
+                        continue;
+
+                    if (groupStartNode == null)
                     {
-                        // Skip entries that are close to the last selected one
-                        // Hmm, this can go 1 loop higher
-                        if (lastSelectedRemainingDistance - takeOffSpot.TakeOffLengthRemaining > 0.25)
-                        {
-                            selectedOne = true;
-                            takeOffSpot.EntryPoints.Add(edge.StartNode);
-                        }
+                        groupStartNode = node;
+                        EntryGroups.Add(node, new List<EntryPoint>());
+                    }
+
+                    // Next can be simplified to 1 if (>= 0.250) / else with the actual add after the if else
+                    // for now this shows better what is going on
+                    if (VortexMath.DistanceKM(groupStartNode, node) < 0.200)
+                    {
+                        EntryGroups[groupStartNode].Add(new EntryPoint() { OffRunwayNode = edge.StartNode, OnRunwayNode = node, RunwayLengthRemaining = distanceRemaining, TurnAngle = entryAngle });
+                    }
+                    else if (EntryGroups.Count < 2)
+                    {
+                        // add to new group
+                        groupStartNode = node;
+                        EntryGroups.Add(node, new List<EntryPoint>());
+                        EntryGroups[groupStartNode].Add(new EntryPoint() { OffRunwayNode = edge.StartNode, OnRunwayNode = node, RunwayLengthRemaining = distanceRemaining, TurnAngle = entryAngle });
+                    }
+                    else
+                    {
+                        foundGroups = true;
+                        break;
                     }
                 }
+                if (foundGroups)
+                    break;
+            }
 
-                // If the node had a good entry, mark '1 node' as found
-                if (selectedOne)
+            foreach (var result in EntryGroups)
+            {
+                Console.WriteLine($"{Designator} Group: {result.Key.Id}");
+
+                EntryPoint right = result.Value.Where(ep => ep.TurnAngle < 0).OrderBy(ep => ep.TurnAngle).FirstOrDefault();
+                EntryPoint left = result.Value.Where(ep => ep.TurnAngle > 0).OrderBy(ep => ep.TurnAngle).FirstOrDefault();
+                EntryGroups[result.Key].Clear();
+
+                if (right != null)
                 {
-                    selectedNodes++;
-                    TakeOffSpots.Add(takeOffSpot);
-                    lastSelectedRemainingDistance = takeOffSpot.TakeOffLengthRemaining;
+                    Console.WriteLine($" Right Entry: {right.OffRunwayNode.Id}->{right.OnRunwayNode.Id} {right.TurnAngle * VortexMath.Rad2Deg:0.0} {right.RunwayLengthRemaining:0.00}");
+                    EntryGroups[result.Key].Add(right);
+                }
+
+                if (left != null)
+                {
+                    Console.WriteLine($" Left  Entry: {left.OffRunwayNode.Id}->{left.OnRunwayNode.Id} {left.TurnAngle * VortexMath.Rad2Deg:0.0} {left.RunwayLengthRemaining:0.00}");
+                    EntryGroups[result.Key].Add(left);
                 }
             }
+
+            //foreach (TaxiNode node in RunwayNodes)
+            //{
+            //    if (selectedNodes > 1)
+            //        break;
+
+            //    RunwayTakeOffSpot takeOffSpot = new RunwayTakeOffSpot();
+            //    takeOffSpot.TakeOffNode = node;
+            //    takeOffSpot.TakeOffLengthRemaining = VortexMath.DistanceKM(takeOffSpot.TakeOffNode, OppositeEnd);
+
+            //    // Now inspect the current node
+            //    bool selectedOne = false;
+            //    foreach (TaxiEdge edge in node.IncomingEdges)
+            //    {
+            //        if (edge.IsRunway)
+            //            continue;
+
+            //        double entryAngle = VortexMath.AbsTurnAngle(edge.Bearing, Bearing);
+            //        if (takeOffSpot.TakeOffLengthRemaining > VortexMath.Feet4000Km &&  entryAngle <= VortexMath.Deg120Rad) // allow a turn of roughly 100 degrees, todo: maybe lower this?
+            //        {
+            //            // Skip entries that are close to the last selected one
+            //            // Hmm, this can go 1 loop higher
+            //            if (lastSelectedRemainingDistance - takeOffSpot.TakeOffLengthRemaining > 0.25)
+            //            {
+            //                selectedOne = true;
+            //                takeOffSpot.EntryPoints.Add(edge.StartNode);
+            //            }
+            //        }
+            //    }
+
+            //    // If the node had a good entry, mark '1 node' as found
+            //    if (selectedOne)
+            //    {
+            //        selectedNodes++;
+            //        TakeOffSpots.Add(takeOffSpot);
+            //        lastSelectedRemainingDistance = takeOffSpot.TakeOffLengthRemaining;
+            //    }
+            //}
         }
 
         public class RunwayExitNode

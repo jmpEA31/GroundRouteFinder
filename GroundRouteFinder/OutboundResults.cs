@@ -28,7 +28,7 @@ namespace GroundRouteFinder
         /// </summary>
         /// <param name="maxSizeCurrentResult">The maximum size allowed on the current route</param>
         /// <param name="parkingNode">The runway node for this exit</param>
-        public void AddResult(XPlaneAircraftCategory maxSizeCurrentResult, TaxiNode parkingNode, Parking parking, RunwayTakeOffSpot takeOffSpot, double availableRunwayLength)
+        public void AddResult(XPlaneAircraftCategory maxSizeCurrentResult, TaxiNode parkingNode, Parking parking, TaxiNode entryGroupNode, EntryPoint entryPoint)
         {
             if (!_results.ContainsKey(parkingNode))
                 _results[parkingNode] = new Dictionary<XPlaneAircraftCategory, ResultRoute>();
@@ -39,8 +39,8 @@ namespace GroundRouteFinder
             if (originResults.Count == 0)
             {
                 originResults.Add(maxSizeCurrentResult, ResultRoute.ExtractRoute(_edges, parkingNode, maxSizeCurrentResult));
-                originResults[maxSizeCurrentResult].TakeoffSpot = takeOffSpot;
-                originResults[maxSizeCurrentResult].AvailableRunwayLength = availableRunwayLength;
+                originResults[maxSizeCurrentResult].RunwayEntryPoint = entryPoint;
+                originResults[maxSizeCurrentResult].AvailableRunwayLength = entryPoint.RunwayLengthRemaining;
             }
             else
             {
@@ -50,16 +50,16 @@ namespace GroundRouteFinder
                     if (minSize > maxSizeCurrentResult)
                     {
                         originResults.Add(maxSizeCurrentResult, ResultRoute.ExtractRoute(_edges, parkingNode, maxSizeCurrentResult));
-                        originResults[maxSizeCurrentResult].TakeoffSpot = takeOffSpot;
-                        originResults[maxSizeCurrentResult].AvailableRunwayLength = availableRunwayLength;
+                        originResults[maxSizeCurrentResult].RunwayEntryPoint = entryPoint;
+                        originResults[maxSizeCurrentResult].AvailableRunwayLength = entryPoint.RunwayLengthRemaining;
 
                         originResults[minSize].MinSize = (maxSizeCurrentResult + 1);
                     }
                     else if (minSize == maxSizeCurrentResult)
                     {
                         originResults[minSize] = ResultRoute.ExtractRoute(_edges, parkingNode, maxSizeCurrentResult);
-                        originResults[minSize].TakeoffSpot = takeOffSpot;
-                        originResults[minSize].AvailableRunwayLength = availableRunwayLength;
+                        originResults[minSize].RunwayEntryPoint = entryPoint;
+                        originResults[minSize].AvailableRunwayLength = entryPoint.RunwayLengthRemaining;
                     }
                 }
             }
@@ -205,8 +205,8 @@ namespace GroundRouteFinder
         private IEnumerable<SteerPoint> buildSteerPoints(Parking currentParking, ResultRoute route)
         {
             LinkedNode link = route.RouteStart;
-            TaxiNode nodeToWrite = route.NearestNode;
-            RunwayTakeOffSpot takeoffSpot = route.TakeoffSpot;
+            TaxiNode nodeToWrite = route.StartNode;
+            EntryPoint entryPoint = route.RunwayEntryPoint;
 
             List<SteerPoint> steerPoints = new List<SteerPoint>();
             steerPoints.Add(new ParkingPoint(currentParking.Latitude, currentParking.Longitude, 3, $"{currentParking.Name}", currentParking.Bearing, false));
@@ -228,9 +228,9 @@ namespace GroundRouteFinder
                 double nextPushBearing = VortexMath.BearingRadians(nodeToWrite.Latitude, nodeToWrite.Longitude, currentParking.PushBackLatitude, currentParking.PushBackLongitude);
                 double turn = VortexMath.TurnAngle(currentParking.Bearing + VortexMath.PI, nextPushBearing);
                 double turnAbs = Math.Abs(turn);
-                double factor = ((turnAbs) / VortexMath.PI);  // 0...0.5.....1
-                factor = (factor * factor) + factor / 4;                   // 0...0.375...1.25
-                double distance = 0.040 * factor;                          // 0m...15m ...50m
+                double factor = ((turnAbs) / VortexMath.PI);                // 0...0.5.....1
+                factor = (factor * factor) + factor / 4;                    // 0...0.375...1.25
+                double distance = 0.040 * factor;                           // 0m...15m ...50m
 
                 if (turnAbs < VortexMath.Deg135Rad)
                 {
@@ -272,22 +272,39 @@ namespace GroundRouteFinder
             if (nodeToWrite != link.Node)
                 steerPoints.Add(new SteerPoint(nodeToWrite.Latitude, nodeToWrite.Longitude, 8, $"{link.Edge.LinkName}"));
 
-            TaxiEdge lastEdge = null;
             while (link.Node != null)
             {
-                lastEdge = link.Edge;
+                bool activeZone = false;
+                string activeFor = "";
+
                 if (link.Edge.ActiveZone)
-                    steerPoints.Add(new RunwayPoint(link.Node.Latitude, link.Node.Longitude, 15, $"{link.Edge.LinkName}", link.Edge.ActiveForRunway(Runway.Designator)));
+                {
+                    activeZone = true;
+                    activeFor = link.Edge.ActiveForRunway(Runway.Designator);
+                }
+                else if (link.Next.Edge != null && link.Next.Edge.ActiveZone)
+                {
+                    activeZone = true;
+                    activeFor = link.Next.Edge.ActiveForRunway(Runway.Designator);
+                }
+                else if (link.Next.Edge == null)
+                {
+                    activeZone = true;
+                    activeFor = Runway.Designator;
+                }
+
+                if (activeZone)
+                    steerPoints.Add(new RunwayPoint(link.Node.Latitude, link.Node.Longitude, 15, $"{link.Edge.LinkName}", activeFor));
                 else
                     steerPoints.Add(new SteerPoint(link.Node.Latitude, link.Node.Longitude, 15, $"{link.Edge.LinkName}"));
 
                 link = link.Next;
             }
 
-            steerPoints.Add(new RunwayPoint(takeoffSpot.TakeOffNode.Latitude, takeoffSpot.TakeOffNode.Longitude, 8, $"{Runway.Designator}", lastEdge.ActiveForRunway(Runway.Designator)));
+            steerPoints.Add(new RunwayPoint(entryPoint.OnRunwayNode, 8, Runway.Designator, Runway.Designator));
 
-            VortexMath.PointFrom(takeoffSpot.TakeOffNode.Latitude, takeoffSpot.TakeOffNode.Longitude, Runway.Bearing, 0.022, ref addLat, ref addLon);
-            steerPoints.Add(new RunwayPoint(addLat, addLon, 6, $"{Runway.Designator}", lastEdge.ActiveForRunway(Runway.Designator)));
+            VortexMath.PointFrom(entryPoint.OnRunwayNode, Runway.Bearing, 0.022, ref addLat, ref addLon);
+            steerPoints.Add(new RunwayPoint(addLat, addLon, 6, Runway.Designator, Runway.Designator));
 
             RouteProcessor.Smooth(steerPoints);
             RouteProcessor.ProcessRunwayOperations(steerPoints);

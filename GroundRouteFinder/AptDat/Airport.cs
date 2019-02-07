@@ -189,14 +189,14 @@ namespace GroundRouteFinder.AptDat
                 r.Analyze(_taxiNodes, _edges);
                 if (r.RunwayExits.Count > 0)
                     Log($"Rwy {r.Designator,3} Exits: {r.RunwayExits.Count()} ({string.Join(", ", r.RunwayExits.Values.OrderBy(re=>re.ExitDistance).Select(re=>(re.ExitDistance/VortexMath.Foot2Km).ToString("0")))} ft)");
-                if (r.TakeOffSpots.Count > 0)
-                {
-                    Log($"Rwy {r.Designator,3} Entry: {r.TakeOffSpots.Count()} ({string.Join(", ", r.TakeOffSpots.Select(to => (to.TakeOffLengthRemaining / VortexMath.Foot2Km).ToString("0")))} ft)");
-                    foreach (var tos in r.TakeOffSpots)
-                    {
-                        Log($" {tos.TakeOffNode} {tos.TakeOffLengthRemaining / VortexMath.Foot2Km:0} {string.Join("-", tos.EntryPoints.Select(ep => ep.Id))}");
-                    }
-                }
+                //if (r.EntryGroups.Count > 0)
+                //{
+                //    Log($"Rwy {r.Designator,3} Entry: {r.EntryGroups.Count()} ({string.Join(", ", r.EntryGroups.Select(to => (to.TakeOffLengthRemaining / VortexMath.Foot2Km).ToString("0")))} ft)");
+                //    foreach (var tos in r.TakeOffSpots)
+                //    {
+                //        Log($" {tos.TakeOffNode} {tos.TakeOffLengthRemaining / VortexMath.Foot2Km:0} {string.Join("-", tos.EntryPoints.Select(ep => ep.Id))}");
+                //    }
+                //}
             }
         }
 
@@ -352,20 +352,19 @@ namespace GroundRouteFinder.AptDat
             foreach (Runway runway in _runways)
             {
                 // for each takeoff spot
-                foreach (RunwayTakeOffSpot takeoffSpot in runway.TakeOffSpots)
+                foreach (KeyValuePair<TaxiNode, List<EntryPoint>> entryGroup in runway.EntryGroups)
                 {
                     OutboundResults or = new OutboundResults(_edges, runway);
                     // for each size
                     for (XPlaneAircraftCategory size = XPlaneAircraftCategory.F; size >= XPlaneAircraftCategory.A; size--)
                     {
-                        // find shortest path from each parking to each takeoff spot considering each entrypoint
-                        foreach (TaxiNode runwayEntryNode in takeoffSpot.EntryPoints)
+                        foreach (EntryPoint ep in entryGroup.Value)
                         {
-                            double remainingRunway = VortexMath.DistanceKM(runwayEntryNode.Latitude, runwayEntryNode.Longitude, runway.OppositeLatitude, runway.OppositeLongitude);
-                            findShortestPaths(_taxiNodes, runwayEntryNode, size);
+                            // find shortest path from each parking to each takeoff spot considering each entrypoint
+                            findShortestPaths(_taxiNodes, ep.OffRunwayNode, size);
                             foreach (Parking parking in _parkings)
                             {
-                                or.AddResult(size, parking.NearestNode, parking, takeoffSpot, remainingRunway);
+                                or.AddResult(size, parking.NearestNode, parking, entryGroup.Key, ep);
                             }
                         }
                     }
@@ -500,10 +499,17 @@ namespace GroundRouteFinder.AptDat
             double latitude2 = double.Parse(tokens[18]) * VortexMath.Deg2Rad;
             double longitude2 = double.Parse(tokens[19]) * VortexMath.Deg2Rad;
 
-            _runways.Add(new Runway(tokens[8], latitude1, longitude1, double.Parse(tokens[11]) / 1000.0, latitude2, longitude2));
-            _runways.Last().LogMessage += RelayMessage;
-            _runways.Add(new Runway(tokens[17], latitude2, longitude2, double.Parse(tokens[20]) / 1000.0, latitude1, longitude1));
-            _runways.Last().LogMessage += RelayMessage;
+            Runway r1 = new Runway(tokens[8], latitude1, longitude1, double.Parse(tokens[11]) / 1000.0);
+            r1.LogMessage += RelayMessage;
+
+            Runway r2 = new Runway(tokens[17], latitude2, longitude2, double.Parse(tokens[20]) / 1000.0);
+            r2.LogMessage += RelayMessage;
+
+            r1.OppositeEnd = r2;
+            r2.OppositeEnd = r1;
+
+            _runways.Add(r1);
+            _runways.Add(r2);
         }
 
         private void readLineSegment(string line)

@@ -22,6 +22,12 @@ namespace GroundRouteFinder
             Operations = operations;
         }
 
+        public RunwayPoint(LocationObject location, int speed, string name, string operations)
+            : this(location.Latitude, location.Longitude, speed, name, operations)
+        {
+        }
+
+
         public override SteerPoint Duplicate()
         {
             return new RunwayPoint(this.Latitude, this.Longitude, this.Speed, this.Name, this.Operations);
