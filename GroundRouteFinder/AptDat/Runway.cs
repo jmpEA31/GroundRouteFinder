@@ -176,7 +176,7 @@ namespace GroundRouteFinder.AptDat
                     {
                         // Skip entries that are close to the last selected one
                         // Hmm, this can go 1 loop higher
-                        if (lastSelectedRemainingDistance - takeOffSpot.TakeOffLengthRemaining > 0.2)
+                        if (lastSelectedRemainingDistance - takeOffSpot.TakeOffLengthRemaining > 0.25)
                         {
                             selectedOne = true;
                             takeOffSpot.EntryPoints.Add(edge.StartNode);

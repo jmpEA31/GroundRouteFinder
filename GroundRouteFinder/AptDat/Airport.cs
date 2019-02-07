@@ -190,7 +190,13 @@ namespace GroundRouteFinder.AptDat
                 if (r.RunwayExits.Count > 0)
                     Log($"Rwy {r.Designator,3} Exits: {r.RunwayExits.Count()} ({string.Join(", ", r.RunwayExits.Values.OrderBy(re=>re.ExitDistance).Select(re=>(re.ExitDistance/VortexMath.Foot2Km).ToString("0")))} ft)");
                 if (r.TakeOffSpots.Count > 0)
+                {
                     Log($"Rwy {r.Designator,3} Entry: {r.TakeOffSpots.Count()} ({string.Join(", ", r.TakeOffSpots.Select(to => (to.TakeOffLengthRemaining / VortexMath.Foot2Km).ToString("0")))} ft)");
+                    foreach (var tos in r.TakeOffSpots)
+                    {
+                        Log($" {tos.TakeOffNode} {tos.TakeOffLengthRemaining / VortexMath.Foot2Km:0} {string.Join("-", tos.EntryPoints.Select(ep => ep.Id))}");
+                    }
+                }
             }
         }
 

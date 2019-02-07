@@ -254,7 +254,13 @@ namespace GroundRouteFinder.AptDat
 
         private void writeOperation(int index, int windMinSpeed, WindLimts windLimit, string startTime, string endTime)
         {
-            _operations.Add($"{index,-7} {windMinSpeed,-17} {windLimit.MaxSpeed,-18} {windLimit.MinDir,-14} {windLimit.MaxDir,-15} {startTime}  {endTime}");
+            if (windLimit.MaxDir < windLimit.MinDir)
+            {
+                _operations.Add($"{index,-7} {windMinSpeed,-17} {windLimit.MaxSpeed,-18} {windLimit.MinDir,-14} {360,-15} {startTime}  {endTime}");
+                _operations.Add($"{index,-7} {windMinSpeed,-17} {windLimit.MaxSpeed,-18} {0,-14} {windLimit.MaxDir,-15} {startTime}  {endTime}");
+            }
+            else
+                _operations.Add($"{index,-7} {windMinSpeed,-17} {windLimit.MaxSpeed,-18} {windLimit.MinDir,-14} {windLimit.MaxDir,-15} {startTime}  {endTime}");
         }
 
         private void writeRunways(List<RunwayUse> runwayUses, int index, string startTime, string endTime)
