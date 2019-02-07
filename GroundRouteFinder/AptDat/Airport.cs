@@ -265,83 +265,10 @@ namespace GroundRouteFinder.AptDat
                     }
                 }
 
-                if (normalOutput)
-                    ir.WriteRoutes(outputPath);
-                else
-                    ir.WriteRoutesKML(outputPath);
+                ir.WriteRoutes(outputPath, !normalOutput);
             }
         }
     
-
-/* 
- * Multi threading experiment:
- * 
-        private class FindThreadParams
-        {
-            public string outputPath;
-            public List<Parking> thrParkings;
-            public List<TaxiEdge> thrEdges;
-            public List<TaxiNode> thrNodes;
-            public List<Runway> thrRunways;
-        }
-
-        private static void FindInboundRoutesThread(object para)
-        {
-            FindThreadParams inParam = para as FindThreadParams;
-
-            foreach (Parking parking in inParam.thrParkings)
-            {
-                InboundResults ir = new InboundResults(inParam.thrEdges, parking);
-                for (XPlaneAircraftCategory size = parking.MaxSize; size >= XPlaneAircraftCategory.A; size--)
-                {
-                    // Nearest node should become 'closest to computed pushback point'
-                    findShortestPaths(inParam.thrNodes, parking.NearestNode, size);
-
-                    // Pick the runway exit points for the selected size
-                    foreach (Runway r in inParam.thrRunways)
-                    {
-                        foreach (Runway.RunwayNodeUsage use in Settings.SizeToUsage[size])
-                        {
-                            Runway.UsageNodes exitNodes = r.GetNodesForUsage(use);
-                            if (exitNodes == null)
-                                continue;
-
-                            Runway.NodeUsage usage = exitNodes.Roles[(int)Runway.UsageNodes.Role.Left];
-                            double bestDistance = double.MaxValue;
-                            Runway.UsageNodes.Role bestSide = Runway.UsageNodes.Role.Max;
-                            if (usage != null)
-                            {
-                                bestDistance = usage.OffRunwayNode.DistanceToTarget;
-                                bestSide = Runway.UsageNodes.Role.Left;
-                            }
-
-                            usage = exitNodes.Roles[(int)Runway.UsageNodes.Role.Right];
-                            if (usage != null)
-                            {
-                                if (usage.OffRunwayNode.DistanceToTarget < bestDistance)
-                                {
-                                    bestDistance = usage.OffRunwayNode.DistanceToTarget;
-                                    bestSide = Runway.UsageNodes.Role.Right;
-                                }
-                            }
-
-                            if (bestSide != Runway.UsageNodes.Role.Max)
-                            {
-                                usage = exitNodes.Roles[(int)bestSide];
-                                ir.AddResult(size, usage.OnRunwayNode, usage.OffRunwayNode, r);
-                            }
-                        }
-                    }
-                }
-
-                //if (normalOutput)
-                ir.WriteRoutes(inParam.outputPath);
-                //else
-                //    ir.WriteRoutesKML(outputPath);
-            }
-        }
-*/
-
         public void FindOutboundRoutes(bool normalOutput)
         {
             string outputPath = normalOutput ? Path.Combine(Settings.WorldTrafficGroundRoutes, "Departure") : Settings.DepartureFolderKML;
@@ -368,10 +295,7 @@ namespace GroundRouteFinder.AptDat
                             }
                         }
                     }
-                    if (normalOutput)
-                        or.WriteRoutes(outputPath);
-                    else
-                        or.WriteRoutesKML(outputPath);
+                    or.WriteRoutes(outputPath, !normalOutput);
                 }
             }
         }

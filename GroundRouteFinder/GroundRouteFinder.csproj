@@ -68,10 +68,10 @@
   <ItemGroup>
     <Compile Include="AptDat\Airport.cs" />
     <Compile Include="AptDat\Definitions.cs" />
-    <Compile Include="AptDat\RunwayExitSpot.cs" />
     <Compile Include="AptDat\TaxiEdge.cs" />
     <Compile Include="AptDat\TrafficFlow.cs" />
     <Compile Include="InboundResults.cs" />
+    <Compile Include="Output\KmlWriter.cs" />
     <Compile Include="LocationObject.cs" />
     <Compile Include="LogEmitter.cs" />
     <Compile Include="OutboundResults.cs" />
@@ -79,9 +79,9 @@
     <Compile Include="PushbackPoint.cs" />
     <Compile Include="ResultRoute.cs" />
     <Compile Include="AptDat\Runway.cs" />
-    <Compile Include="AptDat\RunwayTakeOffSpot.cs" />
     <Compile Include="AptDat\Parking.cs" />
     <Compile Include="RouteProcessor.cs" />
+    <Compile Include="Output\RouteWriter.cs" />
     <Compile Include="RunwayPoint.cs" />
     <Compile Include="Settings.cs" />
     <Compile Include="SteerPoint.cs" />
@@ -94,6 +94,7 @@
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Output\TxtWriter.cs" />
     <Compile Include="VortexMath.cs" />
     <EmbeddedResource Include="Form1.resx">
       <DependentUpon>Form1.cs</DependentUpon>

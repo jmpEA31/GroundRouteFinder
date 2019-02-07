@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using GroundRouteFinder.AptDat;
+using GroundRouteFinder.Output;
 
 namespace GroundRouteFinder
 {
@@ -67,7 +68,7 @@ namespace GroundRouteFinder
             }
         }
 
-        public void WriteRoutes(string outputPath)
+        public void WriteRoutes(string outputPath, bool kml)
         {
             foreach (KeyValuePair<TaxiNode, Dictionary<XPlaneAircraftCategory, ResultRoute>> sizeRoutes in _results)
             {
@@ -113,99 +114,13 @@ namespace GroundRouteFinder
                         string sizeName = (wtTypes.Count() == 10) ? "all" : allSizes.Replace(" ", "");
 
                         string fileName = $"{outputPath}\\{route.Runway.Designator}_to_{Parking.FileNameSafeName}_{route.RouteStart.Node.NameToTarget}_{sizeName}.txt";
-                        using (StreamWriter sw = File.CreateText(fileName))
+                        using (RouteWriter sw = RouteWriter.Create(kml ? 0 : 1, fileName, allSizes, 0, 0, route.Runway.Designator, "NOSEWHEEL"))
                         {
-                            sw.Write($"STARTAIRCRAFTTYPE\n{allSizes}\nENDAIRCRAFTTYPE\n\n");
-                            sw.Write("START_PARKING_CENTER\nNOSEWHEEL\nEND_PARKING_CENTER\n\n");
-                            sw.Write($"STARTRUNWAY\n{route.Runway.Designator}\nENDRUNWAY\n\n");
-                            sw.Write("STARTSTEERPOINTS\n");
-
                             IEnumerable<SteerPoint> steerPoints = buildSteerPoints(route, sizeRoutes.Key);
-
                             foreach (SteerPoint steerPoint in steerPoints)
                             {
-                                steerPoint.Write(sw);
+                                sw.Write(steerPoint);
                             }
-
-                            sw.Write("ENDSTEERPOINTS\n");
-                        }
-                    }
-                }
-            }
-        }
-
-        public void WriteRoutesKML(string outputPath)
-        {
-            foreach (KeyValuePair<TaxiNode, Dictionary<XPlaneAircraftCategory, ResultRoute>> sizeRoutes in _results)
-            {
-                for (XPlaneAircraftCategory size = Parking.MaxSize; size >= XPlaneAircraftCategory.A; size--)
-                {
-                    if (sizeRoutes.Value.ContainsKey(size))
-                    {
-                        ResultRoute route = sizeRoutes.Value[size];
-
-                        if (route.TargetNode == null)
-                            continue;
-
-                        if (Parking.MaxSize < route.MinSize)
-                            continue;
-
-                        XPlaneAircraftCategory validMax = (XPlaneAircraftCategory)Math.Min((int)route.MaxSize, (int)Parking.MaxSize);
-                        IEnumerable<WorldTrafficAircraftType> wtTypes = AircraftTypeConverter.WTTypesFromXPlaneLimits(route.MinSize, validMax, Parking.Operation);
-                        if (wtTypes.Count() == 0)
-                        {
-                            Console.WriteLine($"WARN {Parking.Name} (Max)Cat {Parking.MaxSize} Types: {string.Join(" ", Parking.XpTypes)} does not map to any WT types.");
-                        }
-
-                        if (route.AvailableRunwayLength < VortexMath.Feet5000Km)
-                        {
-                            WorldTrafficAircraftType[] big = { WorldTrafficAircraftType.SuperHeavy, WorldTrafficAircraftType.HeavyJet, WorldTrafficAircraftType.LargeJet, WorldTrafficAircraftType.LargeProp, WorldTrafficAircraftType.LightJet };
-                            wtTypes = wtTypes.Except(big);
-                        }
-                        else if (route.AvailableRunwayLength < VortexMath.Feet6500Km)
-                        {
-                            WorldTrafficAircraftType[] big = { WorldTrafficAircraftType.SuperHeavy, WorldTrafficAircraftType.HeavyJet };
-                            wtTypes = wtTypes.Except(big);
-                        }
-                        else if (route.AvailableRunwayLength > VortexMath.Feet8000Km)
-                        {
-                            WorldTrafficAircraftType[] small = { WorldTrafficAircraftType.LightProp, WorldTrafficAircraftType.LightJet, WorldTrafficAircraftType.MediumProp };
-                            wtTypes = wtTypes.Except(small);
-                        }
-
-                        if (wtTypes.Count() == 0)
-                            continue;
-
-                        string allSizes = string.Join(" ", wtTypes.Select(w => (int)w).OrderBy(w => w));
-                        string sizeName = (wtTypes.Count() == 10) ? "all" : allSizes.Replace(" ", "");
-
-                        string fileName = $"{outputPath}\\{route.Runway.Designator}_to_{Parking.FileNameSafeName}_{route.RouteStart.Node.NameToTarget}_{sizeName}.kml";
-                        File.Delete(fileName);
-                        using (StreamWriter sw = File.CreateText(fileName))
-                        {
-                            sw.WriteLine("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
-                            sw.WriteLine("<kml xmlns=\"http://www.opengis.net/kml/2.2\">");
-                            sw.WriteLine("<Document>");
-                            sw.WriteLine("<Style id=\"Parking\"><IconStyle><Icon><href>http://maps.google.com/mapfiles/kml/shapes/parking_lot.png</href></Icon></IconStyle></Style>");
-                            sw.WriteLine("<Style id=\"HoldShort\"><IconStyle><Icon><href>http://maps.google.com/mapfiles/kml/shapes/hospitals.png</href></Icon></IconStyle></Style>");
-                            sw.WriteLine("<Style id=\"Runway\"><IconStyle><Icon><href>http://maps.google.com/mapfiles/kml/pal4/icon49.png</href></Icon></IconStyle></Style>");
-                            sw.WriteLine("<Style id=\"Pushback\"><IconStyle><Icon><href>http://maps.google.com/mapfiles/kml/paddle/grn-stars-lv.png</href></Icon></IconStyle></Style>");
-                            sw.WriteLine("<Style id=\"TaxiNode\"><IconStyle><Icon><href>http://maps.google.com/mapfiles/kml/paddle/grn-blank-lv.png</href></Icon></IconStyle></Style>");
-                            sw.WriteLine("<Style id=\"TaxiLine\"><LineStyle><color>ff0000ff</color><width>3</width></LineStyle></Style>");
-
-                            IEnumerable<SteerPoint> steerPoints = buildSteerPoints(route, sizeRoutes.Key);
-
-                            StringBuilder coords = new StringBuilder();
-                            foreach (SteerPoint steerPoint in steerPoints)
-                            {
-                                steerPoint.WriteKML(sw);
-                                coords.Append($"  {steerPoint.Longitude * VortexMath.Rad2Deg},{steerPoint.Latitude * VortexMath.Rad2Deg},0\n");
-                            }
-
-                            sw.WriteLine($"<Placemark><styleUrl>#TaxiLine</styleUrl><LineString>\n<coordinates>\n{coords.ToString()}</coordinates>\n</LineString></Placemark>\n");
-
-                            sw.WriteLine("</Document>");
-                            sw.WriteLine("</kml>");
                         }
                     }
                 }
