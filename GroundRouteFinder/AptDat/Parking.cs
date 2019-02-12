@@ -23,7 +23,7 @@ namespace GroundRouteFinder.AptDat
 
         public TaxiNode NearestNode;
 
-        public string Type;
+        public StartUpLocationType LocationType;
         public OperationType Operation;
         public IEnumerable<string> Operators;
 
@@ -71,7 +71,7 @@ namespace GroundRouteFinder.AptDat
 
             // For gates use the indicated bearings (push back), for others add 180 degrees for straight out
             // Then convert to -180...180 range
-            double adjustedBearing = (Type == "gate") ? Bearing : (Bearing + Math.PI);
+            double adjustedBearing = (LocationType == StartUpLocationType.Gate) ? Bearing : (Bearing + Math.PI);
             if (adjustedBearing > Math.PI)
                 adjustedBearing -= (VortexMath.PI2);
 
@@ -89,6 +89,7 @@ namespace GroundRouteFinder.AptDat
             selectedNodes = selectedNodes.Where(v => Math.Abs(adjustedBearing - VortexMath.BearingRadians(v, this)) < VortexMath.PI05);
 
             // For each qualifying node
+            // Todo: check this part for tie downs
             foreach (TaxiNode v in selectedNodes)
             {
                 // Look at each link coming into it from other nodes
@@ -160,7 +161,7 @@ namespace GroundRouteFinder.AptDat
                     double distanceDest = VortexMath.DistancePyth(v.Latitude, v.Longitude, pushBackLatitude, pushBackLongitude);
 
                     // If the found point is outside the link, add the distance to the nearest node of
-                    // the link time 2 as a penalty to the actual distance. This prevents pushback point
+                    // the link times 2 as a penalty to the actual distance. This prevents pushback point
                     // candidates that sneak up on the start because of a slight angle in remote link
                     // from being accepted as best.
                     TaxiNode nearestVertexIfPushBackOutsideSegment = null;

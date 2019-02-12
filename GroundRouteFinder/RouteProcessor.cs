@@ -38,6 +38,10 @@ namespace GroundRouteFinder
 
         public static void Smooth(List<SteerPoint> steerPoints)
         {
+            // todo: Could add a pass to merge points within 25 meters or so.
+            // Take (linear) middle between points, average speed, set 'maximum' runway ops on merged point
+            // Maybe after smoothing works best
+
             for (int i = 1; i < steerPoints.Count()-1; i++)
             {
                 if (steerPoints[i] is PushbackPoint)

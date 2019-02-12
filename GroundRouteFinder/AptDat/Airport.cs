@@ -25,6 +25,7 @@ namespace GroundRouteFinder.AptDat
         private Dictionary<uint, TaxiNode> _nodeDict;
         private IEnumerable<TaxiNode> _taxiNodes;
         private List<Parking> _parkings; /* could be gate, helo, tie down, ... but 'parking' improved readability of some of the code */
+        public List<Parking> Parkings { get { return _parkings; } }
         private List<Runway> _runways;
         private List<TaxiEdge> _edges;
 
@@ -144,13 +145,6 @@ namespace GroundRouteFinder.AptDat
 
             // Filter out parkings with operation type none.
             _parkings = _parkings.Where(p => p.Operation != OperationType.None).ToList();
-
-            var ps = _parkings.GroupBy(p => p.Name);
-            foreach (var psv in ps)
-            {
-                if (psv.Count() > 1)
-                    Log($"WARNING Duplicate parking names in apt source: <{psv.First().Name}> occurs {psv.Count()} times.");
-            }
 
             // With unneeded nodes gone, parse the lat/lon string and convert the values to radians
             foreach (TaxiNode v in _taxiNodes)
@@ -552,7 +546,7 @@ namespace GroundRouteFinder.AptDat
             sp.Latitude = double.Parse(tokens[1]) * VortexMath.Deg2Rad;
             sp.Longitude = double.Parse(tokens[2]) * VortexMath.Deg2Rad;
             sp.Bearing = ((double.Parse(tokens[3]) + 540) * VortexMath.Deg2Rad) % (VortexMath.PI2) - Math.PI;
-            sp.Type = tokens[4];
+            sp.LocationType = StartUpLocationTypeConverter.FromString(tokens[4]);
             sp.XpTypes = AircraftTypeConverter.XPlaneTypesFromStrings(xpTypes);
             sp.Name = string.Join(" ", tokens.Skip(6));
             _parkings.Add(sp);

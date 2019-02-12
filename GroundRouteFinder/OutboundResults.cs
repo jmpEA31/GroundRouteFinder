@@ -157,6 +157,8 @@ namespace GroundRouteFinder
                 nodeToWrite = currentParking.AlternateAfterPushBack;
             }
 
+            // todo: tie_down straight out
+
             // insert one more point here where the plane is pushed a little bit away from the next point
             if (nodeToWrite != null)
             {

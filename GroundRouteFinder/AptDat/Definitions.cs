@@ -51,6 +51,35 @@ namespace GroundRouteFinder.AptDat
         Military
     }
 
+    public enum StartUpLocationType
+    {
+        Gate,
+        Hangar,
+        Misc,
+        TieDown
+    }
+
+    public static class StartUpLocationTypeConverter
+    {
+        public static StartUpLocationType FromString(string locationType)
+        {
+            switch (locationType)
+            {
+                case "gate":
+                    return StartUpLocationType.Gate;
+                case "hangar":
+                    return StartUpLocationType.Hangar;
+                case "misc":
+                    return StartUpLocationType.Misc;
+                case "tie_down":
+                    return StartUpLocationType.TieDown;
+                default:
+                    throw new NotSupportedException($"LocationType <{locationType}> is not supported.");
+            }
+        }
+
+    }
+
     public static class OperationTypeConverter
     {
         public static OperationType FromString(string operationType)

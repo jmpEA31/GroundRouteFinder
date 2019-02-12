@@ -28,7 +28,6 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.button1 = new System.Windows.Forms.Button();
             this.rtb = new System.Windows.Forms.RichTextBox();
             this.rbNormal = new System.Windows.Forms.RadioButton();
             this.radioButton2 = new System.Windows.Forms.RadioButton();
@@ -37,10 +36,20 @@
             this.btnGenerate = new System.Windows.Forms.Button();
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.tabPage1 = new System.Windows.Forms.TabPage();
+            this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.cbxOverwriteAirportOperations = new System.Windows.Forms.CheckBox();
+            this.cbxOverwriteParkingDefs = new System.Windows.Forms.CheckBox();
+            this.cbxOverwriteOutboundRoutes = new System.Windows.Forms.CheckBox();
+            this.cbxOverwriteInboundRoutes = new System.Windows.Forms.CheckBox();
             this.gbxOutput = new System.Windows.Forms.GroupBox();
             this.gbxAiport = new System.Windows.Forms.GroupBox();
             this.label2 = new System.Windows.Forms.Label();
             this.tabPage2 = new System.Windows.Forms.TabPage();
+            this.groupBox2 = new System.Windows.Forms.GroupBox();
+            this.cbxOwOperationsDefault = new System.Windows.Forms.CheckBox();
+            this.cbxOwParkingDefsDefault = new System.Windows.Forms.CheckBox();
+            this.cbxOwOutboundDefault = new System.Windows.Forms.CheckBox();
+            this.cbxOwInboundDefault = new System.Windows.Forms.CheckBox();
             this.btnBrowse = new System.Windows.Forms.Button();
             this.txtXplaneLocation = new System.Windows.Forms.TextBox();
             this.label1 = new System.Windows.Forms.Label();
@@ -50,22 +59,13 @@
             this.btnExit = new System.Windows.Forms.Button();
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
+            this.groupBox1.SuspendLayout();
             this.gbxOutput.SuspendLayout();
             this.gbxAiport.SuspendLayout();
             this.tabPage2.SuspendLayout();
+            this.groupBox2.SuspendLayout();
             this.tabAircraft.SuspendLayout();
             this.SuspendLayout();
-            // 
-            // button1
-            // 
-            this.button1.Location = new System.Drawing.Point(1533, 13);
-            this.button1.Margin = new System.Windows.Forms.Padding(4);
-            this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(100, 28);
-            this.button1.TabIndex = 0;
-            this.button1.Text = "button1";
-            this.button1.UseVisualStyleBackColor = true;
-            this.button1.Click += new System.EventHandler(this.button1_Click);
             // 
             // rtb
             // 
@@ -73,40 +73,40 @@
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.rtb.Font = new System.Drawing.Font("Consolas", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.rtb.Location = new System.Drawing.Point(13, 145);
+            this.rtb.Location = new System.Drawing.Point(13, 172);
             this.rtb.Margin = new System.Windows.Forms.Padding(4);
             this.rtb.Name = "rtb";
-            this.rtb.Size = new System.Drawing.Size(1620, 650);
+            this.rtb.Size = new System.Drawing.Size(1620, 623);
             this.rtb.TabIndex = 1;
             this.rtb.Text = "";
             // 
             // rbNormal
             // 
             this.rbNormal.AutoSize = true;
+            this.rbNormal.Checked = true;
             this.rbNormal.Location = new System.Drawing.Point(25, 28);
             this.rbNormal.Margin = new System.Windows.Forms.Padding(4);
             this.rbNormal.Name = "rbNormal";
             this.rbNormal.Size = new System.Drawing.Size(159, 21);
             this.rbNormal.TabIndex = 2;
+            this.rbNormal.TabStop = true;
             this.rbNormal.Text = "World Traffic Routes";
             this.rbNormal.UseVisualStyleBackColor = true;
             // 
             // radioButton2
             // 
             this.radioButton2.AutoSize = true;
-            this.radioButton2.Checked = true;
             this.radioButton2.Location = new System.Drawing.Point(25, 57);
             this.radioButton2.Margin = new System.Windows.Forms.Padding(4);
             this.radioButton2.Name = "radioButton2";
             this.radioButton2.Size = new System.Drawing.Size(57, 21);
             this.radioButton2.TabIndex = 3;
-            this.radioButton2.TabStop = true;
             this.radioButton2.Text = "KML";
             this.radioButton2.UseVisualStyleBackColor = true;
             // 
             // btnAnalyseAirport
             // 
-            this.btnAnalyseAirport.Location = new System.Drawing.Point(52, 86);
+            this.btnAnalyseAirport.Location = new System.Drawing.Point(67, 86);
             this.btnAnalyseAirport.Margin = new System.Windows.Forms.Padding(4);
             this.btnAnalyseAirport.Name = "btnAnalyseAirport";
             this.btnAnalyseAirport.Size = new System.Drawing.Size(100, 28);
@@ -120,16 +120,16 @@
             this.txtIcao.Location = new System.Drawing.Point(67, 41);
             this.txtIcao.Margin = new System.Windows.Forms.Padding(4);
             this.txtIcao.Name = "txtIcao";
-            this.txtIcao.Size = new System.Drawing.Size(132, 22);
+            this.txtIcao.Size = new System.Drawing.Size(100, 22);
             this.txtIcao.TabIndex = 0;
             this.txtIcao.Text = "EHAM";
             // 
             // btnGenerate
             // 
-            this.btnGenerate.Location = new System.Drawing.Point(60, 86);
+            this.btnGenerate.Location = new System.Drawing.Point(57, 86);
             this.btnGenerate.Margin = new System.Windows.Forms.Padding(4);
             this.btnGenerate.Name = "btnGenerate";
-            this.btnGenerate.Size = new System.Drawing.Size(100, 28);
+            this.btnGenerate.Size = new System.Drawing.Size(100, 44);
             this.btnGenerate.TabIndex = 6;
             this.btnGenerate.Text = "Generate";
             this.btnGenerate.UseVisualStyleBackColor = true;
@@ -152,9 +152,9 @@
             // 
             // tabPage1
             // 
+            this.tabPage1.Controls.Add(this.groupBox1);
             this.tabPage1.Controls.Add(this.gbxOutput);
             this.tabPage1.Controls.Add(this.gbxAiport);
-            this.tabPage1.Controls.Add(this.button1);
             this.tabPage1.Controls.Add(this.rtb);
             this.tabPage1.Location = new System.Drawing.Point(4, 25);
             this.tabPage1.Margin = new System.Windows.Forms.Padding(4);
@@ -165,14 +165,67 @@
             this.tabPage1.Text = "Generator";
             this.tabPage1.UseVisualStyleBackColor = true;
             // 
+            // groupBox1
+            // 
+            this.groupBox1.Controls.Add(this.cbxOverwriteAirportOperations);
+            this.groupBox1.Controls.Add(this.cbxOverwriteParkingDefs);
+            this.groupBox1.Controls.Add(this.cbxOverwriteOutboundRoutes);
+            this.groupBox1.Controls.Add(this.cbxOverwriteInboundRoutes);
+            this.groupBox1.Location = new System.Drawing.Point(219, 13);
+            this.groupBox1.Name = "groupBox1";
+            this.groupBox1.Size = new System.Drawing.Size(215, 152);
+            this.groupBox1.TabIndex = 11;
+            this.groupBox1.TabStop = false;
+            this.groupBox1.Text = "Overwrite";
+            // 
+            // cbxOverwriteAirportOperations
+            // 
+            this.cbxOverwriteAirportOperations.AutoSize = true;
+            this.cbxOverwriteAirportOperations.Location = new System.Drawing.Point(24, 109);
+            this.cbxOverwriteAirportOperations.Name = "cbxOverwriteAirportOperations";
+            this.cbxOverwriteAirportOperations.Size = new System.Drawing.Size(146, 21);
+            this.cbxOverwriteAirportOperations.TabIndex = 3;
+            this.cbxOverwriteAirportOperations.Text = "Airport Operations";
+            this.cbxOverwriteAirportOperations.UseVisualStyleBackColor = true;
+            // 
+            // cbxOverwriteParkingDefs
+            // 
+            this.cbxOverwriteParkingDefs.AutoSize = true;
+            this.cbxOverwriteParkingDefs.Location = new System.Drawing.Point(24, 82);
+            this.cbxOverwriteParkingDefs.Name = "cbxOverwriteParkingDefs";
+            this.cbxOverwriteParkingDefs.Size = new System.Drawing.Size(111, 21);
+            this.cbxOverwriteParkingDefs.TabIndex = 2;
+            this.cbxOverwriteParkingDefs.Text = "Parking Defs";
+            this.cbxOverwriteParkingDefs.UseVisualStyleBackColor = true;
+            // 
+            // cbxOverwriteOutboundRoutes
+            // 
+            this.cbxOverwriteOutboundRoutes.AutoSize = true;
+            this.cbxOverwriteOutboundRoutes.Location = new System.Drawing.Point(24, 55);
+            this.cbxOverwriteOutboundRoutes.Name = "cbxOverwriteOutboundRoutes";
+            this.cbxOverwriteOutboundRoutes.Size = new System.Drawing.Size(142, 21);
+            this.cbxOverwriteOutboundRoutes.TabIndex = 1;
+            this.cbxOverwriteOutboundRoutes.Text = "Outbound Routes";
+            this.cbxOverwriteOutboundRoutes.UseVisualStyleBackColor = true;
+            // 
+            // cbxOverwriteInboundRoutes
+            // 
+            this.cbxOverwriteInboundRoutes.AutoSize = true;
+            this.cbxOverwriteInboundRoutes.Location = new System.Drawing.Point(24, 28);
+            this.cbxOverwriteInboundRoutes.Name = "cbxOverwriteInboundRoutes";
+            this.cbxOverwriteInboundRoutes.Size = new System.Drawing.Size(130, 21);
+            this.cbxOverwriteInboundRoutes.TabIndex = 0;
+            this.cbxOverwriteInboundRoutes.Text = "Inbound Routes";
+            this.cbxOverwriteInboundRoutes.UseVisualStyleBackColor = true;
+            // 
             // gbxOutput
             // 
             this.gbxOutput.Controls.Add(this.btnGenerate);
             this.gbxOutput.Controls.Add(this.rbNormal);
             this.gbxOutput.Controls.Add(this.radioButton2);
-            this.gbxOutput.Location = new System.Drawing.Point(236, 13);
+            this.gbxOutput.Location = new System.Drawing.Point(440, 13);
             this.gbxOutput.Name = "gbxOutput";
-            this.gbxOutput.Size = new System.Drawing.Size(199, 125);
+            this.gbxOutput.Size = new System.Drawing.Size(216, 152);
             this.gbxOutput.TabIndex = 10;
             this.gbxOutput.TabStop = false;
             this.gbxOutput.Text = "Output";
@@ -184,7 +237,7 @@
             this.gbxAiport.Controls.Add(this.txtIcao);
             this.gbxAiport.Location = new System.Drawing.Point(13, 13);
             this.gbxAiport.Name = "gbxAiport";
-            this.gbxAiport.Size = new System.Drawing.Size(217, 125);
+            this.gbxAiport.Size = new System.Drawing.Size(200, 152);
             this.gbxAiport.TabIndex = 9;
             this.gbxAiport.TabStop = false;
             this.gbxAiport.Text = "Airport";
@@ -200,6 +253,7 @@
             // 
             // tabPage2
             // 
+            this.tabPage2.Controls.Add(this.groupBox2);
             this.tabPage2.Controls.Add(this.btnBrowse);
             this.tabPage2.Controls.Add(this.txtXplaneLocation);
             this.tabPage2.Controls.Add(this.label1);
@@ -211,6 +265,63 @@
             this.tabPage2.TabIndex = 1;
             this.tabPage2.Text = "Settings";
             this.tabPage2.UseVisualStyleBackColor = true;
+            // 
+            // groupBox2
+            // 
+            this.groupBox2.Controls.Add(this.cbxOwOperationsDefault);
+            this.groupBox2.Controls.Add(this.cbxOwParkingDefsDefault);
+            this.groupBox2.Controls.Add(this.cbxOwOutboundDefault);
+            this.groupBox2.Controls.Add(this.cbxOwInboundDefault);
+            this.groupBox2.Location = new System.Drawing.Point(12, 62);
+            this.groupBox2.Name = "groupBox2";
+            this.groupBox2.Size = new System.Drawing.Size(400, 152);
+            this.groupBox2.TabIndex = 12;
+            this.groupBox2.TabStop = false;
+            this.groupBox2.Text = "Overwrite Defaults";
+            // 
+            // cbxOwOperationsDefault
+            // 
+            this.cbxOwOperationsDefault.AutoSize = true;
+            this.cbxOwOperationsDefault.Location = new System.Drawing.Point(24, 109);
+            this.cbxOwOperationsDefault.Name = "cbxOwOperationsDefault";
+            this.cbxOwOperationsDefault.Size = new System.Drawing.Size(146, 21);
+            this.cbxOwOperationsDefault.TabIndex = 3;
+            this.cbxOwOperationsDefault.Text = "Airport Operations";
+            this.cbxOwOperationsDefault.UseVisualStyleBackColor = true;
+            this.cbxOwOperationsDefault.CheckedChanged += new System.EventHandler(this.cbxOwOperationsDefault_CheckedChanged);
+            // 
+            // cbxOwParkingDefsDefault
+            // 
+            this.cbxOwParkingDefsDefault.AutoSize = true;
+            this.cbxOwParkingDefsDefault.Location = new System.Drawing.Point(24, 82);
+            this.cbxOwParkingDefsDefault.Name = "cbxOwParkingDefsDefault";
+            this.cbxOwParkingDefsDefault.Size = new System.Drawing.Size(111, 21);
+            this.cbxOwParkingDefsDefault.TabIndex = 2;
+            this.cbxOwParkingDefsDefault.Text = "Parking Defs";
+            this.cbxOwParkingDefsDefault.UseVisualStyleBackColor = true;
+            this.cbxOwParkingDefsDefault.CheckedChanged += new System.EventHandler(this.cbxOwParkingDefsDefault_CheckedChanged);
+            // 
+            // cbxOwOutboundDefault
+            // 
+            this.cbxOwOutboundDefault.AutoSize = true;
+            this.cbxOwOutboundDefault.Location = new System.Drawing.Point(24, 55);
+            this.cbxOwOutboundDefault.Name = "cbxOwOutboundDefault";
+            this.cbxOwOutboundDefault.Size = new System.Drawing.Size(142, 21);
+            this.cbxOwOutboundDefault.TabIndex = 1;
+            this.cbxOwOutboundDefault.Text = "Outbound Routes";
+            this.cbxOwOutboundDefault.UseVisualStyleBackColor = true;
+            this.cbxOwOutboundDefault.CheckedChanged += new System.EventHandler(this.cbxOwOutboundDefault_CheckedChanged);
+            // 
+            // cbxOwInboundDefault
+            // 
+            this.cbxOwInboundDefault.AutoSize = true;
+            this.cbxOwInboundDefault.Location = new System.Drawing.Point(24, 28);
+            this.cbxOwInboundDefault.Name = "cbxOwInboundDefault";
+            this.cbxOwInboundDefault.Size = new System.Drawing.Size(130, 21);
+            this.cbxOwInboundDefault.TabIndex = 0;
+            this.cbxOwInboundDefault.Text = "Inbound Routes";
+            this.cbxOwInboundDefault.UseVisualStyleBackColor = true;
+            this.cbxOwInboundDefault.CheckedChanged += new System.EventHandler(this.cbxOwInboundDefault_CheckedChanged);
             // 
             // btnBrowse
             // 
@@ -298,20 +409,22 @@
             this.Text = "Ground Route Finder 0.1";
             this.tabControl1.ResumeLayout(false);
             this.tabPage1.ResumeLayout(false);
+            this.groupBox1.ResumeLayout(false);
+            this.groupBox1.PerformLayout();
             this.gbxOutput.ResumeLayout(false);
             this.gbxOutput.PerformLayout();
             this.gbxAiport.ResumeLayout(false);
             this.gbxAiport.PerformLayout();
             this.tabPage2.ResumeLayout(false);
             this.tabPage2.PerformLayout();
+            this.groupBox2.ResumeLayout(false);
+            this.groupBox2.PerformLayout();
             this.tabAircraft.ResumeLayout(false);
             this.ResumeLayout(false);
 
         }
 
         #endregion
-
-        private System.Windows.Forms.Button button1;
         private System.Windows.Forms.RichTextBox rtb;
         private System.Windows.Forms.RadioButton rbNormal;
         private System.Windows.Forms.RadioButton radioButton2;
@@ -331,6 +444,16 @@
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.GroupBox gbxOutput;
         private System.Windows.Forms.GroupBox gbxAiport;
+        private System.Windows.Forms.GroupBox groupBox1;
+        private System.Windows.Forms.CheckBox cbxOverwriteAirportOperations;
+        private System.Windows.Forms.CheckBox cbxOverwriteParkingDefs;
+        private System.Windows.Forms.CheckBox cbxOverwriteOutboundRoutes;
+        private System.Windows.Forms.CheckBox cbxOverwriteInboundRoutes;
+        private System.Windows.Forms.GroupBox groupBox2;
+        private System.Windows.Forms.CheckBox cbxOwOperationsDefault;
+        private System.Windows.Forms.CheckBox cbxOwParkingDefsDefault;
+        private System.Windows.Forms.CheckBox cbxOwOutboundDefault;
+        private System.Windows.Forms.CheckBox cbxOwInboundDefault;
     }
 }
 

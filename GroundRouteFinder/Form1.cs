@@ -16,7 +16,11 @@ namespace GroundRouteFinder
     {
         private Airport _airport;
         private DateTime _start;
-        private bool _askForConfirmation = false;
+
+        private bool _hasExistingInboundRoutes;
+        private bool _hasExistingOutboundRoutes;
+        private bool _hasExistingParkingDefs;
+        private bool _hasExistingAirportOperations;    
 
         public MainForm()
         {
@@ -28,6 +32,18 @@ namespace GroundRouteFinder
         {
             setXPlaneLocation();
             btnGenerate.Enabled = false;
+
+            cbxOwInboundDefault.Checked = Settings.OverwriteInbound;
+            cbxOverwriteInboundRoutes.Checked = Settings.OverwriteInbound;
+
+            cbxOwOutboundDefault.Checked = Settings.OverwriteOutbound;
+            cbxOverwriteOutboundRoutes.Checked = Settings.OverwriteOutbound;
+
+            cbxOwParkingDefsDefault.Checked = Settings.OverwriteParkingDefs;
+            cbxOverwriteParkingDefs.Checked = Settings.OverwriteParkingDefs;
+
+            cbxOwOperationsDefault.Checked = Settings.OverwriteOperations;
+            cbxOverwriteAirportOperations.Checked = Settings.OverwriteOperations;
         }
 
         private void setXPlaneLocation()
@@ -60,31 +76,6 @@ namespace GroundRouteFinder
             rtb.AppendText($"{(DateTime.Now - _start).TotalSeconds:0000.000} {message}\n");
             rtb.ScrollToCaret();
             rtb.Update();
-        }
-
-        private void button1_Click(object sender, EventArgs e)
-        {
-            _start = DateTime.Now;
-            rtb.Clear();
-
-            _airport = new Airport();
-            _airport.LogMessage += _airport_LogMessage;
-            _airport.Load("..\\..\\..\\..\\LFPG_Scenery_Pack\\LFPG_Scenery_Pack\\Earth nav data\\apt.dat");
-            //_airport.Load("..\\..\\..\\..\\EHAM_Scenery_Pack\\EHAM_Scenery_Pack\\Earth nav data\\apt.dat");
-            //_airport.Load("..\\..\\..\\..\\EIDW_Scenery_Pack\\EIDW_Scenery_Pack\\Earth nav data\\apt.dat");
-            logElapsed("loading done");
-
-            _airport.WriteParkingDefs();
-            logElapsed($"parking defs done");
-
-            _airport.FindOutboundRoutes(rbNormal.Checked);
-            logElapsed($"outbound done, max steerpoints {OutboundResults.MaxOutPoints}");
-
-            _airport.FindInboundRoutes(rbNormal.Checked);
-            logElapsed($"inbound done, max steerpoints {InboundResults.MaxInPoints}");
-
-
-
         }
 
         private void _airport_LogMessage(object sender, LogEventArgs e)
@@ -128,32 +119,50 @@ namespace GroundRouteFinder
                 }
             }
 
-            rtb.AppendText("Parkings and ATC taxi network are present.\n");
-
-            int worldTrafficCheck = checkWorldTrafficFolders(icao);
-            switch (worldTrafficCheck)
+            if (!found)
             {
-                case -1:
-                    return;
-                case 0:
-                    _askForConfirmation = false;
-                    break;
-                case 1:
-                default:
-                    _askForConfirmation = true;
-                    break;
+                return;
             }
 
-            btnGenerate.Enabled = true;
+            rtb.AppendText("Parkings and ATC taxi network are present.\n");
+
+            var ps = _airport.Parkings.GroupBy(p => p.Name);
+            foreach (var psv in ps)
+            {
+                if (psv.Count() > 1)
+                    rtb.AppendText($"WARNING Duplicate parking names in apt source: <{psv.First().Name}> occurs {psv.Count()} times.\n");
+            }
+
+
+            if (checkWorldTrafficFolders(icao, out _hasExistingInboundRoutes, out _hasExistingOutboundRoutes, out _hasExistingParkingDefs, out _hasExistingAirportOperations))
+            {
+                btnGenerate.Enabled = true;
+                cbxOverwriteAirportOperations.ForeColor = _hasExistingAirportOperations ? Color.Red : Color.Black;
+                cbxOverwriteInboundRoutes.ForeColor = _hasExistingInboundRoutes ? Color.Red : Color.Black;
+                cbxOverwriteOutboundRoutes.ForeColor = _hasExistingOutboundRoutes ? Color.Red : Color.Black;
+                cbxOverwriteParkingDefs.ForeColor = _hasExistingParkingDefs ? Color.Red : Color.Black;
+            }
+            else
+            {
+                btnGenerate.Enabled = false;
+                cbxOverwriteAirportOperations.ForeColor = Color.Gray;
+                cbxOverwriteInboundRoutes.ForeColor = Color.Gray;
+                cbxOverwriteOutboundRoutes.ForeColor = Color.Gray;
+                cbxOverwriteParkingDefs.ForeColor = Color.Gray;
+            }
         }
 
-        private int checkWorldTrafficFolders(string icao)
+        private bool checkWorldTrafficFolders(string icao, out bool hasInboundRoutes, out bool hasOutboundRoutes, out bool hasParkingDefs, out bool hasAirportOperations)
         {
-            bool needOverwriteConfirmation = false;
+            hasInboundRoutes = false;
+            hasOutboundRoutes = false;
+            hasParkingDefs = false;
+            hasAirportOperations = false;
+
             if (!Directory.Exists(Settings.WorldTrafficLocation))
             {
                 rtb.AppendText("World Traffic folder not found.\n");
-                return -1;
+                return false;
             }
 
             if (!Directory.Exists(Path.Combine(Settings.WorldTrafficGroundRoutes, "Departure", icao)))
@@ -163,7 +172,7 @@ namespace GroundRouteFinder
             else if (Directory.EnumerateFiles(Path.Combine(Settings.WorldTrafficGroundRoutes, "Departure", icao)).Count() != 0)
             {
                 rtb.AppendText($"* Departure ground routes already exist for {icao}!\n");
-                needOverwriteConfirmation = true;
+                hasOutboundRoutes = true;
             }
 
             if (!Directory.Exists(Path.Combine(Settings.WorldTrafficGroundRoutes, "Arrival", icao)))
@@ -173,7 +182,7 @@ namespace GroundRouteFinder
             else if (Directory.EnumerateFiles(Path.Combine(Settings.WorldTrafficGroundRoutes, "Arrival", icao)).Count() != 0)
             {
                 rtb.AppendText($"* Arrival ground routes already exist for {icao}!\n");
-                needOverwriteConfirmation = true;
+                hasInboundRoutes = true;
             }
 
             if (!Directory.Exists(Path.Combine(Settings.WorldTrafficParkingDefs, icao)))
@@ -183,7 +192,7 @@ namespace GroundRouteFinder
             else if (Directory.EnumerateFiles(Path.Combine(Settings.WorldTrafficParkingDefs, icao)).Count() != 0)
             {
                 rtb.AppendText($"* Parking definitions already exist for {icao}!\n");
-                needOverwriteConfirmation = true;
+                hasParkingDefs = true;
             }
 
             if (!Directory.Exists(Settings.WorldTrafficOperations))
@@ -193,10 +202,10 @@ namespace GroundRouteFinder
             else if (File.Exists(Path.Combine(Settings.WorldTrafficOperations, $"{icao}.txt")))
             {
                 rtb.AppendText($"* Operations already exist for {icao}!\n");
-                needOverwriteConfirmation = true;
+                hasAirportOperations = true;
             }
 
-            return needOverwriteConfirmation ? 1 : 0;
+            return true;
         }
 
         private bool scanCustomSceneries(string icao)
@@ -298,19 +307,48 @@ namespace GroundRouteFinder
             _airport.LogMessage += _airport_LogMessage;
             _airport.Process();
 
-            _airport.WriteParkingDefs();
-            logElapsed($"parking defs done");
+            if (!_hasExistingParkingDefs || cbxOverwriteParkingDefs.Checked)
+            {
+                _airport.WriteParkingDefs();
+                logElapsed($"parking defs done");
+            }
+            else
+            {
+                logElapsed($"not overwriting parking defs");
+            }
 
-            _airport.WriteOperations();
-            logElapsed($"operations done");
+            if (!_hasExistingAirportOperations || cbxOverwriteAirportOperations.Checked)
+            {
+                _airport.WriteOperations();
+                logElapsed($"operations done");
+            }
+            else
+            {
+                logElapsed($"not overwriting operations");
+            }
 
-            _airport.FindOutboundRoutes(rbNormal.Checked);
-            logElapsed($"outbound done, max steerpoints {OutboundResults.MaxOutPoints}");
+            if (!_hasExistingOutboundRoutes || cbxOverwriteOutboundRoutes.Checked)
+            {
+                _airport.FindOutboundRoutes(rbNormal.Checked);
+                logElapsed($"outbound done, max steerpoints {OutboundResults.MaxOutPoints}");
+            }
+            else
+            {
+                logElapsed($"not overwriting outbound routes");
+            }
 
-            _airport.FindInboundRoutes(rbNormal.Checked);
-            logElapsed($"inbound done, max steerpoints {InboundResults.MaxInPoints}");
+            if (!_hasExistingInboundRoutes || cbxOverwriteInboundRoutes.Checked)
+            {
+                _airport.FindInboundRoutes(rbNormal.Checked);
+                logElapsed($"inbound done, max steerpoints {InboundResults.MaxInPoints}");
+            }
+            else
+            {
+                logElapsed($"not overwriting inbound routes");
+            }
 
             _airport.LogMessage -= _airport_LogMessage;
+            logElapsed($"done");
         }
 
         private void btnBrowse_Click(object sender, EventArgs e)
@@ -444,6 +482,26 @@ namespace GroundRouteFinder
         private void btnExit_Click(object sender, EventArgs e)
         {
             Close();
+        }
+
+        private void cbxOwInboundDefault_CheckedChanged(object sender, EventArgs e)
+        {
+            Settings.OverwriteInbound = cbxOwInboundDefault.Checked;
+        }
+
+        private void cbxOwOutboundDefault_CheckedChanged(object sender, EventArgs e)
+        {
+            Settings.OverwriteOutbound = cbxOwOutboundDefault.Checked;
+        }
+
+        private void cbxOwParkingDefsDefault_CheckedChanged(object sender, EventArgs e)
+        {
+            Settings.OverwriteParkingDefs = cbxOwParkingDefsDefault.Checked;
+        }
+
+        private void cbxOwOperationsDefault_CheckedChanged(object sender, EventArgs e)
+        {
+            Settings.OverwriteOperations = cbxOwOperationsDefault.Checked;
         }
     }
 }

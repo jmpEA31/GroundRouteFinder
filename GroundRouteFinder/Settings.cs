@@ -28,8 +28,80 @@ namespace GroundRouteFinder
 
             set
             {
-                RegistryKey key = openReg(); ;
+                RegistryKey key = openReg(); 
                 key.SetValue("XPlaneLocation", value);
+                key.Close();
+            }
+        }
+
+        public static bool OverwriteInbound
+        {
+            get
+            {
+                RegistryKey key = openReg();
+                bool val = (int)key.GetValue("OverwriteInbound", 0) == 0 ? false : true;
+                key.Close();
+                return val;
+            }
+
+            set
+            {
+                RegistryKey key = openReg(); 
+                key.SetValue("OverwriteInbound", value, RegistryValueKind.DWord);
+                key.Close();
+            }
+        }
+
+        public static bool OverwriteOutbound
+        {
+            get
+            {
+                RegistryKey key = openReg();
+                bool val = (int)key.GetValue("OverwriteOutbound", 0) == 0 ? false : true;
+                key.Close();
+                return val;
+            }
+
+            set
+            {
+                RegistryKey key = openReg();
+                key.SetValue("OverwriteOutbound", value, RegistryValueKind.DWord);
+                key.Close();
+            }
+        }
+
+        public static bool OverwriteParkingDefs
+        {
+            get
+            {
+                RegistryKey key = openReg();
+                bool val = (int)key.GetValue("OverwriteParkingDefs", 0) == 0 ? false : true;
+                key.Close();
+                return val;
+            }
+
+            set
+            {
+                RegistryKey key = openReg();
+                key.SetValue("OverwriteParkingDefs", value, RegistryValueKind.DWord);
+                key.Close();
+            }
+        }
+
+        public static bool OverwriteOperations
+        {
+            get
+            {
+                RegistryKey key = openReg();
+                bool val = (int)key.GetValue("OverwriteOperations", 0) == 0 ? false : true;
+                key.Close();
+                return val;
+            }
+
+            set
+            {
+                RegistryKey key = openReg();
+                key.SetValue("OverwriteOperations", value, RegistryValueKind.DWord);
                 key.Close();
             }
         }
