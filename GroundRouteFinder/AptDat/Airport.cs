@@ -181,8 +181,8 @@ namespace GroundRouteFinder.AptDat
             foreach (Runway r in _runways)
             {
                 r.Analyze(_taxiNodes, _edges);
-                if (r.RunwayExits.Count > 0)
-                    Log($"Rwy {r.Designator,3} Exits: {r.RunwayExits.Count()} ({string.Join(", ", r.RunwayExits.Values.OrderBy(re=>re.ExitDistance).Select(re=>(re.ExitDistance/VortexMath.Foot2Km).ToString("0")))} ft)");
+                //if (r.RunwayExits.Count > 0)
+                //    Log($"Rwy {r.Designator,3} Exits: {r.RunwayExits.Count()} ({string.Join(", ", r.RunwayExits.Values.OrderBy(re=>re.ExitDistance).Select(re=>(re.ExitDistance/VortexMath.Foot2Km).ToString("0")))} ft)");
                 //if (r.EntryGroups.Count > 0)
                 //{
                 //    Log($"Rwy {r.Designator,3} Entry: {r.EntryGroups.Count()} ({string.Join(", ", r.EntryGroups.Select(to => (to.TakeOffLengthRemaining / VortexMath.Foot2Km).ToString("0")))} ft)");
@@ -231,30 +231,28 @@ namespace GroundRouteFinder.AptDat
                     // Pick the runway exit points for the selected size
                     foreach (Runway r in _runways)
                     {
-                        foreach (Runway.RunwayExitNode exit in r.RunwayExits.Values)
+                        foreach (KeyValuePair<TaxiNode, List<ExitPoint>> exit in r.ExitGroups)
                         {
                             double bestDistance = double.MaxValue;
                             double bestTurnAngle = double.MaxValue;
-                            Runway.RunwayExit bestExit = null;
+                            ExitPoint bestExit = null;
 
-                            if (exit.LeftExit != null)
+                            foreach (ExitPoint ep in exit.Value)
                             {
-                                bestExit = exit.LeftExit;
-                                bestDistance = exit.LeftExit.OffRunwayNode.DistanceToTarget;
-                                bestTurnAngle = exit.LeftExit.TurnAngle;
-                            }
-
-                            if (exit.RightExit != null)
-                            {
-                                if ((exit.RightExit.OffRunwayNode.DistanceToTarget < (bestDistance / 1.2) || (bestTurnAngle - exit.RightExit.TurnAngle) > VortexMath.Deg020Rad) ||         // Route 20% shorter, or turn 20 degrees less sharp
-                                    (exit.RightExit.OffRunwayNode.DistanceToTarget < bestDistance && exit.RightExit.TurnAngle < bestTurnAngle))                                            // Or just shorter and less sharp
+                                if (ep.OffRunwayNode.NextNodeToTarget != ep.OnRunwayNode)
                                 {
-                                    bestExit = exit.RightExit;
+                                    if ((ep.OffRunwayNode.DistanceToTarget < bestDistance / 1.2) || (bestTurnAngle - Math.Abs(ep.TurnAngle) > VortexMath.Deg020Rad) ||
+                                        (ep.OffRunwayNode.DistanceToTarget < bestDistance && Math.Abs(ep.TurnAngle) < bestTurnAngle))
+                                    {
+                                        bestExit = ep;
+                                        bestDistance = ep.OffRunwayNode.DistanceToTarget;
+                                        bestTurnAngle = Math.Abs(ep.TurnAngle);
+                                    }
                                 }
                             }
 
-                            if (bestExit.OffRunwayNode.NextNodeToTarget != bestExit.OnRunwayNode)
-                                ir.AddResult(size, bestExit.OnRunwayNode, bestExit.OffRunwayNode, r, bestExit.ExitDistance);
+                            if (bestExit != null)
+                                ir.AddResult(size, bestExit.OnRunwayNode, bestExit.OffRunwayNode, r, bestExit.LandingLengthUsed);
                         }
                     }
                 }

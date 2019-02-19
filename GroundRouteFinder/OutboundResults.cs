@@ -41,7 +41,7 @@ namespace GroundRouteFinder
             {
                 originResults.Add(maxSizeCurrentResult, ResultRoute.ExtractRoute(_edges, parkingNode, maxSizeCurrentResult));
                 originResults[maxSizeCurrentResult].RunwayEntryPoint = entryPoint;
-                originResults[maxSizeCurrentResult].AvailableRunwayLength = entryPoint.RunwayLengthRemaining;
+                originResults[maxSizeCurrentResult].AvailableRunwayLength = entryPoint.TakeoffLengthRemaining;
             }
             else
             {
@@ -52,7 +52,7 @@ namespace GroundRouteFinder
                     {
                         originResults.Add(maxSizeCurrentResult, ResultRoute.ExtractRoute(_edges, parkingNode, maxSizeCurrentResult));
                         originResults[maxSizeCurrentResult].RunwayEntryPoint = entryPoint;
-                        originResults[maxSizeCurrentResult].AvailableRunwayLength = entryPoint.RunwayLengthRemaining;
+                        originResults[maxSizeCurrentResult].AvailableRunwayLength = entryPoint.TakeoffLengthRemaining;
 
                         originResults[minSize].MinSize = (maxSizeCurrentResult + 1);
                     }
@@ -60,7 +60,7 @@ namespace GroundRouteFinder
                     {
                         originResults[minSize] = ResultRoute.ExtractRoute(_edges, parkingNode, maxSizeCurrentResult);
                         originResults[minSize].RunwayEntryPoint = entryPoint;
-                        originResults[minSize].AvailableRunwayLength = entryPoint.RunwayLengthRemaining;
+                        originResults[minSize].AvailableRunwayLength = entryPoint.TakeoffLengthRemaining;
                     }
                 }
             }
@@ -117,7 +117,7 @@ namespace GroundRouteFinder
 
                             string allSizes = string.Join(" ", wtTypes.Select(w => (int)w).OrderBy(w => w));
                             string sizeName = (wtTypes.Count() == 10) ? "all" : allSizes.Replace(" ", "");
-                            string fileName = $"{outputPath}\\{currentParking.FileNameSafeName}_to_{Runway.Designator}-{route.TargetNode.Id}_{sizeName}.kml";
+                            string fileName = $"{outputPath}\\{currentParking.FileNameSafeName}_to_{Runway.Designator}-{route.TargetNode.Id}_{sizeName}";
 
                             int military = (currentParking.Operation == OperationType.Military) ? 1 : 0;
                             int cargo = (currentParking.Operation == OperationType.Cargo) ? 1 : 0;

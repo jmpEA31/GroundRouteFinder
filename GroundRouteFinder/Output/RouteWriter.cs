@@ -9,7 +9,7 @@ namespace GroundRouteFinder.Output
 {
     public abstract class RouteWriter : StreamWriter
     {
-        public static RouteWriter Create(int type, string path, string allSizes = "", int cargo = 0, int military = 0, string designator = "", string parkingCenter = "")
+        public static RouteWriter Create(int type, string path, string allSizes = "", int cargo = -1, int military = -1, string designator = "", string parkingCenter = "")
         {
             switch (type)
             {
@@ -22,7 +22,7 @@ namespace GroundRouteFinder.Output
         }
 
         public RouteWriter(string path)
-            : base(path, false, Encoding.UTF8)
+            : base(path, false, Encoding.ASCII)
         {
         }
 

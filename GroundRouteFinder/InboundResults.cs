@@ -113,8 +113,8 @@ namespace GroundRouteFinder
                         string allSizes = string.Join(" ", wtTypes.Select(w=>(int)w).OrderBy(w => w));
                         string sizeName = (wtTypes.Count() == 10) ? "all" : allSizes.Replace(" ", "");
 
-                        string fileName = $"{outputPath}\\{route.Runway.Designator}_to_{Parking.FileNameSafeName}_{route.RouteStart.Node.NameToTarget}_{sizeName}.txt";
-                        using (RouteWriter sw = RouteWriter.Create(kml ? 0 : 1, fileName, allSizes, 0, 0, route.Runway.Designator, "NOSEWHEEL"))
+                        string fileName = $"{outputPath}\\{route.Runway.Designator}_to_{Parking.FileNameSafeName}_{route.RouteStart.Node.Id}_{sizeName}";
+                        using (RouteWriter sw = RouteWriter.Create(kml ? 0 : 1, fileName, allSizes, -1, -1, route.Runway.Designator, "NOSEWHEEL"))
                         {
                             IEnumerable<SteerPoint> steerPoints = buildSteerPoints(route, sizeRoutes.Key);
                             foreach (SteerPoint steerPoint in steerPoints)
@@ -152,15 +152,35 @@ namespace GroundRouteFinder
             LinkedNode link = route.RouteStart;
             while (link.Node != null)
             {
+                bool activeZone = false;
+                string activeFor = "";
+
                 if (link.Edge.ActiveZone)
-                    steerPoints.Add(new RunwayPoint(link.Node, 15, $"{link.Edge.LinkName}", $"{link.Edge.ActiveForRunway(route.Runway.Designator)}"));
+                {
+                    activeZone = true;
+                    activeFor = link.Edge.ActiveForRunway("");
+                }
+                else if (link.Next.Edge != null && link.Next.Edge.ActiveZone)
+                {
+                    activeZone = true;
+                    activeFor = link.Next.Edge.ActiveForRunway("");
+                }
+
+                if (activeZone)
+                    steerPoints.Add(new RunwayPoint(link.Node.Latitude, link.Node.Longitude, 15, $"{link.Edge.LinkName}", activeFor));
                 else
-                    steerPoints.Add(new SteerPoint(link.Node, 15, $"{link.Edge.LinkName}"));
+                    steerPoints.Add(new SteerPoint(link.Node.Latitude, link.Node.Longitude, 15, $"{link.Edge.LinkName}"));
 
                 link = link.Next;
             }
 
             // todo: remove last point if it takes us past the 'pushback point'
+
+            if (Math.Abs(VortexMath.BearingRadians(steerPoints.Last().Latitude, steerPoints.Last().Longitude, Parking.PushBackLatitude, Parking.PushBackLongitude)) > VortexMath.Deg100Rad)
+            {
+                steerPoints.RemoveAt(steerPoints.Count - 1);
+            }
+
             // todo: how does this all work with freaky pushback points?
             // todo: tie downs
 

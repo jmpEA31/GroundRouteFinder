@@ -10,19 +10,19 @@ namespace GroundRouteFinder.Output
     public class TxtWriter : RouteWriter
     {
         public TxtWriter(string path, string allSizes, int cargo, int military, string designator, string parkingCenter)
-            : base(path)
+            : base(path + ".txt")
         {
             WriteLine($"STARTAIRCRAFTTYPE\n{allSizes}\nENDAIRCRAFTTYPE\n");
-            WriteLine($"STARTCARGO\n{cargo}\nENDCARGO\n");
-            WriteLine($"STARTMILITARY\n{military}\nENDMILITARY\n");
+
+            if (cargo != -1)
+                WriteLine($"STARTCARGO\n{cargo}\nENDCARGO\n");
+            if (military != -1)
+                WriteLine($"STARTMILITARY\n{military}\nENDMILITARY\n");
             if (!string.IsNullOrEmpty(designator))
-            {
                 WriteLine($"STARTRUNWAY\n{designator}\nENDRUNWAY\n");
-            }
             if (!string.IsNullOrEmpty(parkingCenter))
-            {
                 WriteLine($"START_PARKING_CENTER\n{parkingCenter}\nEND_PARKING_CENTER\n");
-            }
+    
             WriteLine("STARTSTEERPOINTS");
         }
 
