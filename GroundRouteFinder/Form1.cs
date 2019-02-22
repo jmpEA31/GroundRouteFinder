@@ -30,7 +30,7 @@ namespace GroundRouteFinder
 
         public void Setup()
         {
-            setXPlaneLocation();
+            SetXPlaneLocation();
             btnGenerate.Enabled = false;
 
             cbxOwInboundDefault.Checked = Settings.OverwriteInbound;
@@ -46,10 +46,10 @@ namespace GroundRouteFinder
             cbxOverwriteAirportOperations.Checked = Settings.OverwriteOperations;
         }
 
-        private void setXPlaneLocation()
+        private void SetXPlaneLocation()
         {
             txtXplaneLocation.Text = Settings.XPlaneLocation;
-            if (!isXPlaneLocationOk())
+            if (!IsXPlaneLocationOk())
             {
                 tabControl1.SelectTab(1);
                 txtXplaneLocation.BackColor = Color.Red;
@@ -60,7 +60,7 @@ namespace GroundRouteFinder
             }
         }
 
-        private bool isXPlaneLocationOk()
+        private bool IsXPlaneLocationOk()
         {
             if (!Directory.Exists(Settings.XPlaneLocation))
                 return false;
@@ -71,16 +71,17 @@ namespace GroundRouteFinder
             return true;
         }
 
-        private void logElapsed(string message = "")
+        private void LogElapsed(string message = "")
         {
-            rtb.AppendText($"{(DateTime.Now - _start).TotalSeconds:0000.000} {message}\n");
+            string elapsed = $"<{(DateTime.Now - _start).TotalSeconds:000.000}>".Replace(".", "s").Replace(",", "s");
+            rtb.AppendText($"{elapsed} {message}\n");
             rtb.ScrollToCaret();
             rtb.Update();
         }
 
         private void _airport_LogMessage(object sender, LogEventArgs e)
         {
-            logElapsed(e.Message);
+            LogElapsed(e.Message);
         }
 
         private static char[] _splitters = { ' ' };
@@ -91,7 +92,7 @@ namespace GroundRouteFinder
             rtb.Clear();
             string icao = txtIcao.Text.ToUpper();
 
-            bool found = scanCustomSceneries(icao);
+            bool found = ScanCustomSceneries(icao);
             if (found)
             {
                 _airport = new Airport();
@@ -134,7 +135,7 @@ namespace GroundRouteFinder
             }
 
 
-            if (checkWorldTrafficFolders(icao, out _hasExistingInboundRoutes, out _hasExistingOutboundRoutes, out _hasExistingParkingDefs, out _hasExistingAirportOperations))
+            if (CheckWorldTrafficFolders(icao, out _hasExistingInboundRoutes, out _hasExistingOutboundRoutes, out _hasExistingParkingDefs, out _hasExistingAirportOperations))
             {
                 btnGenerate.Enabled = true;
                 cbxOverwriteAirportOperations.ForeColor = _hasExistingAirportOperations ? Color.Red : Color.Black;
@@ -152,7 +153,7 @@ namespace GroundRouteFinder
             }
         }
 
-        private bool checkWorldTrafficFolders(string icao, out bool hasInboundRoutes, out bool hasOutboundRoutes, out bool hasParkingDefs, out bool hasAirportOperations)
+        private bool CheckWorldTrafficFolders(string icao, out bool hasInboundRoutes, out bool hasOutboundRoutes, out bool hasParkingDefs, out bool hasAirportOperations)
         {
             hasInboundRoutes = false;
             hasOutboundRoutes = false;
@@ -208,7 +209,7 @@ namespace GroundRouteFinder
             return true;
         }
 
-        private bool scanCustomSceneries(string icao)
+        private bool ScanCustomSceneries(string icao)
         {
             bool found = false;
             string customSceneries = Settings.XPlaneLocation + @"\Custom Scenery\scenery_packs.ini";
@@ -232,7 +233,7 @@ namespace GroundRouteFinder
                     if (!File.Exists(path))
                         continue;
 
-                    found = scanAirportFile(path, icao);
+                    found = ScanAirportFile(path, icao);
                     if (found)
                     {
                         rtb.AppendText($"{icao} found in {path}.\n");
@@ -252,7 +253,7 @@ namespace GroundRouteFinder
                 return false;
             }
 
-            bool found = scanAirportFile(defaultAptDat, icao);
+            bool found = ScanAirportFile(defaultAptDat, icao);
             if (found)
             {
                 rtb.AppendText($"{icao} found in default apt.dat.\n");
@@ -264,7 +265,7 @@ namespace GroundRouteFinder
             return found;
         }
 
-        private bool scanAirportFile(string filename, string forIcao)
+        private bool ScanAirportFile(string filename, string forIcao)
         {
             bool found = false;
 
@@ -302,53 +303,53 @@ namespace GroundRouteFinder
         {
             rtb.Clear();
             _start = DateTime.Now;
-            logElapsed($"Starting generation.");
+            LogElapsed($"Starting generation.");
 
             _airport.LogMessage += _airport_LogMessage;
             _airport.Process();
 
             if (!_hasExistingParkingDefs || cbxOverwriteParkingDefs.Checked)
             {
-                _airport.WriteParkingDefs();
-                logElapsed($"parking defs done");
+                int count = _airport.WriteParkingDefs();
+                LogElapsed($"parking defs done ({count} generated)");
             }
             else
             {
-                logElapsed($"not overwriting parking defs");
+                LogElapsed($"not overwriting parking defs");
             }
 
             if (!_hasExistingAirportOperations || cbxOverwriteAirportOperations.Checked)
             {
                 _airport.WriteOperations();
-                logElapsed($"operations done");
+                LogElapsed($"operations done");
             }
             else
             {
-                logElapsed($"not overwriting operations");
+                LogElapsed($"not overwriting operations");
             }
 
             if (!_hasExistingOutboundRoutes || cbxOverwriteOutboundRoutes.Checked)
             {
-                _airport.FindOutboundRoutes(rbNormal.Checked);
-                logElapsed($"outbound done, max steerpoints {OutboundResults.MaxOutPoints}");
+               int count = _airport.FindOutboundRoutes(rbNormal.Checked);
+                LogElapsed($"outbound routes done, {count} generated, max steerpoints {OutboundResults.MaxOutPoints}");
             }
             else
             {
-                logElapsed($"not overwriting outbound routes");
+                LogElapsed($"not overwriting outbound routes");
             }
 
             if (!_hasExistingInboundRoutes || cbxOverwriteInboundRoutes.Checked)
             {
-                _airport.FindInboundRoutes(rbNormal.Checked);
-                logElapsed($"inbound done, max steerpoints {InboundResults.MaxInPoints}");
+                int count = _airport.FindInboundRoutes(rbNormal.Checked);
+                LogElapsed($"inbound routes done, {count} generated, max steerpoints {InboundResults.MaxInPoints}");
             }
             else
             {
-                logElapsed($"not overwriting inbound routes");
+                LogElapsed($"not overwriting inbound routes");
             }
 
             _airport.LogMessage -= _airport_LogMessage;
-            logElapsed($"done");
+            LogElapsed($"done");
         }
 
         private void btnBrowse_Click(object sender, EventArgs e)
@@ -360,7 +361,7 @@ namespace GroundRouteFinder
                 {
                     Settings.XPlaneLocation = fbd.SelectedPath;
                 }
-                setXPlaneLocation();
+                SetXPlaneLocation();
             }
         }
 
@@ -439,7 +440,7 @@ namespace GroundRouteFinder
                 double minWingSpan = details.Value.Min(a => a.WingSpan);
                 double maxWingSpan = details.Value.Max(a => a.WingSpan);
 
-                rtbAircraft.AppendText($"{details.Key} Wingspan: mn {minWingSpan:0.0} <{spanToCat(minWingSpan)}> av {averageWingSpan:0.0} mx: {maxWingSpan:0.0} <{spanToCat(maxWingSpan)}>\n");
+                rtbAircraft.AppendText($"{details.Key} Wingspan: mn {minWingSpan:0.0} <{SpanToCat(minWingSpan)}> av {averageWingSpan:0.0} mx: {maxWingSpan:0.0} <{SpanToCat(maxWingSpan)}>\n");
             }
 
             foreach (KeyValuePair<int, List<AircraftBase>> details in aircraft.OrderBy(ac => ac.Key))
@@ -462,7 +463,7 @@ namespace GroundRouteFinder
 
         }
 
-        private string spanToCat(double span)
+        private string SpanToCat(double span)
         {
             if (span < 15)
                 return "A";

@@ -20,7 +20,7 @@ namespace GroundRouteFinder
         {
             get
             {
-                RegistryKey key = openReg();
+                RegistryKey key = OpenReg();
                 string val = key.GetValue("XPlaneLocation") as string;
                 key.Close();
                 return val != null ? val : "";
@@ -28,7 +28,7 @@ namespace GroundRouteFinder
 
             set
             {
-                RegistryKey key = openReg(); 
+                RegistryKey key = OpenReg(); 
                 key.SetValue("XPlaneLocation", value);
                 key.Close();
             }
@@ -38,7 +38,7 @@ namespace GroundRouteFinder
         {
             get
             {
-                RegistryKey key = openReg();
+                RegistryKey key = OpenReg();
                 bool val = (int)key.GetValue("OverwriteInbound", 0) == 0 ? false : true;
                 key.Close();
                 return val;
@@ -46,7 +46,7 @@ namespace GroundRouteFinder
 
             set
             {
-                RegistryKey key = openReg(); 
+                RegistryKey key = OpenReg(); 
                 key.SetValue("OverwriteInbound", value, RegistryValueKind.DWord);
                 key.Close();
             }
@@ -56,7 +56,7 @@ namespace GroundRouteFinder
         {
             get
             {
-                RegistryKey key = openReg();
+                RegistryKey key = OpenReg();
                 bool val = (int)key.GetValue("OverwriteOutbound", 0) == 0 ? false : true;
                 key.Close();
                 return val;
@@ -64,7 +64,7 @@ namespace GroundRouteFinder
 
             set
             {
-                RegistryKey key = openReg();
+                RegistryKey key = OpenReg();
                 key.SetValue("OverwriteOutbound", value, RegistryValueKind.DWord);
                 key.Close();
             }
@@ -74,7 +74,7 @@ namespace GroundRouteFinder
         {
             get
             {
-                RegistryKey key = openReg();
+                RegistryKey key = OpenReg();
                 bool val = (int)key.GetValue("OverwriteParkingDefs", 0) == 0 ? false : true;
                 key.Close();
                 return val;
@@ -82,7 +82,7 @@ namespace GroundRouteFinder
 
             set
             {
-                RegistryKey key = openReg();
+                RegistryKey key = OpenReg();
                 key.SetValue("OverwriteParkingDefs", value, RegistryValueKind.DWord);
                 key.Close();
             }
@@ -92,7 +92,7 @@ namespace GroundRouteFinder
         {
             get
             {
-                RegistryKey key = openReg();
+                RegistryKey key = OpenReg();
                 bool val = (int)key.GetValue("OverwriteOperations", 0) == 0 ? false : true;
                 key.Close();
                 return val;
@@ -100,7 +100,7 @@ namespace GroundRouteFinder
 
             set
             {
-                RegistryKey key = openReg();
+                RegistryKey key = OpenReg();
                 key.SetValue("OverwriteOperations", value, RegistryValueKind.DWord);
                 key.Close();
             }
@@ -111,7 +111,7 @@ namespace GroundRouteFinder
         public static string WorldTrafficParkingDefs { get { return Path.Combine(XPlaneLocation, @"ClassicJetSimUtils\WorldTraffic\ParkingDefs"); } }
         public static string WorldTrafficOperations { get { return Path.Combine(XPlaneLocation, @"ClassicJetSimUtils\WorldTraffic\AirportOperations"); } }
 
-        private static RegistryKey openReg()
+        private static RegistryKey OpenReg()
         {
             return Registry.CurrentUser.OpenSubKey(@"Software\Vortex\GRF", true);
         }

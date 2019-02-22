@@ -13,7 +13,7 @@ namespace GroundRouteFinder
     {
         public Parking Parking;
 
-        private IEnumerable<TaxiEdge> _edges;
+        private readonly IEnumerable<TaxiEdge> _edges;
         private Dictionary<TaxiNode, Dictionary<XPlaneAircraftCategory, ResultRoute>> _results;
 
         public static int MaxInPoints = 0;
@@ -68,8 +68,10 @@ namespace GroundRouteFinder
             }
         }
 
-        public void WriteRoutes(string outputPath, bool kml)
+        public int WriteRoutes(string outputPath, bool kml)
         {
+            int count = 0;
+
             foreach (KeyValuePair<TaxiNode, Dictionary<XPlaneAircraftCategory, ResultRoute>> sizeRoutes in _results)
             {
                 for (XPlaneAircraftCategory size = Parking.MaxSize; size >= XPlaneAircraftCategory.A; size--)
@@ -116,7 +118,9 @@ namespace GroundRouteFinder
                         string fileName = $"{outputPath}\\{route.Runway.Designator}_to_{Parking.FileNameSafeName}_{route.RouteStart.Node.Id}_{sizeName}";
                         using (RouteWriter sw = RouteWriter.Create(kml ? 0 : 1, fileName, allSizes, -1, -1, route.Runway.Designator, "NOSEWHEEL"))
                         {
-                            IEnumerable<SteerPoint> steerPoints = buildSteerPoints(route, sizeRoutes.Key);
+                            count++;
+
+                            IEnumerable<SteerPoint> steerPoints = BuildSteerPoints(route, sizeRoutes.Key);
                             foreach (SteerPoint steerPoint in steerPoints)
                             {
                                 sw.Write(steerPoint);
@@ -125,16 +129,19 @@ namespace GroundRouteFinder
                     }
                 }
             }
+            return count;
         }
 
-        private IEnumerable<SteerPoint> buildSteerPoints(ResultRoute route, TaxiNode runwayExitNode)
+        private IEnumerable<SteerPoint> BuildSteerPoints(ResultRoute route, TaxiNode runwayExitNode)
         {
             List<SteerPoint> steerPoints = new List<SteerPoint>();
 
             // Route should start at the (displaced) threshold
-            RunwayPoint threshold = new RunwayPoint(route.Runway.DisplacedNode, 55, $"{route.Runway.Designator} Threshold", route.RouteStart.Edge.ActiveForRunway(route.Runway.Designator));
-            threshold.OnRunway = true;
-            threshold.IsExiting = true;
+            RunwayPoint threshold = new RunwayPoint(route.Runway.DisplacedNode, 55, $"{route.Runway.Designator} Threshold", route.RouteStart.Edge.ActiveForRunway(route.Runway.Designator))
+            {
+                OnRunway = true,
+                IsExiting = true
+            };
             steerPoints.Add(threshold);
 
             foreach (TaxiNode node in route.Runway.RunwayNodes)

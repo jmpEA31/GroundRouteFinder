@@ -29,13 +29,10 @@ namespace GroundRouteFinder.AptDat
         private List<Runway> _runways;
         private List<TaxiEdge> _edges;
 
-        private bool hasFlowRules = false;
-        private bool hasVfrRules = false;
-
         public List<LineElement> _lines;
         public bool inLine = false;
 
-        private static char[] _splitters = { ' ' };
+        private static readonly char[] _splitters = { ' ' };
 
         LineElement cle = null;
 
@@ -49,24 +46,24 @@ namespace GroundRouteFinder.AptDat
 
         internal bool Analyze(string file, string icao)
         {
-            load(file);
+            ReadData(file);
 
             return ((_nodeDict.Count > 0) && (_edges.Count > 0) && (_parkings.Count > 0));
         }
 
         public void Process()
         {
-            preprocess();
+            Preprocess();
         }
 
 
         public void Load(string name)
         {
-            load(name);
-            preprocess();
+            ReadData(name);
+            Preprocess();
         }
 
-        private void load(string name)
+        private void ReadData(string name)
         {
             _nodeDict = new Dictionary<uint, TaxiNode>();
             _parkings = new List<Parking>();
@@ -79,11 +76,11 @@ namespace GroundRouteFinder.AptDat
             {
                 if (lines[i].StartsWith("1 "))
                 {
-                    readAirportRecord(lines[i]);
+                    ReadAirportRecord(lines[i]);
                 }
                 else if (lines[i].StartsWith("100 "))
                 {
-                    readRunwayRecord(lines[i]);
+                    ReadRunwayRecord(lines[i]);
                 }
 
                 // Possibly use this to improve pushback
@@ -106,19 +103,19 @@ namespace GroundRouteFinder.AptDat
 
                 else if (lines[i].StartsWith("1201 "))
                 {
-                    readTaxiNode(lines[i]);
+                    ReadTaxiNode(lines[i]);
                 }
                 else if (lines[i].StartsWith("1202 "))
                 {
-                    readTaxiEdge(lines[i]);
+                    ReadTaxiEdge(lines[i]);
                 }
                 else if (lines[i].StartsWith("1204 "))
                 {
-                    readTaxiEdgeOperations(lines[i]);
+                    ReadTaxiEdgeOperations(lines[i]);
                 }
                 else if (lines[i].StartsWith("1300 "))
                 {
-                    readStartPoint(lines[i]);
+                    ReadStartPoint(lines[i]);
                 }
                 else if (lines[i].StartsWith("1301 "))
                 {
@@ -138,7 +135,7 @@ namespace GroundRouteFinder.AptDat
             Log($"{ICAO} Parkings: {_parkings.Count} Runways: {_runways.Count} Nodes: {_nodeDict.Count()} TaxiPaths: {_edges.Count}");
         }
 
-        public void preprocess()
+        public void Preprocess()
         {
             // Filter out nodes with links (probably nodes for the vehicle network)
             _taxiNodes = _nodeDict.Values.Where(v => v.IncomingEdges.Count > 0);
@@ -194,7 +191,7 @@ namespace GroundRouteFinder.AptDat
             }
         }
 
-        public void WriteParkingDefs()
+        public int WriteParkingDefs()
         {
             // Parking preprocessing
             string parkingDefPath = Path.Combine(Settings.WorldTrafficParkingDefs, ICAO);
@@ -204,6 +201,7 @@ namespace GroundRouteFinder.AptDat
             {
                 parking.WriteDef();
             }
+            return _parkings.Count;
         }
 
         public void WriteOperations()
@@ -214,11 +212,13 @@ namespace GroundRouteFinder.AptDat
         }
 
 
-        public void FindInboundRoutes(bool normalOutput)
+        public int FindInboundRoutes(bool normalOutput)
         {
             string outputPath = normalOutput ? Path.Combine(Settings.WorldTrafficGroundRoutes, "Arrival") : Settings.ArrivalFolderKML;
             outputPath = Path.Combine(outputPath, ICAO);
             Settings.DeleteDirectoryContents(outputPath);
+
+            int count = 0;
 
             foreach (Parking parking in _parkings)
             {
@@ -226,7 +226,7 @@ namespace GroundRouteFinder.AptDat
                 for (XPlaneAircraftCategory size = parking.MaxSize; size >= XPlaneAircraftCategory.A; size--)
                 {
                     // Nearest node should become 'closest to computed pushback point'
-                    findShortestPaths(_taxiNodes, parking.NearestNode, size);
+                    FindShortestPaths(_taxiNodes, parking.NearestNode, size);
 
                     // Pick the runway exit points for the selected size
                     foreach (Runway r in _runways)
@@ -257,15 +257,18 @@ namespace GroundRouteFinder.AptDat
                     }
                 }
 
-                ir.WriteRoutes(outputPath, !normalOutput);
+                count += ir.WriteRoutes(outputPath, !normalOutput);
             }
+            return count;
         }
     
-        public void FindOutboundRoutes(bool normalOutput)
+        public int FindOutboundRoutes(bool normalOutput)
         {
             string outputPath = normalOutput ? Path.Combine(Settings.WorldTrafficGroundRoutes, "Departure") : Settings.DepartureFolderKML;
             outputPath = Path.Combine(outputPath, ICAO);
             Settings.DeleteDirectoryContents(outputPath);
+
+            int count = 0;
 
             // for each runway
             foreach (Runway runway in _runways)
@@ -280,16 +283,18 @@ namespace GroundRouteFinder.AptDat
                         foreach (EntryPoint ep in entryGroup.Value)
                         {
                             // find shortest path from each parking to each takeoff spot considering each entrypoint
-                            findShortestPaths(_taxiNodes, ep.OffRunwayNode, size);
+                            FindShortestPaths(_taxiNodes, ep.OffRunwayNode, size);
                             foreach (Parking parking in _parkings)
                             {
                                 or.AddResult(size, parking.NearestNode, parking, entryGroup.Key, ep);
                             }
                         }
                     }
-                    or.WriteRoutes(outputPath, !normalOutput);
+                    count += or.WriteRoutes(outputPath, !normalOutput);
                 }
             }
+
+            return count;
         }
 
         /// <summary>
@@ -310,7 +315,7 @@ namespace GroundRouteFinder.AptDat
         /// <param name="nodes">The node network</param>
         /// <param name="targetNode">Here do we go now</param>
         /// <param name="targetCategory">Minimum Cat (A-F) that needs to be supported by the route</param>
-        private static void findShortestPaths(IEnumerable<TaxiNode> nodes, TaxiNode targetNode, XPlaneAircraftCategory targetCategory)
+        private static void FindShortestPaths(IEnumerable<TaxiNode> nodes, TaxiNode targetNode, XPlaneAircraftCategory targetCategory)
         {
             List<TaxiNode> untouchedNodes = nodes.ToList();
             List<TaxiNode> touchedNodes = new List<TaxiNode>();
@@ -399,14 +404,14 @@ namespace GroundRouteFinder.AptDat
             }
         }
 
-        private void readAirportRecord(string line)
+        private void ReadAirportRecord(string line)
         {
             string[] tokens = line.Split(_splitters, StringSplitOptions.RemoveEmptyEntries);
 
             ICAO = tokens[4];
         }
 
-        private void readRunwayRecord(string line)
+        private void ReadRunwayRecord(string line)
         {
             string[] tokens = line.Split(_splitters, StringSplitOptions.RemoveEmptyEntries);
 
@@ -428,7 +433,7 @@ namespace GroundRouteFinder.AptDat
             _runways.Add(r2);
         }
 
-        private void readLineSegment(string line)
+        private void ReadLineSegment(string line)
         {
             if (cle == null)
             {
@@ -446,7 +451,7 @@ namespace GroundRouteFinder.AptDat
             }
         }
 
-        private void readLineEnd(string line)
+        private void ReadLineEnd(string line)
         {
             if (inLine)
             {
@@ -463,15 +468,17 @@ namespace GroundRouteFinder.AptDat
         }
 
 
-        private void readTaxiNode(string line)
+        private void ReadTaxiNode(string line)
         {
             string[] tokens = line.Split(_splitters, StringSplitOptions.RemoveEmptyEntries);
             uint id = uint.Parse(tokens[4]);
-            _nodeDict[id] = new TaxiNode(id, tokens[1], tokens[2]);
-            _nodeDict[id].Name = string.Join(" ", tokens.Skip(5));
+            _nodeDict[id] = new TaxiNode(id, tokens[1], tokens[2])
+            {
+                Name = string.Join(" ", tokens.Skip(5))
+            };
         }
 
-        private void readTaxiEdge(string line)
+        private void ReadTaxiEdge(string line)
         {
             string[] tokens = line.Split(_splitters, StringSplitOptions.RemoveEmptyEntries);
             uint va = uint.Parse(tokens[1]);
@@ -519,7 +526,7 @@ namespace GroundRouteFinder.AptDat
             }
         }
 
-        private void readTaxiEdgeOperations(string line)
+        private void ReadTaxiEdgeOperations(string line)
         {
             string[] tokens = line.Split(_splitters, StringSplitOptions.RemoveEmptyEntries);
             string[] rwys = tokens[2].Split(',');
@@ -535,18 +542,20 @@ namespace GroundRouteFinder.AptDat
             }
         }
 
-        private void readStartPoint(string line)
+        private void ReadStartPoint(string line)
         {
             string[] tokens = line.Split(_splitters, StringSplitOptions.RemoveEmptyEntries);
             string[] xpTypes = tokens[5].Split('|');
 
-            Parking sp = new Parking(this);
-            sp.Latitude = double.Parse(tokens[1]) * VortexMath.Deg2Rad;
-            sp.Longitude = double.Parse(tokens[2]) * VortexMath.Deg2Rad;
-            sp.Bearing = ((double.Parse(tokens[3]) + 540) * VortexMath.Deg2Rad) % (VortexMath.PI2) - Math.PI;
-            sp.LocationType = StartUpLocationTypeConverter.FromString(tokens[4]);
-            sp.XpTypes = AircraftTypeConverter.XPlaneTypesFromStrings(xpTypes);
-            sp.Name = string.Join(" ", tokens.Skip(6));
+            Parking sp = new Parking(this)
+            {
+                Latitude = double.Parse(tokens[1]) * VortexMath.Deg2Rad,
+                Longitude = double.Parse(tokens[2]) * VortexMath.Deg2Rad,
+                Bearing = ((double.Parse(tokens[3]) + 540) * VortexMath.Deg2Rad) % (VortexMath.PI2) - Math.PI,
+                LocationType = StartUpLocationTypeConverter.FromString(tokens[4]),
+                XpTypes = AircraftTypeConverter.XPlaneTypesFromStrings(xpTypes),
+                Name = string.Join(" ", tokens.Skip(6))
+            };
             _parkings.Add(sp);
         }
     }

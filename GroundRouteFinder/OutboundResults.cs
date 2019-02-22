@@ -12,7 +12,7 @@ namespace GroundRouteFinder
     public class OutboundResults
     {
         public Runway Runway;
-        private IEnumerable<TaxiEdge> _edges;
+        private readonly IEnumerable<TaxiEdge> _edges;
         private Dictionary<TaxiNode, Dictionary<XPlaneAircraftCategory, ResultRoute>> _results;
 
         public static int MaxOutPoints = 0;
@@ -72,8 +72,10 @@ namespace GroundRouteFinder
             }
         }
 
-        public void WriteRoutes(string outputPath, bool kml)
+        public int WriteRoutes(string outputPath, bool kml)
         {
+            int count = 0;
+
             foreach (KeyValuePair<TaxiNode, Dictionary<XPlaneAircraftCategory, ResultRoute>> sizeRoutes in _results)
             {
                 for (XPlaneAircraftCategory size = XPlaneAircraftCategory.Max - 1; size >= XPlaneAircraftCategory.A; size--)
@@ -124,7 +126,9 @@ namespace GroundRouteFinder
 
                             using (RouteWriter sw = RouteWriter.Create(kml ? 0 : 1, fileName, allSizes, cargo, military, Runway.Designator, "NOSEWHEEL"))
                             {
-                                IEnumerable<SteerPoint> steerPoints = buildSteerPoints(currentParking, route);
+                                count++;
+
+                                IEnumerable<SteerPoint> steerPoints = BuildSteerPoints(currentParking, route);
 
                                 foreach (SteerPoint steerPoint in steerPoints)
                                 {
@@ -135,16 +139,20 @@ namespace GroundRouteFinder
                     }
                 }
             }
+
+            return count;
         }
 
-        private IEnumerable<SteerPoint> buildSteerPoints(Parking currentParking, ResultRoute route)
+        private IEnumerable<SteerPoint> BuildSteerPoints(Parking currentParking, ResultRoute route)
         {
             LinkedNode link = route.RouteStart;
             TaxiNode nodeToWrite = route.StartNode;
             EntryPoint entryPoint = route.RunwayEntryPoint;
 
-            List<SteerPoint> steerPoints = new List<SteerPoint>();
-            steerPoints.Add(new ParkingPoint(currentParking.Latitude, currentParking.Longitude, 3, $"{currentParking.Name}", currentParking.Bearing, false));
+            List<SteerPoint> steerPoints = new List<SteerPoint>
+            {
+                new ParkingPoint(currentParking.Latitude, currentParking.Longitude, 3, $"{currentParking.Name}", currentParking.Bearing, false)
+            };
 
             // Write Pushback node, allowing room for turn
             double addLat = 0;
