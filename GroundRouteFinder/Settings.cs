@@ -106,6 +106,25 @@ namespace GroundRouteFinder
             }
         }
 
+        public static bool GenerateDebugOutput
+        {
+            get
+            {
+                RegistryKey key = OpenReg();
+                bool val = (int)key.GetValue("GenerateDebugOutput", 0) == 0 ? false : true;
+                key.Close();
+                return val;
+            }
+
+            set
+            {
+                RegistryKey key = OpenReg();
+                key.SetValue("GenerateDebugOutput", value, RegistryValueKind.DWord);
+                key.Close();
+            }
+        }
+
+
         public static string WorldTrafficLocation { get { return Path.Combine(XPlaneLocation, @"ClassicJetSimUtils\WorldTraffic"); }  }
         public static string WorldTrafficGroundRoutes { get { return Path.Combine(XPlaneLocation, @"ClassicJetSimUtils\WorldTraffic\GroundRoutes"); } }
         public static string WorldTrafficParkingDefs { get { return Path.Combine(XPlaneLocation, @"ClassicJetSimUtils\WorldTraffic\ParkingDefs"); } }
@@ -126,6 +145,13 @@ namespace GroundRouteFinder
             if (!Directory.Exists(DataFolder))
                 Directory.CreateDirectory(DataFolder);
 
+            string kmlFolder = Path.Combine(DataFolder, "KML");
+            if (!Directory.Exists(kmlFolder))
+                Directory.CreateDirectory(kmlFolder);
+
+            DepartureFolderKML = Path.Combine(kmlFolder, "Departure");
+            ArrivalFolderKML = Path.Combine(kmlFolder, "Arrival");
+
             IEnumerable<string> tmpFiles = Directory.EnumerateFiles(DataFolder, "*.tmp");
             foreach (string tmpFile in tmpFiles)
             {
@@ -145,6 +171,9 @@ namespace GroundRouteFinder
 
         public static void DeleteDirectoryContents(string target_dir, bool deleteDirAsWell = false)
         {
+            if (!Directory.Exists(target_dir))
+                return;
+
             string[] files = Directory.GetFiles(target_dir);
             string[] dirs = Directory.GetDirectories(target_dir);
 
