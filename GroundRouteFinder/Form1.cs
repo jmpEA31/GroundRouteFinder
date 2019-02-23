@@ -88,68 +88,75 @@ namespace GroundRouteFinder
 
         private void btnAnalyze_Click(object sender, EventArgs e)
         {
-            _start = DateTime.Now;
-            rtb.Clear();
-            string icao = txtIcao.Text.ToUpper();
-
-            bool found = ScanCustomSceneries(icao);
-            if (found)
+            try
             {
-                _airport = new Airport();
-                if (!_airport.Analyze(Path.Combine(Settings.DataFolder, $"{icao}.tmp"), icao))
-                {
-                    rtb.AppendText("Customized airport does not contain the minimal data requiered to generate routes (parkings + atc taxi network).\n");
-                    found = false;
-                    _airport = null;
-                }
-            }
+                _start = DateTime.Now;
+                rtb.Clear();
+                string icao = txtIcao.Text.ToUpper();
 
-            if (!found)
-            {
-                found = scanDefaultAptDat(icao);
+                bool found = ScanCustomSceneries(icao);
                 if (found)
                 {
                     _airport = new Airport();
                     if (!_airport.Analyze(Path.Combine(Settings.DataFolder, $"{icao}.tmp"), icao))
                     {
-                        rtb.AppendText("Default airport does not contain the minimal data requiered to generate routes (parkings + atc taxi network).\n");
+                        rtb.AppendText("Customized airport does not contain the minimal data requiered to generate routes (parkings + atc taxi network).\n");
                         found = false;
                         _airport = null;
-                        return;
                     }
                 }
+
+                if (!found)
+                {
+                    found = scanDefaultAptDat(icao);
+                    if (found)
+                    {
+                        _airport = new Airport();
+                        if (!_airport.Analyze(Path.Combine(Settings.DataFolder, $"{icao}.tmp"), icao))
+                        {
+                            rtb.AppendText("Default airport does not contain the minimal data requiered to generate routes (parkings + atc taxi network).\n");
+                            found = false;
+                            _airport = null;
+                            return;
+                        }
+                    }
+                }
+
+                if (!found)
+                {
+                    return;
+                }
+
+                rtb.AppendText("Parkings and ATC taxi network are present.\n");
+
+                var ps = _airport.Parkings.GroupBy(p => p.Name);
+                foreach (var psv in ps)
+                {
+                    if (psv.Count() > 1)
+                        rtb.AppendText($"WARNING Duplicate parking names in apt source: <{psv.First().Name}> occurs {psv.Count()} times.\n");
+                }
+
+
+                if (CheckWorldTrafficFolders(icao, out _hasExistingInboundRoutes, out _hasExistingOutboundRoutes, out _hasExistingParkingDefs, out _hasExistingAirportOperations))
+                {
+                    btnGenerate.Enabled = true;
+                    cbxOverwriteAirportOperations.ForeColor = _hasExistingAirportOperations ? Color.Red : Color.Black;
+                    cbxOverwriteInboundRoutes.ForeColor = _hasExistingInboundRoutes ? Color.Red : Color.Black;
+                    cbxOverwriteOutboundRoutes.ForeColor = _hasExistingOutboundRoutes ? Color.Red : Color.Black;
+                    cbxOverwriteParkingDefs.ForeColor = _hasExistingParkingDefs ? Color.Red : Color.Black;
+                }
+                else
+                {
+                    btnGenerate.Enabled = false;
+                    cbxOverwriteAirportOperations.ForeColor = Color.Gray;
+                    cbxOverwriteInboundRoutes.ForeColor = Color.Gray;
+                    cbxOverwriteOutboundRoutes.ForeColor = Color.Gray;
+                    cbxOverwriteParkingDefs.ForeColor = Color.Gray;
+                }
             }
-
-            if (!found)
+            catch (Exception ex)
             {
-                return;
-            }
-
-            rtb.AppendText("Parkings and ATC taxi network are present.\n");
-
-            var ps = _airport.Parkings.GroupBy(p => p.Name);
-            foreach (var psv in ps)
-            {
-                if (psv.Count() > 1)
-                    rtb.AppendText($"WARNING Duplicate parking names in apt source: <{psv.First().Name}> occurs {psv.Count()} times.\n");
-            }
-
-
-            if (CheckWorldTrafficFolders(icao, out _hasExistingInboundRoutes, out _hasExistingOutboundRoutes, out _hasExistingParkingDefs, out _hasExistingAirportOperations))
-            {
-                btnGenerate.Enabled = true;
-                cbxOverwriteAirportOperations.ForeColor = _hasExistingAirportOperations ? Color.Red : Color.Black;
-                cbxOverwriteInboundRoutes.ForeColor = _hasExistingInboundRoutes ? Color.Red : Color.Black;
-                cbxOverwriteOutboundRoutes.ForeColor = _hasExistingOutboundRoutes ? Color.Red : Color.Black;
-                cbxOverwriteParkingDefs.ForeColor = _hasExistingParkingDefs ? Color.Red : Color.Black;
-            }
-            else
-            {
-                btnGenerate.Enabled = false;
-                cbxOverwriteAirportOperations.ForeColor = Color.Gray;
-                cbxOverwriteInboundRoutes.ForeColor = Color.Gray;
-                cbxOverwriteOutboundRoutes.ForeColor = Color.Gray;
-                cbxOverwriteParkingDefs.ForeColor = Color.Gray;
+                rtb.AppendText($"\nAn exception occurred during analysis:\n{ex}");
             }
         }
 
@@ -301,55 +308,62 @@ namespace GroundRouteFinder
 
         private void btnGenerate_Click(object sender, EventArgs e)
         {
-            rtb.Clear();
-            _start = DateTime.Now;
-            LogElapsed($"Starting generation.");
+            try
+            {
+                rtb.Clear();
+                _start = DateTime.Now;
+                LogElapsed($"Starting generation.");
 
-            _airport.LogMessage += _airport_LogMessage;
-            _airport.Process();
+                _airport.LogMessage += _airport_LogMessage;
+                _airport.Process();
 
-            if (!_hasExistingParkingDefs || cbxOverwriteParkingDefs.Checked)
-            {
-                int count = _airport.WriteParkingDefs();
-                LogElapsed($"parking defs done ({count} generated)");
-            }
-            else
-            {
-                LogElapsed($"not overwriting parking defs");
-            }
+                if (!_hasExistingParkingDefs || cbxOverwriteParkingDefs.Checked)
+                {
+                    int count = _airport.WriteParkingDefs();
+                    LogElapsed($"parking defs done ({count} generated)");
+                }
+                else
+                {
+                    LogElapsed($"not overwriting parking defs");
+                }
 
-            if (!_hasExistingAirportOperations || cbxOverwriteAirportOperations.Checked)
-            {
-                _airport.WriteOperations();
-                LogElapsed($"operations done");
-            }
-            else
-            {
-                LogElapsed($"not overwriting operations");
-            }
+                if (!_hasExistingAirportOperations || cbxOverwriteAirportOperations.Checked)
+                {
+                    _airport.WriteOperations();
+                    LogElapsed($"operations done");
+                }
+                else
+                {
+                    LogElapsed($"not overwriting operations");
+                }
 
-            if (!_hasExistingOutboundRoutes || cbxOverwriteOutboundRoutes.Checked)
-            {
-               int count = _airport.FindOutboundRoutes(rbNormal.Checked);
-                LogElapsed($"outbound routes done, {count} generated, max steerpoints {OutboundResults.MaxOutPoints}");
-            }
-            else
-            {
-                LogElapsed($"not overwriting outbound routes");
-            }
+                if (!_hasExistingOutboundRoutes || cbxOverwriteOutboundRoutes.Checked)
+                {
+                    int count = _airport.FindOutboundRoutes(rbNormal.Checked);
+                    LogElapsed($"outbound routes done, {count} generated, max steerpoints {OutboundResults.MaxOutPoints}");
+                }
+                else
+                {
+                    LogElapsed($"not overwriting outbound routes");
+                }
 
-            if (!_hasExistingInboundRoutes || cbxOverwriteInboundRoutes.Checked)
-            {
-                int count = _airport.FindInboundRoutes(rbNormal.Checked);
-                LogElapsed($"inbound routes done, {count} generated, max steerpoints {InboundResults.MaxInPoints}");
-            }
-            else
-            {
-                LogElapsed($"not overwriting inbound routes");
-            }
+                if (!_hasExistingInboundRoutes || cbxOverwriteInboundRoutes.Checked)
+                {
+                    int count = _airport.FindInboundRoutes(rbNormal.Checked);
+                    LogElapsed($"inbound routes done, {count} generated, max steerpoints {InboundResults.MaxInPoints}");
+                }
+                else
+                {
+                    LogElapsed($"not overwriting inbound routes");
+                }
 
-            _airport.LogMessage -= _airport_LogMessage;
-            LogElapsed($"done");
+                _airport.LogMessage -= _airport_LogMessage;
+                LogElapsed($"done");
+            }
+            catch (Exception ex)
+            {
+                rtb.AppendText($"\nAn exception occurred during generation:\n{ex}");
+            }
         }
 
         private void btnBrowse_Click(object sender, EventArgs e)
