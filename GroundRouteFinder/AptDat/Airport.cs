@@ -404,6 +404,25 @@ namespace GroundRouteFinder.AptDat
             }
         }
 
+        internal void DebugParkings()
+        {
+            using (StreamWriter sw = File.CreateText(Settings.DataFolder + "\\starts.csv"))
+            {
+                foreach (Parking parking in _parkings)
+                {
+                    sw.WriteLine($"{parking.Latitude * VortexMath.Rad2Deg},{parking.Longitude * VortexMath.Rad2Deg},{parking.Name}");
+                }
+            }
+
+            using (StreamWriter sw = File.CreateText(Settings.DataFolder + "\\pushback.csv"))
+            {
+                foreach (Parking parking in _parkings)
+                {
+                    sw.WriteLine($"{parking.PushBackLatitude * VortexMath.Rad2Deg},{parking.PushBackLongitude * VortexMath.Rad2Deg},{parking.Name}");
+                }
+            }
+        }
+
         private void ReadAirportRecord(string line)
         {
             string[] tokens = line.Split(_splitters, StringSplitOptions.RemoveEmptyEntries);

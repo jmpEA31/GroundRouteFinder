@@ -57,6 +57,8 @@
             this.rtbAircraft = new System.Windows.Forms.RichTextBox();
             this.button2 = new System.Windows.Forms.Button();
             this.btnExit = new System.Windows.Forms.Button();
+            this.groupBox3 = new System.Windows.Forms.GroupBox();
+            this.cbxGenerateDebugFiles = new System.Windows.Forms.CheckBox();
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
             this.groupBox1.SuspendLayout();
@@ -65,6 +67,7 @@
             this.tabPage2.SuspendLayout();
             this.groupBox2.SuspendLayout();
             this.tabAircraft.SuspendLayout();
+            this.groupBox3.SuspendLayout();
             this.SuspendLayout();
             // 
             // rtb
@@ -256,6 +259,7 @@
             // 
             // tabPage2
             // 
+            this.tabPage2.Controls.Add(this.groupBox3);
             this.tabPage2.Controls.Add(this.groupBox2);
             this.tabPage2.Controls.Add(this.btnBrowse);
             this.tabPage2.Controls.Add(this.txtXplaneLocation);
@@ -278,7 +282,7 @@
             this.groupBox2.Margin = new System.Windows.Forms.Padding(2);
             this.groupBox2.Name = "groupBox2";
             this.groupBox2.Padding = new System.Windows.Forms.Padding(2);
-            this.groupBox2.Size = new System.Drawing.Size(300, 124);
+            this.groupBox2.Size = new System.Drawing.Size(199, 124);
             this.groupBox2.TabIndex = 12;
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "Overwrite Defaults";
@@ -400,6 +404,27 @@
             this.btnExit.UseVisualStyleBackColor = true;
             this.btnExit.Click += new System.EventHandler(this.btnExit_Click);
             // 
+            // groupBox3
+            // 
+            this.groupBox3.Controls.Add(this.cbxGenerateDebugFiles);
+            this.groupBox3.Location = new System.Drawing.Point(213, 50);
+            this.groupBox3.Name = "groupBox3";
+            this.groupBox3.Size = new System.Drawing.Size(200, 124);
+            this.groupBox3.TabIndex = 13;
+            this.groupBox3.TabStop = false;
+            this.groupBox3.Text = "Debug Options";
+            // 
+            // chkGenerateDebugFiles
+            // 
+            this.cbxGenerateDebugFiles.AutoSize = true;
+            this.cbxGenerateDebugFiles.Location = new System.Drawing.Point(18, 23);
+            this.cbxGenerateDebugFiles.Name = "chkGenerateDebugFiles";
+            this.cbxGenerateDebugFiles.Size = new System.Drawing.Size(129, 17);
+            this.cbxGenerateDebugFiles.TabIndex = 0;
+            this.cbxGenerateDebugFiles.Text = "Generate Debug Files";
+            this.cbxGenerateDebugFiles.UseVisualStyleBackColor = true;
+            this.cbxGenerateDebugFiles.CheckedChanged += new System.EventHandler(this.chkGenerateDebugFiles_CheckedChanged);
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -422,6 +447,8 @@
             this.groupBox2.ResumeLayout(false);
             this.groupBox2.PerformLayout();
             this.tabAircraft.ResumeLayout(false);
+            this.groupBox3.ResumeLayout(false);
+            this.groupBox3.PerformLayout();
             this.ResumeLayout(false);
 
         }
@@ -456,6 +483,8 @@
         private System.Windows.Forms.CheckBox cbxOwParkingDefsDefault;
         private System.Windows.Forms.CheckBox cbxOwOutboundDefault;
         private System.Windows.Forms.CheckBox cbxOwInboundDefault;
+        private System.Windows.Forms.GroupBox groupBox3;
+        private System.Windows.Forms.CheckBox cbxGenerateDebugFiles;
     }
 }
 

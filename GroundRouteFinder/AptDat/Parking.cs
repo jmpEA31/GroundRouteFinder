@@ -120,7 +120,9 @@ namespace GroundRouteFinder.AptDat
                     if (Math.Abs(pushBackLongitude - Longitude) > 0.25 * Math.PI)
                     {
                         pushBackLatitude = -pushBackLatitude;
-                        pushBackLongitude += Math.PI;
+                        pushBackLongitude += VortexMath.PI;
+                        if (pushBackLongitude > VortexMath.PI)
+                            pushBackLongitude -= VortexMath.PI2;
                     }
 
                     // To find the best spot we must know if the found intersection is actually

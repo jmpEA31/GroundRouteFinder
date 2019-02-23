@@ -44,6 +44,8 @@ namespace GroundRouteFinder
 
             cbxOwOperationsDefault.Checked = Settings.OverwriteOperations;
             cbxOverwriteAirportOperations.Checked = Settings.OverwriteOperations;
+
+            cbxGenerateDebugFiles.Checked = Settings.GenerateDebugOutput;
         }
 
         private void SetXPlaneLocation()
@@ -317,25 +319,52 @@ namespace GroundRouteFinder
                 _airport.LogMessage += _airport_LogMessage;
                 _airport.Process();
 
-                if (!_hasExistingParkingDefs || cbxOverwriteParkingDefs.Checked)
+                if (!rbNormal.Checked)
                 {
-                    int count = _airport.WriteParkingDefs();
-                    LogElapsed($"parking defs done ({count} generated)");
-                }
-                else
-                {
-                    LogElapsed($"not overwriting parking defs");
+                    if (!Directory.Exists(Path.Combine(Settings.DepartureFolderKML, _airport.ICAO)))
+                    {
+                        Directory.CreateDirectory(Path.Combine(Settings.DepartureFolderKML, _airport.ICAO));
+                    }
+                    if (!Directory.Exists(Path.Combine(Settings.ArrivalFolderKML, _airport.ICAO)))
+                    {
+                        Directory.CreateDirectory(Path.Combine(Settings.ArrivalFolderKML, _airport.ICAO));
+                    }
                 }
 
-                if (!_hasExistingAirportOperations || cbxOverwriteAirportOperations.Checked)
+                if (rbNormal.Checked)
                 {
-                    _airport.WriteOperations();
-                    LogElapsed($"operations done");
+                    if (!_hasExistingParkingDefs || cbxOverwriteParkingDefs.Checked)
+                    {
+                        int count = _airport.WriteParkingDefs();
+                        LogElapsed($"parking defs done ({count} generated)");
+                    }
+                    else
+                    {
+                        LogElapsed($"not overwriting parking defs");
+                    }
                 }
                 else
                 {
-                    LogElapsed($"not overwriting operations");
+                    LogElapsed($"skipping parkings defs in KML mode");
                 }
+
+                if (rbNormal.Checked)
+                {
+                    if (!_hasExistingAirportOperations || cbxOverwriteAirportOperations.Checked)
+                    {
+                        _airport.WriteOperations();
+                        LogElapsed($"operations done");
+                    }
+                    else
+                    {
+                        LogElapsed($"not overwriting operations");
+                    }
+                }
+                else
+                {
+                    LogElapsed($"skipping operations in KML mode");
+                }
+
 
                 if (!_hasExistingOutboundRoutes || cbxOverwriteOutboundRoutes.Checked)
                 {
@@ -359,6 +388,17 @@ namespace GroundRouteFinder
 
                 _airport.LogMessage -= _airport_LogMessage;
                 LogElapsed($"done");
+
+                if (!rbNormal.Checked)
+                {
+                    rtb.AppendText($"\nKML files can be found in:\n {Settings.ArrivalFolderKML} and\n {Settings.DepartureFolderKML}");
+                }
+
+                if (Settings.GenerateDebugOutput)
+                {
+                    _airport.DebugParkings();
+                    rtb.AppendText($"Debug csv files can be found in: {Settings.DataFolder}");
+                }
             }
             catch (Exception ex)
             {
@@ -517,6 +557,11 @@ namespace GroundRouteFinder
         private void cbxOwOperationsDefault_CheckedChanged(object sender, EventArgs e)
         {
             Settings.OverwriteOperations = cbxOwOperationsDefault.Checked;
+        }
+
+        private void chkGenerateDebugFiles_CheckedChanged(object sender, EventArgs e)
+        {
+            Settings.GenerateDebugOutput = cbxGenerateDebugFiles.Checked;
         }
     }
 }

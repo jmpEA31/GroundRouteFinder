@@ -9,8 +9,16 @@ namespace GroundRouteFinder
     public class VortexMath
     {
         public const double PI = Math.PI;
+
+        /// <summary>
+        /// Constant for 2 * PI
+        /// </summary>
         public const double PI2 = 2.0 * Math.PI;
         public const double PI3 = 3.0 * Math.PI;
+
+        /// <summary>
+        /// Constant for 0.5 * PI 
+        /// </summary>
         public const double PI05 = 0.5 * Math.PI;
         public const double PI025 = 0.25 * Math.PI;
         public const double PI033 = 0.33 * Math.PI;
