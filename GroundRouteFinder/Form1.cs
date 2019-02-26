@@ -365,6 +365,12 @@ namespace GroundRouteFinder
                     LogElapsed($"skipping operations in KML mode");
                 }
 
+                if (Settings.GenerateDebugOutput)
+                {
+                    _airport.DebugParkings();
+                    _airport.DebugAtcNodes();
+                    rtb.AppendText($"Debug csv files can be found in: {Settings.DataFolder}");
+                }
 
                 if (!_hasExistingOutboundRoutes || cbxOverwriteOutboundRoutes.Checked)
                 {
@@ -391,13 +397,7 @@ namespace GroundRouteFinder
 
                 if (!rbNormal.Checked)
                 {
-                    rtb.AppendText($"\nKML files can be found in:\n {Settings.ArrivalFolderKML} and\n {Settings.DepartureFolderKML}");
-                }
-
-                if (Settings.GenerateDebugOutput)
-                {
-                    _airport.DebugParkings();
-                    rtb.AppendText($"Debug csv files can be found in: {Settings.DataFolder}");
+                    rtb.AppendText($"\nKML files can be found in:\n {Settings.ArrivalFolderKML} and\n {Settings.DepartureFolderKML}\n");
                 }
             }
             catch (Exception ex)

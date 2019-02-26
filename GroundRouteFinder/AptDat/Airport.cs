@@ -408,6 +408,7 @@ namespace GroundRouteFinder.AptDat
         {
             using (StreamWriter sw = File.CreateText(Settings.DataFolder + "\\starts.csv"))
             {
+                sw.WriteLine("latitude,longitude,name\n");
                 foreach (Parking parking in _parkings)
                 {
                     sw.WriteLine($"{parking.Latitude * VortexMath.Rad2Deg},{parking.Longitude * VortexMath.Rad2Deg},{parking.Name}");
@@ -416,9 +417,23 @@ namespace GroundRouteFinder.AptDat
 
             using (StreamWriter sw = File.CreateText(Settings.DataFolder + "\\pushback.csv"))
             {
+                sw.WriteLine("latitude,longitude,name\n");
                 foreach (Parking parking in _parkings)
                 {
                     sw.WriteLine($"{parking.PushBackLatitude * VortexMath.Rad2Deg},{parking.PushBackLongitude * VortexMath.Rad2Deg},{parking.Name}");
+                }
+            }
+        }
+
+        internal void DebugAtcNodes()
+        {
+            using (StreamWriter sw = File.CreateText(Settings.DataFolder + "\\atcnodes.csv"))
+            {
+                sw.WriteLine("latitude,longitude,name\n");
+
+                foreach (TaxiNode node in _taxiNodes)
+                {
+                    sw.WriteLine($"{node.Latitude * VortexMath.Rad2Deg},{node.Longitude * VortexMath.Rad2Deg},{node.Name}");
                 }
             }
         }

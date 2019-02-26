@@ -78,7 +78,7 @@ namespace GroundRouteFinder.AptDat
             // Compute the distance (arbitrary units) from each taxi node to the start location
             foreach (TaxiNode node in taxiNodes)
             {
-                node.TemporaryDistance = VortexMath.DistancePyth(node, this);
+                node.TemporaryDistance = VortexMath.DistanceKM(node, this);
             }
 
             // Select the 25 nearest, then from those select only the ones that are in the 180 degree arc of the direction
@@ -86,6 +86,36 @@ namespace GroundRouteFinder.AptDat
             // todo: make both 25 and 180 parameters
             IEnumerable<TaxiNode> selectedNodes = taxiNodes.OrderBy(v => v.TemporaryDistance).Take(25);
             fallback = selectedNodes.First();
+
+            if (fallback.TemporaryDistance < 0.005)
+            {
+                // There is a atc taxi node really close to the parking, try to build pushback path from there
+                if (fallback.IncomingEdges.Count == 1)
+                {
+                    TaxiEdge theEdge = fallback.IncomingEdges.FirstOrDefault();
+                    if (theEdge != null)
+                    {
+                        fallback = theEdge.StartNode;
+                        while (fallback.TemporaryDistance < 0.200 && fallback.IncomingEdges.Count <= 2)
+                        {
+                            theEdge = fallback.IncomingEdges.FirstOrDefault(e => e.StartNode != theEdge.EndNode);
+                            if (theEdge == null)
+                                break;
+
+                            // todo: each node should be added to the parking as 'push back trajectory'
+                            fallback = theEdge.StartNode;
+                        }
+
+                        NearestNode = fallback;
+                        AlternateAfterPushBack = null;
+                        PushBackLatitude = fallback.Latitude;
+                        PushBackLongitude = fallback.Longitude;
+                        return;
+                    }
+                }
+            }
+
+
             selectedNodes = selectedNodes.Where(v => Math.Abs(adjustedBearing - VortexMath.BearingRadians(v, this)) < VortexMath.PI05);
 
             // For each qualifying node

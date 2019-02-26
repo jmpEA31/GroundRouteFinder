@@ -170,7 +170,19 @@ namespace GroundRouteFinder
             // insert one more point here where the plane is pushed a little bit away from the next point
             if (nodeToWrite != null)
             {
-                double nextPushBearing = VortexMath.BearingRadians(nodeToWrite.Latitude, nodeToWrite.Longitude, currentParking.PushBackLatitude, currentParking.PushBackLongitude);
+                double nextPushBearing;
+
+                if (VortexMath.DistanceKM(nodeToWrite.Latitude, nodeToWrite.Longitude, currentParking.PushBackLatitude, currentParking.PushBackLongitude) > 0.010)
+                {
+                    // Push target is a virtual node
+                    nextPushBearing = VortexMath.BearingRadians(nodeToWrite.Latitude, nodeToWrite.Longitude, currentParking.PushBackLatitude, currentParking.PushBackLongitude);
+                }
+                else
+                {
+                    // Push target is very close to the actual first node of the route
+                    nextPushBearing = (nodeToWrite.BearingToTarget + VortexMath.PI) % VortexMath.PI2;
+                }
+               
                 double turn = VortexMath.TurnAngle(currentParking.Bearing + VortexMath.PI, nextPushBearing);
                 double turnAbs = Math.Abs(turn);
                 double factor = ((turnAbs) / VortexMath.PI);                // 0...0.5.....1
