@@ -40,6 +40,7 @@ namespace GroundRouteFinder.AptDat
         LightProp = 8,
         Helo = 9,
         Ground = 10,
+        Max
     }
 
     public enum OperationType

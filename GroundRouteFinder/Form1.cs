@@ -421,9 +421,11 @@ namespace GroundRouteFinder
 
         private class AircraftBase
         {
+            public string Name;
             public double WingSpan;
             public double TakeOffDist;
             public double LandingDist;
+            public double MinLandingDist;
         }
 
         private void button2_Click(object sender, EventArgs e)
@@ -431,16 +433,23 @@ namespace GroundRouteFinder
             string aircraftFolder = Settings.XPlaneLocation + @"\ClassicJetSimUtils\WorldTraffic\AircraftTypes";
             IEnumerable<string> baseAircraft = Directory.EnumerateFiles(aircraftFolder, "*_BASE.txt");
             rtbAircraft.Clear();
-            rtbAircraft.AppendText($"Found {baseAircraft.Count()} 'base' aircraft.\n");
+            rtbAircraft.AppendText($"Found {baseAircraft.Count()} 'base' aircraft.\n\n");
 
-            int currentType = -1;
+            WorldTrafficAircraftType currentType = WorldTrafficAircraftType.Fighter;
 
-            Dictionary<int, List<AircraftBase>> aircraft = new Dictionary<int, List<AircraftBase>>();
+            Dictionary<WorldTrafficAircraftType, List<AircraftBase>> aircraft = new Dictionary<WorldTrafficAircraftType, List<AircraftBase>>();
+            for (WorldTrafficAircraftType wat = WorldTrafficAircraftType.Fighter; wat < WorldTrafficAircraftType.Max; wat++)
+            {
+                aircraft[wat] = new List<AircraftBase>();
+            }
+
+
             foreach (string basecraft in baseAircraft)
             {
                 AircraftBase aircraftBase = null;
                 string[] lines = File.ReadAllLines(basecraft);
                 bool startFound = false;
+                string nameCache = "";
 
                 foreach (string line in lines)
                 {
@@ -460,12 +469,19 @@ namespace GroundRouteFinder
                             continue;
                         }
                     }
-                
+
+                    if (tokens.Length < 2)
+                        continue;
+
                     switch (tokens[0])
                     {
                         case "type":
-                            currentType = int.Parse(tokens[1]);
+                            currentType = (WorldTrafficAircraftType)int.Parse(tokens[1]);
                             aircraftBase = new AircraftBase();
+                            aircraftBase.Name = nameCache.ToUpper();
+                            break;
+                        case "name":
+                            nameCache = tokens[1];
                             break;
                         case "wingspan":
                             aircraftBase.WingSpan = double.Parse(tokens[1]);
@@ -476,44 +492,87 @@ namespace GroundRouteFinder
                         case "landingdist":
                             aircraftBase.LandingDist = double.Parse(tokens[1]);
                             break;
+                        case "minlandingdist":
+                            aircraftBase.MinLandingDist = double.Parse(tokens[1]);
+                            break;
                         default:
                             break;
                     }
 
                 }
 
-                if (!aircraft.ContainsKey(currentType))
-                    aircraft.Add(currentType, new List<AircraftBase>());
-
                 aircraft[currentType].Add(aircraftBase);
             }
 
-            foreach (KeyValuePair<int, List<AircraftBase>> details in aircraft.OrderBy(ac => ac.Key))
+            for (WorldTrafficAircraftType wat = WorldTrafficAircraftType.Fighter; wat < WorldTrafficAircraftType.Max; wat++)
             {
-                double averageWingSpan = details.Value.Average(a => a.WingSpan);
-                double minWingSpan = details.Value.Min(a => a.WingSpan);
-                double maxWingSpan = details.Value.Max(a => a.WingSpan);
+                if (aircraft[wat].Count > 0)
+                {
+                    rtbAircraft.AppendText($"World Traffic Type {(int)wat} <{wat}>\n");
 
-                rtbAircraft.AppendText($"{details.Key} Wingspan: mn {minWingSpan:0.0} <{SpanToCat(minWingSpan)}> av {averageWingSpan:0.0} mx: {maxWingSpan:0.0} <{SpanToCat(maxWingSpan)}>\n");
+
+                    double minLandingDist = aircraft[wat].Min(ac => ac.LandingDist);
+                    double maxLandingDist = aircraft[wat].Max(ac => ac.LandingDist);
+
+                    double minMinLandingDist = aircraft[wat].Min(ac => ac.MinLandingDist);
+                    double maxMinLandingDist = aircraft[wat].Max(ac => ac.MinLandingDist);
+
+                    double minWingSpan = aircraft[wat].Min(ac => ac.WingSpan);
+                    double maxWingSpan = aircraft[wat].Max(ac => ac.WingSpan);
+
+                    double minTakeOff = aircraft[wat].Min(ac => ac.TakeOffDist);
+                    double maxTakeOff = aircraft[wat].Max(ac => ac.TakeOffDist);
+
+                    string Name = aircraft[wat].First(ac => ac.WingSpan == maxWingSpan).Name;
+                    rtbAircraft.AppendText($" Required Gate/Taxiway Size:  <{SpanToCat(maxWingSpan)}>  ({Name} has wingspan {maxWingSpan,4:0.0})\n");
+
+                    Name = aircraft[wat].First(ac => ac.TakeOffDist == minTakeOff).Name;
+                    rtbAircraft.AppendText($" Shortest Takeoff possible : {minTakeOff,5} ({Name})\n");
+                    Name = aircraft[wat].First(ac => ac.TakeOffDist == maxTakeOff).Name;
+                    rtbAircraft.AppendText($" Max Takeoff required      : {maxTakeOff,5} ({Name})\n");
+
+                    Name = aircraft[wat].First(ac => ac.LandingDist == minLandingDist).Name;
+                    rtbAircraft.AppendText($" Shortest Landing Distance : {minLandingDist,5} ({Name})\n");
+                    Name = aircraft[wat].First(ac => ac.LandingDist == maxLandingDist).Name;
+                    rtbAircraft.AppendText($" Longest Landing Distance  : {maxLandingDist,5} ({Name})\n");
+
+                    Name = aircraft[wat].First(ac => ac.MinLandingDist == minMinLandingDist).Name;
+                    rtbAircraft.AppendText($" Shortest Min Ldg Dist.    : {minMinLandingDist,5} ({Name})\n");
+                    Name = aircraft[wat].First(ac => ac.MinLandingDist == maxMinLandingDist).Name;
+                    rtbAircraft.AppendText($" Longest Min Ldg Dist.     : {maxMinLandingDist,5} ({Name})\n");
+
+                    //rtbAircraft.AppendText($"{wat,-10} {aircraft[wat].Count(),2} {minLandingDist,5} {maxLandingDist,5}  {minMinLandingDist,5}  {maxMinLandingDist,5} {minTakeOff,5} {maxTakeOff,5} {minWingSpan,4:0.0} <{SpanToCat(minWingSpan)}> {maxWingSpan,4:0.0} <{SpanToCat(maxWingSpan)}>\n");
+                    rtbAircraft.AppendText("\n");
+                }
             }
 
-            foreach (KeyValuePair<int, List<AircraftBase>> details in aircraft.OrderBy(ac => ac.Key))
-            {
-                double averageLength = details.Value.Average(a => a.TakeOffDist);
-                double minLength = details.Value.Min(a => a.TakeOffDist);
-                double maxLength = details.Value.Max(a => a.TakeOffDist);
 
-                rtbAircraft.AppendText($"{details.Key} TakeOffDist: mn {minLength:0} av {averageLength:0} mx: {maxLength:0}\n");
-            }
+            //foreach (KeyValuePair<int, List<AircraftBase>> details in aircraft.OrderBy(ac => ac.Key))
+            //{
+            //    double averageWingSpan = details.Value.Average(a => a.WingSpan);
+            //    double minWingSpan = details.Value.Min(a => a.WingSpan);
+            //    double maxWingSpan = details.Value.Max(a => a.WingSpan);
 
-            foreach (KeyValuePair<int, List<AircraftBase>> details in aircraft.OrderBy(ac => ac.Key))
-            {
-                double averageLength = details.Value.Average(a => a.LandingDist);
-                double minLength = details.Value.Min(a => a.LandingDist);
-                double maxLength = details.Value.Max(a => a.LandingDist);
+            //    rtbAircraft.AppendText($"{details.Key} Wingspan: mn {minWingSpan:0.0} <{SpanToCat(minWingSpan)}> av {averageWingSpan:0.0} mx: {maxWingSpan:0.0} <{SpanToCat(maxWingSpan)}>\n");
+            //}
 
-                rtbAircraft.AppendText($"{details.Key} LandingDist: mn {minLength:0} av {averageLength:0} mx: {maxLength:0}\n");
-            }
+            //foreach (KeyValuePair<int, List<AircraftBase>> details in aircraft.OrderBy(ac => ac.Key))
+            //{
+            //    double averageLength = details.Value.Average(a => a.TakeOffDist);
+            //    double minLength = details.Value.Min(a => a.TakeOffDist);
+            //    double maxLength = details.Value.Max(a => a.TakeOffDist);
+
+            //    rtbAircraft.AppendText($"{details.Key} TakeOffDist: mn {minLength:0} av {averageLength:0} mx: {maxLength:0}\n");
+            //}
+
+            //foreach (KeyValuePair<int, List<AircraftBase>> details in aircraft.OrderBy(ac => ac.Key))
+            //{
+            //    double averageLength = details.Value.Average(a => a.LandingDist);
+            //    double minLength = details.Value.Min(a => a.LandingDist);
+            //    double maxLength = details.Value.Max(a => a.LandingDist);
+
+            //    rtbAircraft.AppendText($"{details.Key} LandingDist: mn {minLength:0} av {averageLength:0} mx: {maxLength:0}\n");
+            //}
 
         }
 
