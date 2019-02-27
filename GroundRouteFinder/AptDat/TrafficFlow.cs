@@ -212,9 +212,12 @@ namespace GroundRouteFinder.AptDat
         {
             Logger.Log("Analyzing Operations");
 
-            // Todo: check whether the result has a fallback and covers all winddirections
-            // Todo: handle multiple visibility options
-            _operations = new List<string>();
+            // Filter out rules without wind speed/direction specs (could be helos)
+            TrafficRules = TrafficRules.Where(tr => tr.WindLimits.Count > 0).ToList();
+
+             // Todo: check whether the result has a fallback and covers all winddirections
+             // Todo: handle multiple visibility options
+             _operations = new List<string>();
             _runwayOps = new List<string>();
 
             int ruleIdx = 0;
