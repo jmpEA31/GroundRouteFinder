@@ -102,7 +102,7 @@ namespace GroundRouteFinder.AptDat
         public void ParseTimeRule(string line)
         {
             string[] tokens = line.Split(_splitters, StringSplitOptions.RemoveEmptyEntries);
-            TimeLimits.Add(new TimeLimts(int.Parse(tokens[2]), int.Parse(tokens[3])));
+            TimeLimits.Add(new TimeLimts(int.Parse(tokens[1]), int.Parse(tokens[2])));
         }
 
         public void ParseRunwayUse(string line, List<Runway> runways)
