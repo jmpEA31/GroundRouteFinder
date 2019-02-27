@@ -124,6 +124,25 @@ namespace GroundRouteFinder
             }
         }
 
+        public static int MaxSteerpoints
+        {
+            get
+            {
+                //RegistryKey key = OpenReg();
+                //int val = (int)key.GetValue("MaxSteerpoints", 127);
+                //key.Close();
+                //return val;
+                return 127;
+            }
+
+            set
+            {
+                RegistryKey key = OpenReg();
+                key.SetValue("MaxSteerpoints", value, RegistryValueKind.DWord);
+                key.Close();
+            }
+        }
+
 
         public static string WorldTrafficLocation { get { return Path.Combine(XPlaneLocation, @"ClassicJetSimUtils\WorldTraffic"); }  }
         public static string WorldTrafficGroundRoutes { get { return Path.Combine(XPlaneLocation, @"ClassicJetSimUtils\WorldTraffic\GroundRoutes"); } }

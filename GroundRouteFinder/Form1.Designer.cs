@@ -59,6 +59,8 @@
             this.rtbAircraft = new System.Windows.Forms.RichTextBox();
             this.button2 = new System.Windows.Forms.Button();
             this.btnExit = new System.Windows.Forms.Button();
+            this.groupBox4 = new System.Windows.Forms.GroupBox();
+            this.btnShowLogFile = new System.Windows.Forms.Button();
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
             this.groupBox1.SuspendLayout();
@@ -68,6 +70,7 @@
             this.groupBox3.SuspendLayout();
             this.groupBox2.SuspendLayout();
             this.tabAircraft.SuspendLayout();
+            this.groupBox4.SuspendLayout();
             this.SuspendLayout();
             // 
             // rtb
@@ -155,6 +158,7 @@
             // 
             // tabPage1
             // 
+            this.tabPage1.Controls.Add(this.groupBox4);
             this.tabPage1.Controls.Add(this.groupBox1);
             this.tabPage1.Controls.Add(this.gbxOutput);
             this.tabPage1.Controls.Add(this.gbxAiport);
@@ -442,6 +446,29 @@
             this.btnExit.UseVisualStyleBackColor = true;
             this.btnExit.Click += new System.EventHandler(this.btnExit_Click);
             // 
+            // groupBox4
+            // 
+            this.groupBox4.Controls.Add(this.btnShowLogFile);
+            this.groupBox4.Location = new System.Drawing.Point(662, 14);
+            this.groupBox4.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
+            this.groupBox4.Name = "groupBox4";
+            this.groupBox4.Padding = new System.Windows.Forms.Padding(3, 2, 3, 2);
+            this.groupBox4.Size = new System.Drawing.Size(216, 153);
+            this.groupBox4.TabIndex = 11;
+            this.groupBox4.TabStop = false;
+            this.groupBox4.Text = "Debug";
+            // 
+            // btnShowLogFile
+            // 
+            this.btnShowLogFile.Location = new System.Drawing.Point(23, 28);
+            this.btnShowLogFile.Margin = new System.Windows.Forms.Padding(4);
+            this.btnShowLogFile.Name = "btnShowLogFile";
+            this.btnShowLogFile.Size = new System.Drawing.Size(176, 31);
+            this.btnShowLogFile.TabIndex = 6;
+            this.btnShowLogFile.Text = "Open Last Log file";
+            this.btnShowLogFile.UseVisualStyleBackColor = true;
+            this.btnShowLogFile.Click += new System.EventHandler(this.btnShowLogFile_Click);
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
@@ -467,6 +494,7 @@
             this.groupBox2.ResumeLayout(false);
             this.groupBox2.PerformLayout();
             this.tabAircraft.ResumeLayout(false);
+            this.groupBox4.ResumeLayout(false);
             this.ResumeLayout(false);
 
         }
@@ -503,6 +531,8 @@
         private System.Windows.Forms.CheckBox cbxOwInboundDefault;
         private System.Windows.Forms.GroupBox groupBox3;
         private System.Windows.Forms.CheckBox cbxGenerateDebugFiles;
+        private System.Windows.Forms.GroupBox groupBox4;
+        private System.Windows.Forms.Button btnShowLogFile;
     }
 }
 

@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using GroundRouteFinder.AptDat;
+using GroundRouteFinder.LogSupport;
 using GroundRouteFinder.Output;
 
 namespace GroundRouteFinder
@@ -112,19 +113,26 @@ namespace GroundRouteFinder
                         if (wtTypes.Count() == 0)
                             continue;
 
-                        string allSizes = string.Join(" ", wtTypes.Select(w=>(int)w).OrderBy(w => w));
-                        string sizeName = (wtTypes.Count() == 10) ? "all" : allSizes.Replace(" ", "");
-
-                        string fileName = $"{outputPath}\\{route.Runway.Designator}_to_{Parking.FileNameSafeName}_{route.RouteStart.Node.Id}_{sizeName}";
-                        using (RouteWriter sw = RouteWriter.Create(kml ? 0 : 1, fileName, allSizes, -1, -1, route.Runway.Designator, "NOSEWHEEL"))
+                        IEnumerable<SteerPoint> steerPoints = BuildSteerPoints(route, sizeRoutes.Key);
+                        if (steerPoints.Count() <= Settings.MaxSteerpoints)
                         {
-                            count++;
+                            string allSizes = string.Join(" ", wtTypes.Select(w => (int)w).OrderBy(w => w));
+                            string sizeName = (wtTypes.Count() == 10) ? "all" : allSizes.Replace(" ", "");
+                            string fileName = $"{outputPath}\\{route.Runway.Designator}_to_{Parking.FileNameSafeName}_{route.RouteStart.Node.Id}_{sizeName}";
 
-                            IEnumerable<SteerPoint> steerPoints = BuildSteerPoints(route, sizeRoutes.Key);
-                            foreach (SteerPoint steerPoint in steerPoints)
+                            using (RouteWriter sw = RouteWriter.Create(kml ? 0 : 1, fileName, allSizes, -1, -1, route.Runway.Designator, "NOSEWHEEL"))
                             {
-                                sw.Write(steerPoint);
+                                count++;
+
+                                foreach (SteerPoint steerPoint in steerPoints)
+                                {
+                                    sw.Write(steerPoint);
+                                }
                             }
+                        }
+                        else
+                        {
+                            Logger.Log($"Route from <{route.Runway.Designator}> to {Parking.FileNameSafeName} not written. Too many steerpoints ({steerPoints.Count()} vs {Settings.MaxSteerpoints})");
                         }
                     }
                 }

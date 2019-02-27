@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using GroundRouteFinder.AptDat;
+using GroundRouteFinder.LogSupport;
 using GroundRouteFinder.Output;
 
 namespace GroundRouteFinder
@@ -117,23 +118,30 @@ namespace GroundRouteFinder
                             if (wtTypes.Count() == 0)
                                 continue;
 
-                            string allSizes = string.Join(" ", wtTypes.Select(w => (int)w).OrderBy(w => w));
-                            string sizeName = (wtTypes.Count() == 10) ? "all" : allSizes.Replace(" ", "");
-                            string fileName = $"{outputPath}\\{currentParking.FileNameSafeName}_to_{Runway.Designator}-{route.TargetNode.Id}_{sizeName}";
+                            IEnumerable<SteerPoint> steerPoints = BuildSteerPoints(currentParking, route);
 
-                            int military = (currentParking.Operation == OperationType.Military) ? 1 : 0;
-                            int cargo = (currentParking.Operation == OperationType.Cargo) ? 1 : 0;
-
-                            using (RouteWriter sw = RouteWriter.Create(kml ? 0 : 1, fileName, allSizes, cargo, military, Runway.Designator, "NOSEWHEEL"))
+                            if (steerPoints.Count() <= Settings.MaxSteerpoints)
                             {
-                                count++;
+                                string allSizes = string.Join(" ", wtTypes.Select(w => (int)w).OrderBy(w => w));
+                                string sizeName = (wtTypes.Count() == 10) ? "all" : allSizes.Replace(" ", "");
+                                string fileName = $"{outputPath}\\{currentParking.FileNameSafeName}_to_{Runway.Designator}-{route.TargetNode.Id}_{sizeName}";
 
-                                IEnumerable<SteerPoint> steerPoints = BuildSteerPoints(currentParking, route);
+                                int military = (currentParking.Operation == OperationType.Military) ? 1 : 0;
+                                int cargo = (currentParking.Operation == OperationType.Cargo) ? 1 : 0;
 
-                                foreach (SteerPoint steerPoint in steerPoints)
+                                using (RouteWriter sw = RouteWriter.Create(kml ? 0 : 1, fileName, allSizes, cargo, military, Runway.Designator, "NOSEWHEEL"))
                                 {
-                                    sw.Write(steerPoint);
+                                    count++;
+
+                                    foreach (SteerPoint steerPoint in steerPoints)
+                                    {
+                                        sw.Write(steerPoint);
+                                    }
                                 }
+                            }
+                            else
+                            {
+                                Logger.Log($"Route from <{currentParking.FileNameSafeName}> to {Runway.Designator} not written. Too many steerpoints ({steerPoints.Count()} vs {Settings.MaxSteerpoints})");
                             }
                         }
                     }

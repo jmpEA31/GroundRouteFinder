@@ -87,6 +87,7 @@
     <Compile Include="AptDat\TaxiEdge.cs" />
     <Compile Include="AptDat\TrafficFlow.cs" />
     <Compile Include="InboundResults.cs" />
+    <Compile Include="LogSupport\Logger.cs" />
     <Compile Include="Output\KmlWriter.cs" />
     <Compile Include="LocationObject.cs" />
     <Compile Include="LogEmitter.cs" />

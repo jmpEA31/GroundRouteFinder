@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.IO;
 using GroundRouteFinder.AptDat;
+using GroundRouteFinder.LogSupport;
 
 namespace GroundRouteFinder
 {
@@ -25,6 +26,7 @@ namespace GroundRouteFinder
         public MainForm()
         {
             InitializeComponent();
+            Logger.CreateLogfile(Settings.DataFolder);
             Setup();
         }
 
@@ -335,6 +337,7 @@ namespace GroundRouteFinder
                 {
                     if (!_hasExistingParkingDefs || cbxOverwriteParkingDefs.Checked)
                     {
+                        LogElapsed($"Generating parking defs");
                         int count = _airport.WriteParkingDefs();
                         LogElapsed($"parking defs done ({count} generated)");
                     }
@@ -352,8 +355,11 @@ namespace GroundRouteFinder
                 {
                     if (!_hasExistingAirportOperations || cbxOverwriteAirportOperations.Checked)
                     {
-                        _airport.WriteOperations();
-                        LogElapsed($"operations done");
+                        LogElapsed($"Generating operations");
+                        if (!_airport.WriteOperations())
+                            LogElapsed($"* There were issues creating the operations. See the log file for details.");
+                        else
+                            LogElapsed($"operations done");
                     }
                     else
                     {
@@ -365,17 +371,16 @@ namespace GroundRouteFinder
                     LogElapsed($"skipping operations in KML mode");
                 }
 
-                if (Settings.GenerateDebugOutput)
-                {
-                    _airport.DebugParkings();
-                    _airport.DebugAtcNodes();
-                    rtb.AppendText($"Debug csv files can be found in: {Settings.DataFolder}");
-                }
-
                 if (!_hasExistingOutboundRoutes || cbxOverwriteOutboundRoutes.Checked)
                 {
+                    LogElapsed($"Generating outbound routes");
+
                     int count = _airport.FindOutboundRoutes(rbNormal.Checked);
                     LogElapsed($"outbound routes done, {count} generated, max steerpoints {OutboundResults.MaxOutPoints}");
+                    if (OutboundResults.MaxOutPoints > Settings.MaxSteerpoints)
+                    {
+                        LogElapsed($"* Some outbound routes were not written becuase they had to many steerpoints. See the log file for details.");
+                    }
                 }
                 else
                 {
@@ -384,8 +389,14 @@ namespace GroundRouteFinder
 
                 if (!_hasExistingInboundRoutes || cbxOverwriteInboundRoutes.Checked)
                 {
+                    LogElapsed($"Generating inbound routes");
+
                     int count = _airport.FindInboundRoutes(rbNormal.Checked);
                     LogElapsed($"inbound routes done, {count} generated, max steerpoints {InboundResults.MaxInPoints}");
+                    if (InboundResults.MaxInPoints > Settings.MaxSteerpoints)
+                    {
+                        LogElapsed($"* Some inbound routes were not written becuase they had to many steerpoints. See the log file for details.");
+                    }
                 }
                 else
                 {
@@ -398,6 +409,13 @@ namespace GroundRouteFinder
                 if (!rbNormal.Checked)
                 {
                     rtb.AppendText($"\nKML files can be found in:\n {Settings.ArrivalFolderKML} and\n {Settings.DepartureFolderKML}\n");
+                }
+
+                if (Settings.GenerateDebugOutput)
+                {
+                    _airport.DebugParkings();
+                    _airport.DebugAtcNodes();
+                    rtb.AppendText($"Debug csv files can be found in:\n {Settings.DataFolder}\n");
                 }
             }
             catch (Exception ex)
@@ -621,6 +639,11 @@ namespace GroundRouteFinder
         private void chkGenerateDebugFiles_CheckedChanged(object sender, EventArgs e)
         {
             Settings.GenerateDebugOutput = cbxGenerateDebugFiles.Checked;
+        }
+
+        private void btnShowLogFile_Click(object sender, EventArgs e)
+        {
+            rtb.Text = Logger.LoadLog();
         }
     }
 }

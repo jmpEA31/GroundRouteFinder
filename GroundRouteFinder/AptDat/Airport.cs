@@ -204,11 +204,12 @@ namespace GroundRouteFinder.AptDat
             return _parkings.Count;
         }
 
-        public void WriteOperations()
+        public bool WriteOperations()
         {
             string operationFile = Path.Combine(Settings.WorldTrafficOperations, $"{ICAO}.txt");
             File.Delete(operationFile);
             _flows.Write(ICAO);
+            return _flows.RuleSetOk;
         }
 
 

@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using GroundRouteFinder.LogSupport;
 
 namespace GroundRouteFinder.AptDat
 {
@@ -143,6 +144,7 @@ namespace GroundRouteFinder.AptDat
         public List<TrafficRule> TrafficRules;
         private TrafficRule _currentRule;
         private bool _flowRulesFound;
+        public bool RuleSetOk = true;
 
         public TrafficFlow()
         {
@@ -204,9 +206,12 @@ namespace GroundRouteFinder.AptDat
 
         private List<string> _operations;
         private List<string> _runwayOps;
+        private bool _noOverlap;
 
-        public void Analyze()
+        public bool Analyze()
         {
+            Logger.Log("Analyzing Operations");
+
             // Todo: check whether the result has a fallback and covers all winddirections
             // Todo: handle multiple visibility options
             _operations = new List<string>();
@@ -215,41 +220,156 @@ namespace GroundRouteFinder.AptDat
             int ruleIdx = 0;
             IEnumerable<Tuple<int, double>> cvKeys = TrafficRules.Select(tr => new Tuple<int, double>(tr.MinCeiling, tr.MinVisibility)).Distinct();
             if (cvKeys.Count() == 0)
-                return;
+            {
+                Logger.Log(" apt.dat has no usable traffic rules.");
+                return false;
+            }
+
+            Logger.Log($" apt.dat has traffic rules: {string.Join(", ", cvKeys.Select(cvk => "(c>" + cvk.Item1 + "ft v>" + cvk.Item2 + "nm)")) }");
+
 
             Tuple<int, double> cvKey = cvKeys.First();
             //            foreach (Tuple<int, double> cvKey in cvKeys)
             {
-                Console.WriteLine($"Rules for Ceiling>{cvKey.Item1} Vis>{cvKey.Item2}");
+                Logger.Log($"Using rules for Ceiling>{cvKey.Item1} Vis>{cvKey.Item2}");
                 IEnumerable<TrafficRule> rules = TrafficRules.Where(tr => tr.MinCeiling == cvKey.Item1 && tr.MinVisibility == cvKey.Item2);
 
-                int lowWind = 0;
+                // First pass: Verify the rules (and even try to align XP format to WT format)
+                _noOverlap = false;
+
+                int currentMinWindSpeed = -1;
+                int currentMaxWindSpeed = -1;
+
+                List<Tuple<int, int>> coveredDirections = new List<Tuple<int, int>>();
                 foreach (TrafficRule rule in rules.OrderBy(r => r.WindLimits.Min(wl => wl.MaxSpeed))) // Sorting by min MaxWindSpeed
                 {
                     foreach (WindLimts windLimit in rule.WindLimits.OrderBy(wl => wl.MaxSpeed)) // Sorting by min MaxWindSpeed again, trying to 'force' the low wind speed rule to be processed first
                     {
+                        if (currentMaxWindSpeed == -1)
+                        {
+                            currentMinWindSpeed = 0;
+                            currentMaxWindSpeed = windLimit.MaxSpeed;
+                        }
+                        else if (currentMaxWindSpeed != windLimit.MaxSpeed)
+                        {
+                            RuleSetOk &= VerifyRuleCoverage(currentMinWindSpeed, currentMaxWindSpeed, coveredDirections);
+                            coveredDirections.Clear();
+                            currentMinWindSpeed = currentMaxWindSpeed;
+                            currentMaxWindSpeed = windLimit.MaxSpeed;
+                        }
+
+                        coveredDirections.Add(new Tuple<int, int>(windLimit.MinDir, windLimit.MaxDir));
+                    }
+                }
+                RuleSetOk &= VerifyRuleCoverage(currentMinWindSpeed, currentMaxWindSpeed, coveredDirections);
+
+                // Second pass... actually generate the rules
+                currentMinWindSpeed = -1;
+                currentMaxWindSpeed = -1;
+
+                foreach (TrafficRule rule in rules.OrderBy(r => r.WindLimits.Min(wl => wl.MaxSpeed))) // Sorting by min MaxWindSpeed
+                {
+                    foreach (WindLimts windLimit in rule.WindLimits.OrderBy(wl => wl.MaxSpeed)) // Sorting by min MaxWindSpeed again, trying to 'force' the low wind speed rule to be processed first
+                    {
+                        if (currentMaxWindSpeed == -1)
+                        {
+                            currentMinWindSpeed = 0;
+                            currentMaxWindSpeed = windLimit.MaxSpeed;
+                        }
+                        else if (currentMaxWindSpeed != windLimit.MaxSpeed)
+                        {
+                            currentMinWindSpeed = currentMaxWindSpeed;
+                            currentMaxWindSpeed = windLimit.MaxSpeed;
+                        }
+
                         if (rule.TimeLimits.Count > 0)
                         {
                             foreach (TimeLimts timeLimit in rule.TimeLimits)
                             {
                                 string startTime = $"{timeLimit.From / 100}:{timeLimit.From % 100}";
                                 string endTime = $"{timeLimit.Until / 100}:{timeLimit.Until % 100}";
-                                writeOperation(ruleIdx, lowWind, windLimit, startTime, endTime);
+
+                                if (_noOverlap)
+                                    windLimit.MaxDir++;
+                                windLimit.MaxDir = Math.Min(360, windLimit.MaxDir);
+                                writeOperation(ruleIdx, currentMinWindSpeed, windLimit, startTime, endTime);
+                                Logger.Log($"{currentMinWindSpeed,3}-{currentMaxWindSpeed,3} kts {windLimit.MinDir:000}-{windLimit.MaxDir:000} {startTime} {endTime}");
                                 writeRunways(rule.RunwayUses, ruleIdx++, startTime, endTime);
                             }
                         }
                         else
                         {
-                            writeOperation(ruleIdx, lowWind, windLimit, "00:00", "24:00");
+                            if (_noOverlap)
+                                windLimit.MaxDir++;
+                            windLimit.MaxDir = Math.Min(360, windLimit.MaxDir);
+                            writeOperation(ruleIdx, currentMinWindSpeed, windLimit, "00:00", "24:00");
+                            Logger.Log($"{currentMinWindSpeed,3}-{currentMaxWindSpeed,3} kts {windLimit.MinDir:000}-{windLimit.MaxDir:000} 00:00 24:00");
                             writeRunways(rule.RunwayUses, ruleIdx++, "00:00", "24:00");
                         }
-
-                        // Should catch most cases, but needs a proper solution
-                        if (windLimit.MinDir == 0 && windLimit.MaxDir == 360)
-                            lowWind = windLimit.MaxSpeed;
                     }
                 }
             }
+            return RuleSetOk;
+        }
+
+        /// <summary>
+        /// Check if the rules for a certain windspeed, visibility and ceiling range do cover the whole windrose from 0-360 degrees
+        /// Todo: Check the definition X Plane uses. Value are int, but do they use min < wind < max or min < wind <= max ?
+        /// </summary>
+        /// <param name="currentMinWindSpeed"></param>
+        /// <param name="currentMaxWindSpeed"></param>
+        /// <param name="coveredDirections"></param>
+        private bool VerifyRuleCoverage(int currentMinWindSpeed, int currentMaxWindSpeed, List<Tuple<int, int>> coveredDirections)
+        {
+            Tuple<int, int> covered = coveredDirections.First();
+            Tuple<int, int> linked = null;
+
+            do
+            {
+                linked = coveredDirections.FirstOrDefault(cd => cd.Item1 == covered.Item2);
+                if (linked == null)
+                {
+                    linked = coveredDirections.FirstOrDefault(cd => cd.Item1 == covered.Item2 + 1);
+                    if (linked != null)
+                        _noOverlap = true;
+                }
+
+                if (linked == null)
+                {
+                    linked = coveredDirections.FirstOrDefault(cd => cd.Item2 == covered.Item1);
+                    if (linked == null)
+                    {
+                        linked = coveredDirections.FirstOrDefault(cd => cd.Item2 + 1 == covered.Item1);
+                        if (linked != null)
+                            _noOverlap = true;
+                    }
+
+                    if (linked != null)
+                    {
+                        if (linked.Item1 > linked.Item2)
+                            covered = new Tuple<int, int>(0, covered.Item2);
+                        else
+                            covered = new Tuple<int, int>(linked.Item1, covered.Item2);
+                    }
+                }
+                else
+                {
+                    if (linked.Item2 < linked.Item1)
+                        covered = new Tuple<int, int>(covered.Item1, 360);
+                    else
+                        covered = new Tuple<int, int>(covered.Item1, linked.Item2);
+                }
+            }
+            while (linked != null);
+
+            Logger.Log($"{currentMinWindSpeed,3}-{currentMaxWindSpeed,3} kts coverage: {covered.Item1:000}-{covered.Item2:000}");
+            if (covered.Item1 != 0 || covered.Item2 != 360)
+            {
+                Logger.Log($"{currentMinWindSpeed,3}-{currentMaxWindSpeed,3} kts does not have full 360 coverage!");
+                return false;
+            }
+            else
+                return true;
         }
 
         private void writeOperation(int index, int windMinSpeed, WindLimts windLimit, string startTime, string endTime)
