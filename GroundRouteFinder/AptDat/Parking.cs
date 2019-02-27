@@ -88,7 +88,7 @@ namespace GroundRouteFinder.AptDat
             IEnumerable<TaxiNode> selectedNodes = taxiNodes.OrderBy(v => v.TemporaryDistance).Take(25);
             fallback = selectedNodes.First();
 
-            if (fallback.TemporaryDistance < 0.005)
+            if (fallback.TemporaryDistance < 0.0025)
             {
                 // There is a atc taxi node really close to the parking, try to build pushback path from there
                 if (fallback.IncomingEdges.Count == 1)
@@ -97,14 +97,20 @@ namespace GroundRouteFinder.AptDat
                     if (theEdge != null)
                     {
                         fallback = theEdge.StartNode;
-                        while (fallback.TemporaryDistance < 0.200 && fallback.IncomingEdges.Count <= 2)
+                        while (fallback.TemporaryDistance < 0.150 && fallback.IncomingEdges.Count <= 2)
                         {
-                            theEdge = fallback.IncomingEdges.FirstOrDefault(e => e.StartNode != theEdge.EndNode);
-                            if (theEdge == null)
+                            TaxiEdge nextEdge = fallback.IncomingEdges.FirstOrDefault(e => e.StartNode != theEdge.EndNode);
+                            if (nextEdge == null)
+                                break;
+
+                            // This catches the cases at the end of an apron where the only
+                            // link is the actual taxipath already
+                            if (VortexMath.AbsTurnAngle(theEdge.Bearing, nextEdge.Bearing) > VortexMath.Deg060Rad)
                                 break;
 
                             // todo: each node should be added to the parking as 'push back trajectory'
-                            fallback = theEdge.StartNode;
+                            fallback = nextEdge.StartNode;
+                            theEdge = nextEdge;
                         }
 
                         NearestNode = fallback;
