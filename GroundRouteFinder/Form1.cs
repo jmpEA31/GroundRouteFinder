@@ -48,6 +48,8 @@ namespace GroundRouteFinder
             cbxOverwriteAirportOperations.Checked = Settings.OverwriteOperations;
 
             cbxGenerateDebugFiles.Checked = Settings.GenerateDebugOutput;
+
+            cbxFixDuplicateParkingNames.Checked = Settings.FixDuplicateParkingNames;
         }
 
         private void SetXPlaneLocation()
@@ -646,6 +648,11 @@ namespace GroundRouteFinder
         private void btnShowLogFile_Click(object sender, EventArgs e)
         {
             rtb.Text = Logger.LoadLog();
+        }
+
+        private void cbxFixDuplicateParkingNames_CheckedChanged(object sender, EventArgs e)
+        {
+            Settings.FixDuplicateParkingNames = cbxFixDuplicateParkingNames.Checked;
         }
     }
 }

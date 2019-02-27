@@ -143,6 +143,34 @@ namespace GroundRouteFinder
             }
         }
 
+        private static bool? _fixDuplicateParkingNames;
+
+        public static bool FixDuplicateParkingNames
+        {
+            get { return getBool("FixDuplicateParkingNames", ref _fixDuplicateParkingNames); }
+            set { setBool("FixDuplicateParkingNames", ref _fixDuplicateParkingNames, value); }
+        }
+
+        private static bool getBool(string name, ref bool? storage)
+        {
+            if (storage.HasValue) return storage.Value;
+
+            RegistryKey key = OpenReg();
+            storage = (int)key.GetValue(name, 0) == 0 ? false : true;
+            key.Close();
+            return storage.Value;
+        }
+
+        private static void setBool(string name, ref bool? storage, bool value)
+        {
+            if (storage.HasValue && storage.Value == value)
+                return;
+
+            RegistryKey key = OpenReg();
+            storage = value;
+            key.SetValue(name, value, RegistryValueKind.DWord);
+            key.Close();
+        }
 
         public static string WorldTrafficLocation { get { return Path.Combine(XPlaneLocation, @"ClassicJetSimUtils\WorldTraffic"); }  }
         public static string WorldTrafficGroundRoutes { get { return Path.Combine(XPlaneLocation, @"ClassicJetSimUtils\WorldTraffic\GroundRoutes"); } }

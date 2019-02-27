@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using GroundRouteFinder.LogSupport;
 
 namespace GroundRouteFinder.AptDat
 {
@@ -39,9 +40,13 @@ namespace GroundRouteFinder.AptDat
 
         private TrafficFlow _flows = new TrafficFlow();
 
+        private Dictionary<string, int> _parkingNameDuplicates;
+
+
         public Airport()
             : base()
         {
+            _parkingNameDuplicates = new Dictionary<string, int>();
             ICAO = "";
         }
 
@@ -66,6 +71,7 @@ namespace GroundRouteFinder.AptDat
 
         private void ReadData(string name)
         {
+            _parkingNameDuplicates.Clear();
             _nodeDict = new Dictionary<uint, TaxiNode>();
             _parkings = new List<Parking>();
             _runways = new List<Runway>();
@@ -600,6 +606,22 @@ namespace GroundRouteFinder.AptDat
                 XpTypes = AircraftTypeConverter.XPlaneTypesFromStrings(xpTypes),
                 Name = string.Join(" ", tokens.Skip(6))
             };
+
+            if (Settings.FixDuplicateParkingNames)
+            {
+                if (_parkings.Count(p => p.Name == sp.Name) > 0)
+                {
+                    if (!_parkingNameDuplicates.ContainsKey(sp.Name))
+                    {
+                        _parkingNameDuplicates.Add(sp.Name, 1);
+                    }
+
+                    _parkingNameDuplicates[sp.Name]++;
+                    sp.Name += $" - {_parkingNameDuplicates[sp.Name]}";
+                    Logger.Log($"Renamed a parking to: {sp.Name}");
+                }
+            }
+
             _parkings.Add(sp);
         }
     }

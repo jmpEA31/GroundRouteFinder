@@ -36,6 +36,13 @@
             this.btnGenerate = new System.Windows.Forms.Button();
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.tabPage1 = new System.Windows.Forms.TabPage();
+            this.gbxProgress = new System.Windows.Forms.GroupBox();
+            this.progressOutbound = new System.Windows.Forms.ProgressBar();
+            this.label4 = new System.Windows.Forms.Label();
+            this.progressInbound = new System.Windows.Forms.ProgressBar();
+            this.label3 = new System.Windows.Forms.Label();
+            this.groupBox4 = new System.Windows.Forms.GroupBox();
+            this.btnShowLogFile = new System.Windows.Forms.Button();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.cbxOverwriteAirportOperations = new System.Windows.Forms.CheckBox();
             this.cbxOverwriteParkingDefs = new System.Windows.Forms.CheckBox();
@@ -59,15 +66,12 @@
             this.rtbAircraft = new System.Windows.Forms.RichTextBox();
             this.btnAnalyseAircraft = new System.Windows.Forms.Button();
             this.btnExit = new System.Windows.Forms.Button();
-            this.groupBox4 = new System.Windows.Forms.GroupBox();
-            this.btnShowLogFile = new System.Windows.Forms.Button();
-            this.progressOutbound = new System.Windows.Forms.ProgressBar();
-            this.progressInbound = new System.Windows.Forms.ProgressBar();
-            this.label3 = new System.Windows.Forms.Label();
-            this.label4 = new System.Windows.Forms.Label();
-            this.gbxProgress = new System.Windows.Forms.GroupBox();
+            this.groupBox5 = new System.Windows.Forms.GroupBox();
+            this.cbxFixDuplicateParkingNames = new System.Windows.Forms.CheckBox();
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
+            this.gbxProgress.SuspendLayout();
+            this.groupBox4.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.gbxOutput.SuspendLayout();
             this.gbxAiport.SuspendLayout();
@@ -75,8 +79,7 @@
             this.groupBox3.SuspendLayout();
             this.groupBox2.SuspendLayout();
             this.tabAircraft.SuspendLayout();
-            this.groupBox4.SuspendLayout();
-            this.gbxProgress.SuspendLayout();
+            this.groupBox5.SuspendLayout();
             this.SuspendLayout();
             // 
             // rtb
@@ -179,6 +182,76 @@
             this.tabPage1.Text = "Generator";
             this.tabPage1.UseVisualStyleBackColor = true;
             // 
+            // gbxProgress
+            // 
+            this.gbxProgress.Controls.Add(this.progressOutbound);
+            this.gbxProgress.Controls.Add(this.label4);
+            this.gbxProgress.Controls.Add(this.progressInbound);
+            this.gbxProgress.Controls.Add(this.label3);
+            this.gbxProgress.Location = new System.Drawing.Point(884, 17);
+            this.gbxProgress.Name = "gbxProgress";
+            this.gbxProgress.Size = new System.Drawing.Size(581, 148);
+            this.gbxProgress.TabIndex = 16;
+            this.gbxProgress.TabStop = false;
+            this.gbxProgress.Text = "Progress";
+            // 
+            // progressOutbound
+            // 
+            this.progressOutbound.Location = new System.Drawing.Point(28, 52);
+            this.progressOutbound.Name = "progressOutbound";
+            this.progressOutbound.Size = new System.Drawing.Size(535, 23);
+            this.progressOutbound.Style = System.Windows.Forms.ProgressBarStyle.Continuous;
+            this.progressOutbound.TabIndex = 12;
+            // 
+            // label4
+            // 
+            this.label4.AutoSize = true;
+            this.label4.Location = new System.Drawing.Point(28, 82);
+            this.label4.Name = "label4";
+            this.label4.Size = new System.Drawing.Size(59, 17);
+            this.label4.TabIndex = 15;
+            this.label4.Text = "Inbound";
+            // 
+            // progressInbound
+            // 
+            this.progressInbound.Location = new System.Drawing.Point(28, 102);
+            this.progressInbound.Name = "progressInbound";
+            this.progressInbound.Size = new System.Drawing.Size(535, 23);
+            this.progressInbound.Style = System.Windows.Forms.ProgressBarStyle.Continuous;
+            this.progressInbound.TabIndex = 13;
+            // 
+            // label3
+            // 
+            this.label3.AutoSize = true;
+            this.label3.Location = new System.Drawing.Point(25, 32);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(71, 17);
+            this.label3.TabIndex = 14;
+            this.label3.Text = "Outbound";
+            // 
+            // groupBox4
+            // 
+            this.groupBox4.Controls.Add(this.btnShowLogFile);
+            this.groupBox4.Location = new System.Drawing.Point(662, 14);
+            this.groupBox4.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
+            this.groupBox4.Name = "groupBox4";
+            this.groupBox4.Padding = new System.Windows.Forms.Padding(3, 2, 3, 2);
+            this.groupBox4.Size = new System.Drawing.Size(216, 153);
+            this.groupBox4.TabIndex = 11;
+            this.groupBox4.TabStop = false;
+            this.groupBox4.Text = "Debug";
+            // 
+            // btnShowLogFile
+            // 
+            this.btnShowLogFile.Location = new System.Drawing.Point(23, 28);
+            this.btnShowLogFile.Margin = new System.Windows.Forms.Padding(4);
+            this.btnShowLogFile.Name = "btnShowLogFile";
+            this.btnShowLogFile.Size = new System.Drawing.Size(176, 31);
+            this.btnShowLogFile.TabIndex = 6;
+            this.btnShowLogFile.Text = "Open Last Log file";
+            this.btnShowLogFile.UseVisualStyleBackColor = true;
+            this.btnShowLogFile.Click += new System.EventHandler(this.btnShowLogFile_Click);
+            // 
             // groupBox1
             // 
             this.groupBox1.Controls.Add(this.cbxOverwriteAirportOperations);
@@ -277,6 +350,7 @@
             // 
             // tabPage2
             // 
+            this.tabPage2.Controls.Add(this.groupBox5);
             this.tabPage2.Controls.Add(this.groupBox3);
             this.tabPage2.Controls.Add(this.groupBox2);
             this.tabPage2.Controls.Add(this.btnBrowse);
@@ -453,75 +527,26 @@
             this.btnExit.UseVisualStyleBackColor = true;
             this.btnExit.Click += new System.EventHandler(this.btnExit_Click);
             // 
-            // groupBox4
+            // groupBox5
             // 
-            this.groupBox4.Controls.Add(this.btnShowLogFile);
-            this.groupBox4.Location = new System.Drawing.Point(662, 14);
-            this.groupBox4.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
-            this.groupBox4.Name = "groupBox4";
-            this.groupBox4.Padding = new System.Windows.Forms.Padding(3, 2, 3, 2);
-            this.groupBox4.Size = new System.Drawing.Size(216, 153);
-            this.groupBox4.TabIndex = 11;
-            this.groupBox4.TabStop = false;
-            this.groupBox4.Text = "Debug";
+            this.groupBox5.Controls.Add(this.cbxFixDuplicateParkingNames);
+            this.groupBox5.Location = new System.Drawing.Point(12, 230);
+            this.groupBox5.Name = "groupBox5";
+            this.groupBox5.Size = new System.Drawing.Size(265, 222);
+            this.groupBox5.TabIndex = 14;
+            this.groupBox5.TabStop = false;
+            this.groupBox5.Text = "General";
             // 
-            // btnShowLogFile
+            // cbxFixDuplicateParkingNames
             // 
-            this.btnShowLogFile.Location = new System.Drawing.Point(23, 28);
-            this.btnShowLogFile.Margin = new System.Windows.Forms.Padding(4);
-            this.btnShowLogFile.Name = "btnShowLogFile";
-            this.btnShowLogFile.Size = new System.Drawing.Size(176, 31);
-            this.btnShowLogFile.TabIndex = 6;
-            this.btnShowLogFile.Text = "Open Last Log file";
-            this.btnShowLogFile.UseVisualStyleBackColor = true;
-            this.btnShowLogFile.Click += new System.EventHandler(this.btnShowLogFile_Click);
-            // 
-            // progressOutbound
-            // 
-            this.progressOutbound.Location = new System.Drawing.Point(28, 52);
-            this.progressOutbound.Name = "progressOutbound";
-            this.progressOutbound.Size = new System.Drawing.Size(535, 23);
-            this.progressOutbound.Style = System.Windows.Forms.ProgressBarStyle.Continuous;
-            this.progressOutbound.TabIndex = 12;
-            // 
-            // progressInbound
-            // 
-            this.progressInbound.Location = new System.Drawing.Point(28, 102);
-            this.progressInbound.Name = "progressInbound";
-            this.progressInbound.Size = new System.Drawing.Size(535, 23);
-            this.progressInbound.Style = System.Windows.Forms.ProgressBarStyle.Continuous;
-            this.progressInbound.TabIndex = 13;
-            // 
-            // label3
-            // 
-            this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(25, 32);
-            this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(71, 17);
-            this.label3.TabIndex = 14;
-            this.label3.Text = "Outbound";
-            // 
-            // label4
-            // 
-            this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(28, 82);
-            this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(59, 17);
-            this.label4.TabIndex = 15;
-            this.label4.Text = "Inbound";
-            // 
-            // gbxProgress
-            // 
-            this.gbxProgress.Controls.Add(this.progressOutbound);
-            this.gbxProgress.Controls.Add(this.label4);
-            this.gbxProgress.Controls.Add(this.progressInbound);
-            this.gbxProgress.Controls.Add(this.label3);
-            this.gbxProgress.Location = new System.Drawing.Point(884, 17);
-            this.gbxProgress.Name = "gbxProgress";
-            this.gbxProgress.Size = new System.Drawing.Size(581, 148);
-            this.gbxProgress.TabIndex = 16;
-            this.gbxProgress.TabStop = false;
-            this.gbxProgress.Text = "Progress";
+            this.cbxFixDuplicateParkingNames.AutoSize = true;
+            this.cbxFixDuplicateParkingNames.Location = new System.Drawing.Point(24, 37);
+            this.cbxFixDuplicateParkingNames.Name = "cbxFixDuplicateParkingNames";
+            this.cbxFixDuplicateParkingNames.Size = new System.Drawing.Size(205, 21);
+            this.cbxFixDuplicateParkingNames.TabIndex = 0;
+            this.cbxFixDuplicateParkingNames.Text = "Fix duplicate parking names";
+            this.cbxFixDuplicateParkingNames.UseVisualStyleBackColor = true;
+            this.cbxFixDuplicateParkingNames.CheckedChanged += new System.EventHandler(this.cbxFixDuplicateParkingNames_CheckedChanged);
             // 
             // MainForm
             // 
@@ -535,6 +560,9 @@
             this.Text = "Ground Route Generator 0.3";
             this.tabControl1.ResumeLayout(false);
             this.tabPage1.ResumeLayout(false);
+            this.gbxProgress.ResumeLayout(false);
+            this.gbxProgress.PerformLayout();
+            this.groupBox4.ResumeLayout(false);
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();
             this.gbxOutput.ResumeLayout(false);
@@ -548,9 +576,8 @@
             this.groupBox2.ResumeLayout(false);
             this.groupBox2.PerformLayout();
             this.tabAircraft.ResumeLayout(false);
-            this.groupBox4.ResumeLayout(false);
-            this.gbxProgress.ResumeLayout(false);
-            this.gbxProgress.PerformLayout();
+            this.groupBox5.ResumeLayout(false);
+            this.groupBox5.PerformLayout();
             this.ResumeLayout(false);
 
         }
@@ -594,6 +621,8 @@
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.ProgressBar progressInbound;
         private System.Windows.Forms.GroupBox gbxProgress;
+        private System.Windows.Forms.GroupBox groupBox5;
+        private System.Windows.Forms.CheckBox cbxFixDuplicateParkingNames;
     }
 }
 
