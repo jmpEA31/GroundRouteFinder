@@ -52,7 +52,7 @@ namespace GroundRouteFinder.AptDat
 
     public class TrafficRule
     {
-        private static char[] _splitters = { ' ' };
+        private static readonly char[] _splitters = { ' ' };
 
         public int MinCeiling;
         public double MinVisibility;
@@ -295,9 +295,9 @@ namespace GroundRouteFinder.AptDat
                                 if (_noOverlap)
                                     windLimit.MaxDir++;
                                 windLimit.MaxDir = Math.Min(360, windLimit.MaxDir);
-                                writeOperation(ruleIdx, currentMinWindSpeed, windLimit, startTime, endTime);
+                                WriteOperation(ruleIdx, currentMinWindSpeed, windLimit, startTime, endTime);
                                 Logger.Log($"{currentMinWindSpeed,3}-{currentMaxWindSpeed,3} kts {windLimit.MinDir:000}-{windLimit.MaxDir:000} {startTime} {endTime}");
-                                writeRunways(rule.RunwayUses, ruleIdx++, startTime, endTime);
+                                WriteRunways(rule.RunwayUses, ruleIdx++, startTime, endTime);
                             }
                         }
                         else
@@ -305,9 +305,9 @@ namespace GroundRouteFinder.AptDat
                             if (_noOverlap)
                                 windLimit.MaxDir++;
                             windLimit.MaxDir = Math.Min(360, windLimit.MaxDir);
-                            writeOperation(ruleIdx, currentMinWindSpeed, windLimit, "00:00", "24:00");
+                            WriteOperation(ruleIdx, currentMinWindSpeed, windLimit, "00:00", "24:00");
                             Logger.Log($"{currentMinWindSpeed,3}-{currentMaxWindSpeed,3} kts {windLimit.MinDir:000}-{windLimit.MaxDir:000} 00:00 24:00");
-                            writeRunways(rule.RunwayUses, ruleIdx++, "00:00", "24:00");
+                            WriteRunways(rule.RunwayUses, ruleIdx++, "00:00", "24:00");
                         }
                     }
                 }
@@ -375,7 +375,7 @@ namespace GroundRouteFinder.AptDat
                 return true;
         }
 
-        private void writeOperation(int index, int windMinSpeed, WindLimts windLimit, string startTime, string endTime)
+        private void WriteOperation(int index, int windMinSpeed, WindLimts windLimit, string startTime, string endTime)
         {
             if (windLimit.MaxDir < windLimit.MinDir)
             {
@@ -386,7 +386,7 @@ namespace GroundRouteFinder.AptDat
                 _operations.Add($"{index,-7} {windMinSpeed,-17} {windLimit.MaxSpeed,-18} {windLimit.MinDir,-14} {windLimit.MaxDir,-15} {startTime}  {endTime}");
         }
 
-        private void writeRunways(List<RunwayUse> runwayUses, int index, string startTime, string endTime)
+        private void WriteRunways(List<RunwayUse> runwayUses, int index, string startTime, string endTime)
         {
             foreach (RunwayUse ru in runwayUses)
             {

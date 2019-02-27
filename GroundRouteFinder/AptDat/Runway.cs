@@ -68,14 +68,12 @@ namespace GroundRouteFinder.AptDat
 
         public double Length;
 
-        //        public List<RunwayTakeOffSpot> TakeOffSpots;
         public List<TaxiNode> RunwayNodes;
         public Dictionary<TaxiNode, List<EntryPoint>> EntryGroups;
         public Dictionary<TaxiNode, List<ExitPoint>> ExitGroups;
 
         public double Bearing;
 
-//        public Dictionary<uint, RunwayExitNode> RunwayExits;
 
         private bool _availableForLanding = true;
         public bool AvailableForLanding
@@ -118,24 +116,28 @@ namespace GroundRouteFinder.AptDat
             Logger.Log($"Analyzing Runway {Designator}");
             Logger.Log($"---------------------------------------------");
 
-            //RunwayExits = new Dictionary<uint, RunwayExitNode>();
-
             // Find the taxi nodes closest to the start of the runway and the displaced start
             double shortestDistance = double.MaxValue;
             double shortestDisplacedDistance = double.MaxValue;
 
             IEnumerable<TaxiNode> runwayNodes = taxiEdges.Where(te=>te.IsRunway).Select(te => te.StartNode).Concat(taxiEdges.Where(te => te.IsRunway).Select(te => te.EndNode)).Distinct();
-            //Console.WriteLine($"Runway nodes {runwayNodes.Count()}");
             foreach (TaxiNode node in runwayNodes)
             {
-                double d = VortexMath.DistancePyth(node.Latitude, node.Longitude, DisplacedLatitude, DisplacedLongitude);
+                double angleFromStart = VortexMath.AbsTurnAngle(Bearing, VortexMath.BearingRadians(this, node));
+                if (angleFromStart > VortexMath.Deg0025Rad)
+                    continue;
+
+                double d = VortexMath.DistanceKM(node.Latitude, node.Longitude, DisplacedLatitude, DisplacedLongitude);
+                if (d > Length * 1.1)
+                    continue;
+
                 if (d < shortestDisplacedDistance)
                 {
                     shortestDisplacedDistance = d;
                     DisplacedNode = node;
                 }
 
-                d = VortexMath.DistancePyth(this, node);
+                d = VortexMath.DistanceKM(this, node);
                 if (d < shortestDistance)
                 {
                     shortestDistance = d;
@@ -143,13 +145,22 @@ namespace GroundRouteFinder.AptDat
                 }
             }
 
-            //Console.WriteLine($"Near {NearestNode.Id} Displaced {DisplacedNode.Id}");
+            if (NearestNode == null)
+            {
+                // The KOKC runway 18 clause...
+                Logger.Log($"No suitable nodes on the runway found.");
+                AvailableForTakeOff = false;
+                AvailableForLanding = false;
+                return false;
+            }
 
             // Find the nodes that make up this runway: first find an edge connected to the nearest node
             IEnumerable<TaxiEdge> selectedEdges = taxiEdges.Where(te => te.IsRunway && (te.EndNode.Id == NearestNode.Id || te.StartNode.Id == NearestNode.Id));
             if (selectedEdges.Count() == 0)
             {
                 Logger.Log($"No runway edges found.");
+                AvailableForTakeOff = false;
+                AvailableForLanding = false;
                 return false;
             }
 
@@ -157,22 +168,22 @@ namespace GroundRouteFinder.AptDat
             string edgeKey = selectedEdges.First().LinkName;
             selectedEdges = taxiEdges.Where(te => te.LinkName == edgeKey);
 
-            RunwayNodes = findNodeChain(taxiNodes, selectedEdges);
+            RunwayNodes = FindNodeChain(taxiNodes, selectedEdges);
 
             if (AvailableForTakeOff)
-                findEntries();
+                FindEntries();
             else
                 Logger.Log("Not in use for take offs");
 
             if (AvailableForLanding)
-                findExits2();
+                FindExits();
             else
                 Logger.Log("Not in use for landing");
             
             return true;
         }
 
-        private void findEntries()
+        private void FindEntries()
         {
             EntryGroups.Clear();
 
@@ -246,7 +257,7 @@ namespace GroundRouteFinder.AptDat
             }         
         }
 
-        private void findExits2()
+        private void FindExits()
         {
             ExitGroups.Clear();
             TaxiNode groupStartNode = null;
@@ -357,7 +368,7 @@ namespace GroundRouteFinder.AptDat
         /// <param name="taxiNodes"></param>
         /// <param name="taxiEdges"></param>
         /// <returns></returns>
-        private List<TaxiNode> findNodeChain(IEnumerable<TaxiNode> taxiNodes, IEnumerable<TaxiEdge> taxiEdges)
+        private List<TaxiNode> FindNodeChain(IEnumerable<TaxiNode> taxiNodes, IEnumerable<TaxiEdge> taxiEdges)
         {
             List<TaxiNode> nodes = new List<TaxiNode>();
 
@@ -386,7 +397,6 @@ namespace GroundRouteFinder.AptDat
 
             return nodes;
         }
-
 
         public override string ToString()
         {

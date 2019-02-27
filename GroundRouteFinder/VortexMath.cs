@@ -25,6 +25,10 @@ namespace GroundRouteFinder
         public const double Deg2Rad = Math.PI / 180.0;
         public const double Rad2Deg = 180.0 / Math.PI;
 
+        /// <summary>
+        /// 2.5 degrees represented as radians
+        /// </summary>
+        public const double Deg0025Rad = 2.5 * VortexMath.Deg2Rad;
         public const double Deg005Rad = 5.0 * VortexMath.Deg2Rad;
         public const double Deg020Rad = 20.0 * VortexMath.Deg2Rad;
         public const double Deg0475Rad = 47.5 * VortexMath.Deg2Rad;
