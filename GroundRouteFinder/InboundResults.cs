@@ -91,7 +91,7 @@ namespace GroundRouteFinder
                         IEnumerable<WorldTrafficAircraftType> wtTypes = AircraftTypeConverter.WTTypesFromXPlaneLimits(route.MinSize, validMax, Parking.Operation);
                         if (wtTypes.Count() == 0)
                         {
-                            Console.WriteLine($"WARN {Parking.Name} (Max)Cat {Parking.MaxSize} Types: {string.Join(" ", Parking.XpTypes)} does not map to any WT types.");
+                            Logger.Log($"WARN {Parking.Name} (Max)Cat {Parking.MaxSize} Types: {string.Join(" ", Parking.XpTypes)} does not map to any WT types.");
                         }
 
                         if (route.AvailableRunwayLength < VortexMath.Feet5000Km)

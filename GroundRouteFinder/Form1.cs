@@ -375,7 +375,8 @@ namespace GroundRouteFinder
                 {
                     LogElapsed($"Generating outbound routes");
 
-                    int count = _airport.FindOutboundRoutes(rbNormal.Checked);
+                    int count = _airport.FindOutboundRoutes(rbNormal.Checked, progressOutbound);
+
                     LogElapsed($"outbound routes done, {count} generated, max steerpoints {OutboundResults.MaxOutPoints}");
                     if (OutboundResults.MaxOutPoints > Settings.MaxSteerpoints)
                     {
@@ -391,7 +392,8 @@ namespace GroundRouteFinder
                 {
                     LogElapsed($"Generating inbound routes");
 
-                    int count = _airport.FindInboundRoutes(rbNormal.Checked);
+                    int count = _airport.FindInboundRoutes(rbNormal.Checked, progressInbound);
+
                     LogElapsed($"inbound routes done, {count} generated, max steerpoints {InboundResults.MaxInPoints}");
                     if (InboundResults.MaxInPoints > Settings.MaxSteerpoints)
                     {

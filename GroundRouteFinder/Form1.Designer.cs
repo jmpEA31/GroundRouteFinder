@@ -57,10 +57,15 @@
             this.label1 = new System.Windows.Forms.Label();
             this.tabAircraft = new System.Windows.Forms.TabPage();
             this.rtbAircraft = new System.Windows.Forms.RichTextBox();
-            this.button2 = new System.Windows.Forms.Button();
+            this.btnAnalyseAircraft = new System.Windows.Forms.Button();
             this.btnExit = new System.Windows.Forms.Button();
             this.groupBox4 = new System.Windows.Forms.GroupBox();
             this.btnShowLogFile = new System.Windows.Forms.Button();
+            this.progressOutbound = new System.Windows.Forms.ProgressBar();
+            this.progressInbound = new System.Windows.Forms.ProgressBar();
+            this.label3 = new System.Windows.Forms.Label();
+            this.label4 = new System.Windows.Forms.Label();
+            this.gbxProgress = new System.Windows.Forms.GroupBox();
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
             this.groupBox1.SuspendLayout();
@@ -71,6 +76,7 @@
             this.groupBox2.SuspendLayout();
             this.tabAircraft.SuspendLayout();
             this.groupBox4.SuspendLayout();
+            this.gbxProgress.SuspendLayout();
             this.SuspendLayout();
             // 
             // rtb
@@ -89,24 +95,24 @@
             // rbNormal
             // 
             this.rbNormal.AutoSize = true;
+            this.rbNormal.Checked = true;
             this.rbNormal.Location = new System.Drawing.Point(25, 28);
             this.rbNormal.Margin = new System.Windows.Forms.Padding(4);
             this.rbNormal.Name = "rbNormal";
             this.rbNormal.Size = new System.Drawing.Size(159, 21);
             this.rbNormal.TabIndex = 2;
+            this.rbNormal.TabStop = true;
             this.rbNormal.Text = "World Traffic Routes";
             this.rbNormal.UseVisualStyleBackColor = true;
             // 
             // radioButton2
             // 
             this.radioButton2.AutoSize = true;
-            this.radioButton2.Checked = true;
             this.radioButton2.Location = new System.Drawing.Point(25, 57);
             this.radioButton2.Margin = new System.Windows.Forms.Padding(4);
             this.radioButton2.Name = "radioButton2";
             this.radioButton2.Size = new System.Drawing.Size(57, 21);
             this.radioButton2.TabIndex = 3;
-            this.radioButton2.TabStop = true;
             this.radioButton2.Text = "KML";
             this.radioButton2.UseVisualStyleBackColor = true;
             // 
@@ -158,6 +164,7 @@
             // 
             // tabPage1
             // 
+            this.tabPage1.Controls.Add(this.gbxProgress);
             this.tabPage1.Controls.Add(this.groupBox4);
             this.tabPage1.Controls.Add(this.groupBox1);
             this.tabPage1.Controls.Add(this.gbxOutput);
@@ -403,7 +410,7 @@
             // tabAircraft
             // 
             this.tabAircraft.Controls.Add(this.rtbAircraft);
-            this.tabAircraft.Controls.Add(this.button2);
+            this.tabAircraft.Controls.Add(this.btnAnalyseAircraft);
             this.tabAircraft.Location = new System.Drawing.Point(4, 25);
             this.tabAircraft.Margin = new System.Windows.Forms.Padding(4);
             this.tabAircraft.Name = "tabAircraft";
@@ -416,23 +423,23 @@
             // rtbAircraft
             // 
             this.rtbAircraft.Font = new System.Drawing.Font("Consolas", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.rtbAircraft.Location = new System.Drawing.Point(73, 71);
+            this.rtbAircraft.Location = new System.Drawing.Point(18, 44);
             this.rtbAircraft.Margin = new System.Windows.Forms.Padding(4);
             this.rtbAircraft.Name = "rtbAircraft";
-            this.rtbAircraft.Size = new System.Drawing.Size(1507, 740);
+            this.rtbAircraft.Size = new System.Drawing.Size(1562, 740);
             this.rtbAircraft.TabIndex = 1;
             this.rtbAircraft.Text = "";
             // 
-            // button2
+            // btnAnalyseAircraft
             // 
-            this.button2.Location = new System.Drawing.Point(35, 22);
-            this.button2.Margin = new System.Windows.Forms.Padding(4);
-            this.button2.Name = "button2";
-            this.button2.Size = new System.Drawing.Size(100, 28);
-            this.button2.TabIndex = 0;
-            this.button2.Text = "button2";
-            this.button2.UseVisualStyleBackColor = true;
-            this.button2.Click += new System.EventHandler(this.button2_Click);
+            this.btnAnalyseAircraft.Location = new System.Drawing.Point(18, 8);
+            this.btnAnalyseAircraft.Margin = new System.Windows.Forms.Padding(4);
+            this.btnAnalyseAircraft.Name = "btnAnalyseAircraft";
+            this.btnAnalyseAircraft.Size = new System.Drawing.Size(180, 28);
+            this.btnAnalyseAircraft.TabIndex = 0;
+            this.btnAnalyseAircraft.Text = "Analyse \'Base\' Aircraft";
+            this.btnAnalyseAircraft.UseVisualStyleBackColor = true;
+            this.btnAnalyseAircraft.Click += new System.EventHandler(this.button2_Click);
             // 
             // btnExit
             // 
@@ -469,6 +476,53 @@
             this.btnShowLogFile.UseVisualStyleBackColor = true;
             this.btnShowLogFile.Click += new System.EventHandler(this.btnShowLogFile_Click);
             // 
+            // progressOutbound
+            // 
+            this.progressOutbound.Location = new System.Drawing.Point(28, 52);
+            this.progressOutbound.Name = "progressOutbound";
+            this.progressOutbound.Size = new System.Drawing.Size(535, 23);
+            this.progressOutbound.Style = System.Windows.Forms.ProgressBarStyle.Continuous;
+            this.progressOutbound.TabIndex = 12;
+            // 
+            // progressInbound
+            // 
+            this.progressInbound.Location = new System.Drawing.Point(28, 102);
+            this.progressInbound.Name = "progressInbound";
+            this.progressInbound.Size = new System.Drawing.Size(535, 23);
+            this.progressInbound.Style = System.Windows.Forms.ProgressBarStyle.Continuous;
+            this.progressInbound.TabIndex = 13;
+            // 
+            // label3
+            // 
+            this.label3.AutoSize = true;
+            this.label3.Location = new System.Drawing.Point(25, 32);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(71, 17);
+            this.label3.TabIndex = 14;
+            this.label3.Text = "Outbound";
+            // 
+            // label4
+            // 
+            this.label4.AutoSize = true;
+            this.label4.Location = new System.Drawing.Point(28, 82);
+            this.label4.Name = "label4";
+            this.label4.Size = new System.Drawing.Size(59, 17);
+            this.label4.TabIndex = 15;
+            this.label4.Text = "Inbound";
+            // 
+            // gbxProgress
+            // 
+            this.gbxProgress.Controls.Add(this.progressOutbound);
+            this.gbxProgress.Controls.Add(this.label4);
+            this.gbxProgress.Controls.Add(this.progressInbound);
+            this.gbxProgress.Controls.Add(this.label3);
+            this.gbxProgress.Location = new System.Drawing.Point(884, 17);
+            this.gbxProgress.Name = "gbxProgress";
+            this.gbxProgress.Size = new System.Drawing.Size(581, 148);
+            this.gbxProgress.TabIndex = 16;
+            this.gbxProgress.TabStop = false;
+            this.gbxProgress.Text = "Progress";
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
@@ -495,6 +549,8 @@
             this.groupBox2.PerformLayout();
             this.tabAircraft.ResumeLayout(false);
             this.groupBox4.ResumeLayout(false);
+            this.gbxProgress.ResumeLayout(false);
+            this.gbxProgress.PerformLayout();
             this.ResumeLayout(false);
 
         }
@@ -514,7 +570,7 @@
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.TabPage tabAircraft;
         private System.Windows.Forms.RichTextBox rtbAircraft;
-        private System.Windows.Forms.Button button2;
+        private System.Windows.Forms.Button btnAnalyseAircraft;
         private System.Windows.Forms.Button btnExit;
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.GroupBox gbxOutput;
@@ -533,6 +589,11 @@
         private System.Windows.Forms.CheckBox cbxGenerateDebugFiles;
         private System.Windows.Forms.GroupBox groupBox4;
         private System.Windows.Forms.Button btnShowLogFile;
+        private System.Windows.Forms.ProgressBar progressOutbound;
+        private System.Windows.Forms.Label label4;
+        private System.Windows.Forms.Label label3;
+        private System.Windows.Forms.ProgressBar progressInbound;
+        private System.Windows.Forms.GroupBox gbxProgress;
     }
 }
 

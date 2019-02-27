@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using GroundRouteFinder.LogSupport;
 
 namespace GroundRouteFinder.AptDat
 {
@@ -319,11 +320,11 @@ namespace GroundRouteFinder.AptDat
 
             if (leBEst != null)
             {
-                Console.WriteLine($"{Name} has a line node at {minDist * 1000:0.000} meters: {leBEst.Latitude * VortexMath.Rad2Deg} {leBEst.Longitude * VortexMath.Rad2Deg}");
+                Logger.Log($"{Name} has a line node at {minDist * 1000:0.000} meters: {leBEst.Latitude * VortexMath.Rad2Deg} {leBEst.Longitude * VortexMath.Rad2Deg}");
             }
             else
             {
-                Console.WriteLine($"{Name} has no nearby line node");
+                Logger.Log($"{Name} has no nearby line node");
             }
         }
 

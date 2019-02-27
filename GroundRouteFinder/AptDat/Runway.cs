@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using GroundRouteFinder.LogSupport;
 
 namespace GroundRouteFinder.AptDat
 {
@@ -113,7 +114,9 @@ namespace GroundRouteFinder.AptDat
 
         public bool Analyze(IEnumerable<TaxiNode> taxiNodes, IEnumerable<TaxiEdge> taxiEdges)
         {
-            //Log($"Analyzing Runway {Designator}");
+            Logger.Log($"---------------------------------------------");
+            Logger.Log($"Analyzing Runway {Designator}");
+            Logger.Log($"---------------------------------------------");
 
             //RunwayExits = new Dictionary<uint, RunwayExitNode>();
 
@@ -146,7 +149,7 @@ namespace GroundRouteFinder.AptDat
             IEnumerable<TaxiEdge> selectedEdges = taxiEdges.Where(te => te.IsRunway && (te.EndNode.Id == NearestNode.Id || te.StartNode.Id == NearestNode.Id));
             if (selectedEdges.Count() == 0)
             {
-                //Console.WriteLine("No edges");
+                Logger.Log($"No runway edges found.");
                 return false;
             }
 
@@ -158,11 +161,14 @@ namespace GroundRouteFinder.AptDat
 
             if (AvailableForTakeOff)
                 findEntries();
+            else
+                Logger.Log("Not in use for take offs");
 
             if (AvailableForLanding)
                 findExits2();
-//                findExits(RunwayNodes.Reverse<TaxiNode>(), taxiNodes, taxiEdges);
-
+            else
+                Logger.Log("Not in use for landing");
+            
             return true;
         }
 
@@ -220,7 +226,7 @@ namespace GroundRouteFinder.AptDat
 
             foreach (var result in EntryGroups)
             {
-                Console.WriteLine($"{Designator} Group: {result.Key.Id}");
+                Logger.Log($"{Designator} Group: {result.Key.Id}");
 
                 EntryPoint right = result.Value.Where(ep => ep.TurnAngle < 0).OrderByDescending(ep => ep.TurnAngle).FirstOrDefault();
                 EntryPoint left = result.Value.Where(ep => ep.TurnAngle > 0).OrderBy(ep => ep.TurnAngle).FirstOrDefault();
@@ -228,13 +234,13 @@ namespace GroundRouteFinder.AptDat
 
                 if (right != null)
                 {
-                    Console.WriteLine($" Right Entry: {right.OffRunwayNode.Id}->{right.OnRunwayNode.Id} {right.TurnAngle * VortexMath.Rad2Deg:0.0} {right.TakeoffLengthRemaining:0.00}");
+                    Logger.Log($" Right Entry: {right.OffRunwayNode.Id}->{right.OnRunwayNode.Id} {right.TurnAngle * VortexMath.Rad2Deg:0.0} {right.TakeoffLengthRemaining * VortexMath.KmToFoot:0}ft");
                     EntryGroups[result.Key].Add(right);
                 }
 
                 if (left != null)
                 {
-                    Console.WriteLine($" Left  Entry: {left.OffRunwayNode.Id}->{left.OnRunwayNode.Id} {left.TurnAngle * VortexMath.Rad2Deg:0.0} {left.TakeoffLengthRemaining:0.00}");
+                    Logger.Log($" Left  Entry: {left.OffRunwayNode.Id}->{left.OnRunwayNode.Id} {left.TurnAngle * VortexMath.Rad2Deg:0.0} {left.TakeoffLengthRemaining * VortexMath.KmToFoot:0}ft");
                     EntryGroups[result.Key].Add(left);
                 }
             }         
@@ -325,7 +331,7 @@ namespace GroundRouteFinder.AptDat
 
             foreach (var result in ExitGroups)
             {
-                Console.WriteLine($"{Designator} Group: {result.Key.Id}");
+                Logger.Log($"{Designator} Group: {result.Key.Id}");
 
                 ExitPoint right = result.Value.Where(ep => ep.TurnAngle > 0).OrderBy(ep => ep.TurnAngle).FirstOrDefault();
                 ExitPoint left = result.Value.Where(ep => ep.TurnAngle < 0).OrderByDescending(ep => ep.TurnAngle).FirstOrDefault();
@@ -333,183 +339,17 @@ namespace GroundRouteFinder.AptDat
 
                 if (right != null)
                 {
-                    Console.WriteLine($" Right Exit: {right.OnRunwayNode.Id}->{right.OffRunwayNode.Id} {right.TurnAngle * VortexMath.Rad2Deg:0.0} {right.LandingLengthUsed:0.00}");
+                    Logger.Log($" Right Exit: {right.OnRunwayNode.Id}->{right.OffRunwayNode.Id} {right.TurnAngle * VortexMath.Rad2Deg:0.0} {right.LandingLengthUsed * VortexMath.KmToFoot:0}ft");
                     ExitGroups[result.Key].Add(right);
                 }
 
                 if (left != null)
                 {
-                    Console.WriteLine($" Left  Exit: {left.OnRunwayNode.Id}->{left.OffRunwayNode.Id} {left.TurnAngle * VortexMath.Rad2Deg:0.0} {left.LandingLengthUsed:0.00}");
+                    Logger.Log($" Left  Exit: {left.OnRunwayNode.Id}->{left.OffRunwayNode.Id} {left.TurnAngle * VortexMath.Rad2Deg:0.0} {left.LandingLengthUsed * VortexMath.KmToFoot:0}ft");
                     ExitGroups[result.Key].Add(left);
                 }
             }
         }
-
-        //public class RunwayExitNode
-        //{
-        //    public double ExitDistance;
-        //    public RunwayExit LeftExit;
-        //    public RunwayExit RightExit;
-
-        //    public RunwayExitNode()
-        //    {
-        //        LeftExit = null;
-        //        RightExit = null;
-        //    }
-        //}
-
-        //public class RunwayExit
-        //{
-        //    public double ExitDistance;
-        //    public double ExitAngle;
-        //    public double TurnAngle;
-        //    public TaxiNode OnRunwayNode;
-        //    public TaxiNode OffRunwayNode;
-
-        //    public RunwayExit()
-        //    {
-
-        //    }
-
-        //    public override string ToString()
-        //    {
-        //        return $"{ExitDistance:0.00}km {OnRunwayNode.Id} Turn {ExitAngle * VortexMath.Rad2Deg}";
-        //    }
-
-        //}
-
-        //private class ExitLengthComparer : IComparer<RunwayExit>
-        //{
-        //    public int Compare(RunwayExit x, RunwayExit y)
-        //    {
-        //        return x.ExitDistance.CompareTo(y.ExitDistance);
-        //    }
-        //}
-
-        //private void findExits(IEnumerable<TaxiNode> runwayNodes, IEnumerable<TaxiNode> taxiNodes, IEnumerable<TaxiEdge> taxiEdges)
-        //{
-        //    ExitLengthComparer exitLengthComparer = new ExitLengthComparer();
-        //    List<RunwayExit> exitsLeft = new List<RunwayExit>();
-        //    List<RunwayExit> exitsRight = new List<RunwayExit>();
-
-        //    // start at long distance
-        //    foreach (TaxiNode onRunwayNode in runwayNodes)
-        //    {
-        //        // Find nodes that have the current runway node in an incoming edge
-        //        IEnumerable<TaxiEdge> exitEdges = taxiEdges.Where(edge => edge.StartNode.Id == onRunwayNode.Id);
-        //        exitEdges = exitEdges.Where(ee => !runwayNodes.Select(n => n.Id).Contains(ee.EndNode.Id));
-
-        //        foreach (TaxiEdge exit in exitEdges)
-        //        {
-        //            TaxiNode offRunwayNode = exit.EndNode;
-        //            double leaveBearing;
-
-        //            // If there is only one link continuing from the current node use that as link's bearing
-        //            IEnumerable<TaxiEdge> secondEdges = taxiEdges.Where(inc => inc.StartNode.Id == offRunwayNode.Id && inc.EndNode.Id != onRunwayNode.Id);
-        //            if (secondEdges.Count() == 1)
-        //            {
-        //                leaveBearing = secondEdges.First().Bearing;
-        //            }
-        //            else
-        //            {
-        //                leaveBearing = exit.Bearing;
-        //            }
-
-        //            double exitAngle = VortexMath.TurnAngle(Bearing, leaveBearing); // sign indicates left or right turn
-        //            if (Math.Abs(exitAngle) > VortexMath.Deg100Rad)
-        //                break;
-
-        //            double exitDistance = VortexMath.DistanceKM(this, onRunwayNode);
-        //            if (exitDistance < VortexMath.Feet3000Km)
-        //                break;
-
-        //            if (exitAngle > 0)
-        //                exitsRight.Add(new RunwayExit() { ExitAngle = exitAngle, TurnAngle = Math.Abs(exitAngle), ExitDistance = exitDistance, OnRunwayNode = onRunwayNode, OffRunwayNode = offRunwayNode });
-        //            else
-        //                exitsLeft.Add(new RunwayExit() { ExitAngle = exitAngle, TurnAngle = Math.Abs(exitAngle), ExitDistance = exitDistance, OnRunwayNode = onRunwayNode, OffRunwayNode = offRunwayNode });
-        //        }
-        //    }
-
-        //    analyzeExits(exitsLeft);
-        //    analyzeExits(exitsRight);
-        //}
-
-        //private void analyzeExits(List<RunwayExit> exits)
-        //{
-        //    if (exits.Count() > 0)
-        //    {
-        //        exits.Sort(new ExitLengthComparer());
-
-        //        RunwayExit shortExit = exits.First();
-        //        RunwayExit mediumExit = null;
-        //        RunwayExit longExit = null;
-        //        RunwayExit maxExit = null;
-
-        //        foreach (RunwayExit exit in exits)
-        //        {
-        //            if (exit.ExitDistance <= VortexMath.Feet5000Km && shortExit.TurnAngle > exit.TurnAngle)
-        //            {
-        //                shortExit = exit;
-        //            }
-        //            else if (exit != shortExit && exit.ExitDistance > VortexMath.Feet5000Km)
-        //            {
-        //                if (mediumExit == null)
-        //                {
-        //                    mediumExit = exit;
-        //                }
-        //                else if (exit.ExitDistance < VortexMath.Feet6500Km && mediumExit.TurnAngle > exit.TurnAngle)
-        //                {
-        //                    mediumExit = exit;
-        //                }
-        //                else if (exit.ExitDistance > VortexMath.Feet6500Km)
-        //                {
-        //                    if (longExit == null)
-        //                    {
-        //                        longExit = exit;
-        //                    }
-        //                    else if (exit.ExitDistance < VortexMath.Feet8000Km && longExit.TurnAngle > exit.TurnAngle)
-        //                    {
-        //                        longExit = exit;
-        //                    }
-        //                    else if (exit.ExitDistance > VortexMath.Feet8000Km)
-        //                    {
-        //                        if (maxExit == null)
-        //                        {
-        //                            maxExit = exit;
-        //                        }
-        //                        else if (maxExit.TurnAngle > exit.TurnAngle)
-        //                        {
-        //                            maxExit = exit;
-        //                        }
-        //                    }
-        //                }
-        //            }
-        //        }
-
-        //        mergeExit(shortExit);
-        //        mergeExit(mediumExit);
-        //        mergeExit(longExit);
-        //        mergeExit(maxExit);
-        //    }
-        //}
-
-        //private void mergeExit(RunwayExit exit)
-        //{
-        //    if (exit == null)
-        //        return;
-
-        //    if (!RunwayExits.ContainsKey(exit.OnRunwayNode.Id))
-        //    {
-        //        RunwayExits[exit.OnRunwayNode.Id] = new RunwayExitNode();
-        //    }
-
-        //    RunwayExits[exit.OnRunwayNode.Id].ExitDistance = exit.ExitDistance;
-        //    if (exit.ExitAngle < 0)
-        //        RunwayExits[exit.OnRunwayNode.Id].LeftExit = exit;
-        //    else
-        //        RunwayExits[exit.OnRunwayNode.Id].RightExit = exit;
-        //}
-
 
         /// <summary>
         /// Find the chain of TaxiNodes that represent this runway

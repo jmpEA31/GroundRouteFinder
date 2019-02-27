@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 
 namespace GroundRouteFinder.AptDat
 {
@@ -173,21 +174,9 @@ namespace GroundRouteFinder.AptDat
 
             _flows.Analyze();
 
-            // Find taxi links that are the actual runways
-            //  Then find applicable nodes for entering the runway and find the nodes off the runway connected to those
             foreach (Runway r in _runways)
             {
                 r.Analyze(_taxiNodes, _edges);
-                //if (r.RunwayExits.Count > 0)
-                //    Log($"Rwy {r.Designator,3} Exits: {r.RunwayExits.Count()} ({string.Join(", ", r.RunwayExits.Values.OrderBy(re=>re.ExitDistance).Select(re=>(re.ExitDistance/VortexMath.Foot2Km).ToString("0")))} ft)");
-                //if (r.EntryGroups.Count > 0)
-                //{
-                //    Log($"Rwy {r.Designator,3} Entry: {r.EntryGroups.Count()} ({string.Join(", ", r.EntryGroups.Select(to => (to.TakeOffLengthRemaining / VortexMath.Foot2Km).ToString("0")))} ft)");
-                //    foreach (var tos in r.TakeOffSpots)
-                //    {
-                //        Log($" {tos.TakeOffNode} {tos.TakeOffLengthRemaining / VortexMath.Foot2Km:0} {string.Join("-", tos.EntryPoints.Select(ep => ep.Id))}");
-                //    }
-                //}
             }
         }
 
@@ -213,7 +202,7 @@ namespace GroundRouteFinder.AptDat
         }
 
 
-        public int FindInboundRoutes(bool normalOutput)
+        public int FindInboundRoutes(bool normalOutput, ProgressBar progress)
         {
             string outputPath = normalOutput ? Path.Combine(Settings.WorldTrafficGroundRoutes, "Arrival") : Settings.ArrivalFolderKML;
             outputPath = Path.Combine(outputPath, ICAO);
@@ -221,9 +210,16 @@ namespace GroundRouteFinder.AptDat
 
             int count = 0;
 
+            progress.Minimum = 0;
+            progress.Maximum = _parkings.Count * (int)XPlaneAircraftCategory.Max;
+            progress.Value = 0;
+
             foreach (Parking parking in _parkings)
             {
                 InboundResults ir = new InboundResults(_edges, parking);
+
+                progress.Value += (XPlaneAircraftCategory.Max - (parking.MaxSize + 1));
+
                 for (XPlaneAircraftCategory size = parking.MaxSize; size >= XPlaneAircraftCategory.A; size--)
                 {
                     // Nearest node should become 'closest to computed pushback point'
@@ -256,20 +252,28 @@ namespace GroundRouteFinder.AptDat
                                 ir.AddResult(size, bestExit.OnRunwayNode, bestExit.OffRunwayNode, r, bestExit.LandingLengthUsed);
                         }
                     }
+                    progress.Value++;
+                    progress.Update();
                 }
 
                 count += ir.WriteRoutes(outputPath, !normalOutput);
             }
+
+            progress.Update();
             return count;
         }
     
-        public int FindOutboundRoutes(bool normalOutput)
+        public int FindOutboundRoutes(bool normalOutput, ProgressBar progress)
         {
             string outputPath = normalOutput ? Path.Combine(Settings.WorldTrafficGroundRoutes, "Departure") : Settings.DepartureFolderKML;
             outputPath = Path.Combine(outputPath, ICAO);
             Settings.DeleteDirectoryContents(outputPath);
 
             int count = 0;
+
+            progress.Minimum = 0;
+            progress.Maximum = _runways.Sum(r => r.EntryGroups.Count) * (int)XPlaneAircraftCategory.Max;
+            progress.Value = 0;
 
             // for each runway
             foreach (Runway runway in _runways)
@@ -290,10 +294,15 @@ namespace GroundRouteFinder.AptDat
                                 or.AddResult(size, parking.NearestNode, parking, entryGroup.Key, ep);
                             }
                         }
+                        progress.Value++;
+                        progress.Update();
                     }
                     count += or.WriteRoutes(outputPath, !normalOutput);
                 }
             }
+
+            progress.Maximum++; progress.Value++; progress.Maximum--; progress.Value = progress.Maximum; // Work around for a side effect caused by windows animating the progress bar
+            progress.Update();
 
             return count;
         }

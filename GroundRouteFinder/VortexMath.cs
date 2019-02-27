@@ -35,6 +35,7 @@ namespace GroundRouteFinder
         public const double Deg135Rad = 135.0 * VortexMath.Deg2Rad;
 
         public const double Foot2Km = 0.0003048;
+        public const double KmToFoot = 1.0/0.0003048;
         public const double Feet2000Km = 2000.0 * Foot2Km;
         public const double Feet3000Km = 3000.0 * Foot2Km;
         public const double Feet4000Km = 4000.0 * Foot2Km;
