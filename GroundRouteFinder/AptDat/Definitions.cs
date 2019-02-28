@@ -60,6 +60,40 @@ namespace GroundRouteFinder.AptDat
         TieDown
     }
 
+    public enum WorldTrafficParkingReference : int
+    {
+        MainWheel = 0,
+        NoseWheel = 1,
+        Door = 2,
+//        Door2 = 3,
+        Max
+    }
+
+    public static class ParkingReferenceConverter
+    {
+        public static string ParkingReference(int reference)
+        {
+            return ParkingReference((WorldTrafficParkingReference)reference);
+        }
+
+        public static string ParkingReference(WorldTrafficParkingReference reference)
+        {
+            switch (reference)
+            {
+                case WorldTrafficParkingReference.MainWheel:
+                    return "MAINWHEEL";
+                case WorldTrafficParkingReference.NoseWheel:
+                    return "NOSEWHEEL";
+                case WorldTrafficParkingReference.Door:
+                    return "DOOR";
+                //case WorldTrafficParkingReference.Door2:
+                //    return "DOOR";
+                default:
+                    throw new NotSupportedException($"Unsupported parking reference {reference}");
+            }
+        }
+    }
+
     public static class StartUpLocationTypeConverter
     {
         public static StartUpLocationType FromString(string locationType)

@@ -106,50 +106,34 @@ namespace GroundRouteFinder
             }
         }
 
+        private static bool? _generateDebugOutput;
         public static bool GenerateDebugOutput
         {
-            get
-            {
-                RegistryKey key = OpenReg();
-                bool val = (int)key.GetValue("GenerateDebugOutput", 0) == 0 ? false : true;
-                key.Close();
-                return val;
-            }
-
-            set
-            {
-                RegistryKey key = OpenReg();
-                key.SetValue("GenerateDebugOutput", value, RegistryValueKind.DWord);
-                key.Close();
-            }
+            get { return getBool("GenerateDebugOutput", ref _generateDebugOutput); }
+            set { setBool("GenerateDebugOutput", ref _generateDebugOutput, value); }
         }
 
+        private static int? _maxSteerPoints;
         public static int MaxSteerpoints
         {
-            get
-            {
-                //RegistryKey key = OpenReg();
-                //int val = (int)key.GetValue("MaxSteerpoints", 127);
-                //key.Close();
-                //return val;
-                return 127;
-            }
-
-            set
-            {
-                RegistryKey key = OpenReg();
-                key.SetValue("MaxSteerpoints", value, RegistryValueKind.DWord);
-                key.Close();
-            }
+            get { return getValue("MaxSteerpoints", ref _maxSteerPoints, 127); }
+            set { setValue("MaxSteerpoints", ref _maxSteerPoints, value); }
         }
 
         private static bool? _fixDuplicateParkingNames;
-
         public static bool FixDuplicateParkingNames
         {
             get { return getBool("FixDuplicateParkingNames", ref _fixDuplicateParkingNames); }
             set { setBool("FixDuplicateParkingNames", ref _fixDuplicateParkingNames, value); }
         }
+
+        private static int? _parkingReference;
+        public static int ParkingReference
+        {
+            get { return getValue("ParkingReference", ref _parkingReference, (int)WorldTrafficParkingReference.NoseWheel); }
+            set { setValue("ParkingReference", ref _parkingReference, value); }
+        }
+
 
         private static bool getBool(string name, ref bool? storage)
         {
@@ -171,6 +155,28 @@ namespace GroundRouteFinder
             key.SetValue(name, value, RegistryValueKind.DWord);
             key.Close();
         }
+
+        private static T getValue<T>(string name, ref T? storage, T fallback) where T : struct
+        {
+            if (storage.HasValue) return storage.Value;
+
+            RegistryKey key = OpenReg();
+            storage = (T)key.GetValue(name, fallback);
+            key.Close();
+            return storage.Value;
+        }
+
+        private static void setValue<T>(string name, ref T? storage, T value) where T : struct
+        {
+            if (storage.HasValue && EqualityComparer<T>.Default.Equals(storage.Value, value))
+                return;
+
+            RegistryKey key = OpenReg();
+            storage = value;
+            key.SetValue(name, value, RegistryValueKind.DWord);
+            key.Close();
+        }
+
 
         public static string WorldTrafficLocation { get { return Path.Combine(XPlaneLocation, @"ClassicJetSimUtils\WorldTraffic"); }  }
         public static string WorldTrafficGroundRoutes { get { return Path.Combine(XPlaneLocation, @"ClassicJetSimUtils\WorldTraffic\GroundRoutes"); } }

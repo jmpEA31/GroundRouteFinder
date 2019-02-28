@@ -194,7 +194,7 @@ namespace GroundRouteFinder.AptDat
 
             foreach (Parking parking in _parkings)
             {
-                parking.WriteDef();
+                parking.WriteParkingDef();
             }
             return _parkings.Count;
         }

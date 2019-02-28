@@ -52,6 +52,10 @@
             this.gbxAiport = new System.Windows.Forms.GroupBox();
             this.label2 = new System.Windows.Forms.Label();
             this.tabPage2 = new System.Windows.Forms.TabPage();
+            this.groupBox5 = new System.Windows.Forms.GroupBox();
+            this.label5 = new System.Windows.Forms.Label();
+            this.cbxParkingReference = new System.Windows.Forms.ComboBox();
+            this.cbxFixDuplicateParkingNames = new System.Windows.Forms.CheckBox();
             this.groupBox3 = new System.Windows.Forms.GroupBox();
             this.cbxGenerateDebugFiles = new System.Windows.Forms.CheckBox();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
@@ -66,8 +70,6 @@
             this.rtbAircraft = new System.Windows.Forms.RichTextBox();
             this.btnAnalyseAircraft = new System.Windows.Forms.Button();
             this.btnExit = new System.Windows.Forms.Button();
-            this.groupBox5 = new System.Windows.Forms.GroupBox();
-            this.cbxFixDuplicateParkingNames = new System.Windows.Forms.CheckBox();
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
             this.gbxProgress.SuspendLayout();
@@ -76,10 +78,10 @@
             this.gbxOutput.SuspendLayout();
             this.gbxAiport.SuspendLayout();
             this.tabPage2.SuspendLayout();
+            this.groupBox5.SuspendLayout();
             this.groupBox3.SuspendLayout();
             this.groupBox2.SuspendLayout();
             this.tabAircraft.SuspendLayout();
-            this.groupBox5.SuspendLayout();
             this.SuspendLayout();
             // 
             // rtb
@@ -365,6 +367,47 @@
             this.tabPage2.Text = "Settings";
             this.tabPage2.UseVisualStyleBackColor = true;
             // 
+            // groupBox5
+            // 
+            this.groupBox5.Controls.Add(this.label5);
+            this.groupBox5.Controls.Add(this.cbxParkingReference);
+            this.groupBox5.Controls.Add(this.cbxFixDuplicateParkingNames);
+            this.groupBox5.Location = new System.Drawing.Point(12, 230);
+            this.groupBox5.Name = "groupBox5";
+            this.groupBox5.Size = new System.Drawing.Size(539, 222);
+            this.groupBox5.TabIndex = 14;
+            this.groupBox5.TabStop = false;
+            this.groupBox5.Text = "General";
+            // 
+            // label5
+            // 
+            this.label5.AutoSize = true;
+            this.label5.Location = new System.Drawing.Point(46, 78);
+            this.label5.Name = "label5";
+            this.label5.Size = new System.Drawing.Size(126, 17);
+            this.label5.TabIndex = 2;
+            this.label5.Text = "Parking Reference";
+            // 
+            // cbxParkingReference
+            // 
+            this.cbxParkingReference.FormattingEnabled = true;
+            this.cbxParkingReference.Location = new System.Drawing.Point(187, 75);
+            this.cbxParkingReference.Name = "cbxParkingReference";
+            this.cbxParkingReference.Size = new System.Drawing.Size(142, 24);
+            this.cbxParkingReference.TabIndex = 1;
+            this.cbxParkingReference.SelectedIndexChanged += new System.EventHandler(this.cbxParkingReference_SelectedIndexChanged);
+            // 
+            // cbxFixDuplicateParkingNames
+            // 
+            this.cbxFixDuplicateParkingNames.AutoSize = true;
+            this.cbxFixDuplicateParkingNames.Location = new System.Drawing.Point(24, 37);
+            this.cbxFixDuplicateParkingNames.Name = "cbxFixDuplicateParkingNames";
+            this.cbxFixDuplicateParkingNames.Size = new System.Drawing.Size(205, 21);
+            this.cbxFixDuplicateParkingNames.TabIndex = 0;
+            this.cbxFixDuplicateParkingNames.Text = "Fix duplicate parking names";
+            this.cbxFixDuplicateParkingNames.UseVisualStyleBackColor = true;
+            this.cbxFixDuplicateParkingNames.CheckedChanged += new System.EventHandler(this.cbxFixDuplicateParkingNames_CheckedChanged);
+            // 
             // groupBox3
             // 
             this.groupBox3.Controls.Add(this.cbxGenerateDebugFiles);
@@ -527,27 +570,6 @@
             this.btnExit.UseVisualStyleBackColor = true;
             this.btnExit.Click += new System.EventHandler(this.btnExit_Click);
             // 
-            // groupBox5
-            // 
-            this.groupBox5.Controls.Add(this.cbxFixDuplicateParkingNames);
-            this.groupBox5.Location = new System.Drawing.Point(12, 230);
-            this.groupBox5.Name = "groupBox5";
-            this.groupBox5.Size = new System.Drawing.Size(265, 222);
-            this.groupBox5.TabIndex = 14;
-            this.groupBox5.TabStop = false;
-            this.groupBox5.Text = "General";
-            // 
-            // cbxFixDuplicateParkingNames
-            // 
-            this.cbxFixDuplicateParkingNames.AutoSize = true;
-            this.cbxFixDuplicateParkingNames.Location = new System.Drawing.Point(24, 37);
-            this.cbxFixDuplicateParkingNames.Name = "cbxFixDuplicateParkingNames";
-            this.cbxFixDuplicateParkingNames.Size = new System.Drawing.Size(205, 21);
-            this.cbxFixDuplicateParkingNames.TabIndex = 0;
-            this.cbxFixDuplicateParkingNames.Text = "Fix duplicate parking names";
-            this.cbxFixDuplicateParkingNames.UseVisualStyleBackColor = true;
-            this.cbxFixDuplicateParkingNames.CheckedChanged += new System.EventHandler(this.cbxFixDuplicateParkingNames_CheckedChanged);
-            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
@@ -557,7 +579,7 @@
             this.Controls.Add(this.tabControl1);
             this.Margin = new System.Windows.Forms.Padding(4);
             this.Name = "MainForm";
-            this.Text = "Ground Route Generator 0.3";
+            this.Text = "Ground Route Generator 0.4";
             this.tabControl1.ResumeLayout(false);
             this.tabPage1.ResumeLayout(false);
             this.gbxProgress.ResumeLayout(false);
@@ -571,13 +593,13 @@
             this.gbxAiport.PerformLayout();
             this.tabPage2.ResumeLayout(false);
             this.tabPage2.PerformLayout();
+            this.groupBox5.ResumeLayout(false);
+            this.groupBox5.PerformLayout();
             this.groupBox3.ResumeLayout(false);
             this.groupBox3.PerformLayout();
             this.groupBox2.ResumeLayout(false);
             this.groupBox2.PerformLayout();
             this.tabAircraft.ResumeLayout(false);
-            this.groupBox5.ResumeLayout(false);
-            this.groupBox5.PerformLayout();
             this.ResumeLayout(false);
 
         }
@@ -623,6 +645,8 @@
         private System.Windows.Forms.GroupBox gbxProgress;
         private System.Windows.Forms.GroupBox groupBox5;
         private System.Windows.Forms.CheckBox cbxFixDuplicateParkingNames;
+        private System.Windows.Forms.Label label5;
+        private System.Windows.Forms.ComboBox cbxParkingReference;
     }
 }
 

@@ -50,6 +50,14 @@ namespace GroundRouteFinder
             cbxGenerateDebugFiles.Checked = Settings.GenerateDebugOutput;
 
             cbxFixDuplicateParkingNames.Checked = Settings.FixDuplicateParkingNames;
+
+            cbxParkingReference.Items.Clear();
+            for (WorldTrafficParkingReference i = WorldTrafficParkingReference.MainWheel; i < WorldTrafficParkingReference.Max; i++)
+            {
+                cbxParkingReference.Items.Add(ParkingReferenceConverter.ParkingReference(i));
+            }
+
+            cbxParkingReference.SelectedIndex = Settings.ParkingReference;
         }
 
         private void SetXPlaneLocation()
@@ -653,6 +661,11 @@ namespace GroundRouteFinder
         private void cbxFixDuplicateParkingNames_CheckedChanged(object sender, EventArgs e)
         {
             Settings.FixDuplicateParkingNames = cbxFixDuplicateParkingNames.Checked;
+        }
+
+        private void cbxParkingReference_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            Settings.ParkingReference = cbxParkingReference.SelectedIndex;
         }
     }
 }
