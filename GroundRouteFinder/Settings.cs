@@ -88,22 +88,11 @@ namespace GroundRouteFinder
             }
         }
 
+        private static bool? _overwriteOperations;
         public static bool OverwriteOperations
         {
-            get
-            {
-                RegistryKey key = OpenReg();
-                bool val = (int)key.GetValue("OverwriteOperations", 0) == 0 ? false : true;
-                key.Close();
-                return val;
-            }
-
-            set
-            {
-                RegistryKey key = OpenReg();
-                key.SetValue("OverwriteOperations", value, RegistryValueKind.DWord);
-                key.Close();
-            }
+            get { return getBool("OverwriteOperations", ref _overwriteOperations); }
+            set { setBool("OverwriteOperations", ref _overwriteOperations, value); }
         }
 
         private static bool? _generateDebugOutput;
@@ -139,9 +128,11 @@ namespace GroundRouteFinder
         {
             if (storage.HasValue) return storage.Value;
 
-            RegistryKey key = OpenReg();
-            storage = (int)key.GetValue(name, 0) == 0 ? false : true;
-            key.Close();
+            using (RegistryKey key = OpenReg())
+            {
+                storage = (int)key.GetValue(name, 0) == 0 ? false : true;
+                key.Close();
+            }
             return storage.Value;
         }
 
@@ -150,19 +141,23 @@ namespace GroundRouteFinder
             if (storage.HasValue && storage.Value == value)
                 return;
 
-            RegistryKey key = OpenReg();
-            storage = value;
-            key.SetValue(name, value, RegistryValueKind.DWord);
-            key.Close();
+            using (RegistryKey key = OpenReg())
+            {
+                storage = value;
+                key.SetValue(name, value, RegistryValueKind.DWord);
+                key.Close();
+            }
         }
 
         private static T getValue<T>(string name, ref T? storage, T fallback) where T : struct
         {
             if (storage.HasValue) return storage.Value;
 
-            RegistryKey key = OpenReg();
-            storage = (T)key.GetValue(name, fallback);
-            key.Close();
+            using (RegistryKey key = OpenReg())
+            {
+                storage = (T)key.GetValue(name, fallback);
+                key.Close();
+            }
             return storage.Value;
         }
 
@@ -171,10 +166,12 @@ namespace GroundRouteFinder
             if (storage.HasValue && EqualityComparer<T>.Default.Equals(storage.Value, value))
                 return;
 
-            RegistryKey key = OpenReg();
-            storage = value;
-            key.SetValue(name, value, RegistryValueKind.DWord);
-            key.Close();
+            using (RegistryKey key = OpenReg())
+            {
+                storage = value;
+                key.SetValue(name, value, RegistryValueKind.DWord);
+                key.Close();
+            }
         }
 
 
@@ -244,6 +241,5 @@ namespace GroundRouteFinder
             if (deleteDirAsWell)
                 Directory.Delete(target_dir, false);
         }
-
     }
 }

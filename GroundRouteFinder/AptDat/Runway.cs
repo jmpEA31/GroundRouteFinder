@@ -123,14 +123,19 @@ namespace GroundRouteFinder.AptDat
             IEnumerable<TaxiNode> runwayNodes = taxiEdges.Where(te=>te.IsRunway).Select(te => te.StartNode).Concat(taxiEdges.Where(te => te.IsRunway).Select(te => te.EndNode)).Distinct();
             foreach (TaxiNode node in runwayNodes)
             {
+                // Start with a few sanity cehcks to prevent runways without nodes in the apt.dat fro picking up nodes from nearby runways
                 double angleFromStart = VortexMath.AbsTurnAngle(Bearing, VortexMath.BearingRadians(this, node));
-                if (angleFromStart > VortexMath.Deg0025Rad)
-                    continue;
-
                 double d = VortexMath.DistanceKM(node.Latitude, node.Longitude, DisplacedLatitude, DisplacedLongitude);
-                if (d > Length * 1.1)
+
+                // A node more than 10m from the runway start should be near the centerline to be accepted
+                if (d > 0.010 && angleFromStart > VortexMath.Deg005Rad)
                     continue;
 
+                // Ignore node that are farther away from the runway coordinates than the length of the runway
+                if (d > Length * 1.1) 
+                        continue;
+
+                // Now see if this node is better than the best so far
                 if (d < shortestDisplacedDistance)
                 {
                     shortestDisplacedDistance = d;
@@ -381,17 +386,29 @@ namespace GroundRouteFinder.AptDat
             {
                 // Now find an edge that is marked as 'runway' and that starts at the current node, bt does not lead to the previous node
                 // todo: test with crossing runways
-                TaxiEdge edgeToNext = taxiEdges.SingleOrDefault(e => e.IsRunway && (e.StartNode.Id == currentNode.Id && e.EndNode.Id != previousNodeId));
-                if (edgeToNext == null)
-                    break;
 
-                // Keep the current Id as the previous Id
-                previousNodeId = currentNode.Id;
+                try
+                {
+                    TaxiEdge edgeToNext = taxiEdges.SingleOrDefault(e => e.IsRunway && (e.StartNode.Id == currentNode.Id && e.EndNode.Id != previousNodeId));
+                    if (edgeToNext == null)
+                        break;
 
-                // And get the new current node
-                currentNode = taxiNodes.Single(n => n.Id == edgeToNext.EndNode.Id);
-                if (currentNode != null)
-                    nodes.Add(currentNode);
+                    // Keep the current Id as the previous Id
+                    previousNodeId = currentNode.Id;
+
+                    // And get the new current node
+                    currentNode = taxiNodes.Single(n => n.Id == edgeToNext.EndNode.Id);
+                    if (currentNode != null)
+                        nodes.Add(currentNode);
+                }
+                catch (Exception ex)
+                {
+                    IEnumerable<TaxiEdge> edgesToNext = taxiEdges.Where(e => e.IsRunway && (e.StartNode.Id == currentNode.Id && e.EndNode.Id != previousNodeId));
+                    if (edgesToNext.Count() > 0)
+                    {
+                        int k = 5;
+                    }
+                }
             }
             while (currentNode != null);
 
