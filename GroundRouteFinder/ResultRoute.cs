@@ -171,6 +171,36 @@ namespace GroundRouteFinder
             return extracted;
         }
 
+        /// <summary>
+        /// Helper method that will scan the route for a specific node.
+        /// Used to see if a generated route crosses the runway before returning back to the same point on the runway.
+        /// </summary>
+        /// <param name="nodeToFind"></param>
+        /// <returns></returns>
+        internal bool HasNode(TaxiNode nodeToFind)
+        {
+            LinkedNode currentNode = RouteStart;
+            if (currentNode == null || currentNode.Node == null || nodeToFind == null)
+                return false;
+
+            do
+            {
+                if (currentNode.Node.Id == nodeToFind.Id)
+                    return true;
+                currentNode = currentNode.Next;
+            }
+            while (currentNode != null && currentNode.Node != null);
+
+            return false;
+        }
+
+        /// <summary>
+        /// Helper method used when rerouting the Dijkstra results. This is done to avoid sharp turns
+        /// It scans the rerouted route to make sure it does not return to where we started from
+        /// </summary>
+        /// <param name="startNode"></param>
+        /// <param name="loopNode"></param>
+        /// <returns></returns>
         private static bool hasLoop(TaxiNode startNode, TaxiNode loopNode)
         {
             while (startNode != null)

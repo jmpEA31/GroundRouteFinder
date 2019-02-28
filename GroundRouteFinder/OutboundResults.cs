@@ -40,9 +40,13 @@ namespace GroundRouteFinder
             // If no results yet for this node, just add the current route
             if (originResults.Count == 0)
             {
-                originResults.Add(maxSizeCurrentResult, ResultRoute.ExtractRoute(_edges, parkingNode, maxSizeCurrentResult));
-                originResults[maxSizeCurrentResult].RunwayEntryPoint = entryPoint;
-                originResults[maxSizeCurrentResult].AvailableRunwayLength = entryPoint.TakeoffLengthRemaining;
+                ResultRoute theRoute = ResultRoute.ExtractRoute(_edges, parkingNode, maxSizeCurrentResult);
+                if (!theRoute.HasNode(entryPoint.OnRunwayNode))
+                {
+                    originResults.Add(maxSizeCurrentResult, theRoute);
+                    originResults[maxSizeCurrentResult].RunwayEntryPoint = entryPoint;
+                    originResults[maxSizeCurrentResult].AvailableRunwayLength = entryPoint.TakeoffLengthRemaining;
+                }
             }
             else
             {
@@ -51,22 +55,30 @@ namespace GroundRouteFinder
                 {
                     if (minSize > maxSizeCurrentResult)
                     {
-                        originResults.Add(maxSizeCurrentResult, ResultRoute.ExtractRoute(_edges, parkingNode, maxSizeCurrentResult));
-                        originResults[maxSizeCurrentResult].RunwayEntryPoint = entryPoint;
-                        originResults[maxSizeCurrentResult].AvailableRunwayLength = entryPoint.TakeoffLengthRemaining;
+                        ResultRoute theRoute = ResultRoute.ExtractRoute(_edges, parkingNode, maxSizeCurrentResult);
+                        if (!theRoute.HasNode(entryPoint.OnRunwayNode))
+                        {
+                            originResults.Add(maxSizeCurrentResult, theRoute);
+                            originResults[maxSizeCurrentResult].RunwayEntryPoint = entryPoint;
+                            originResults[maxSizeCurrentResult].AvailableRunwayLength = entryPoint.TakeoffLengthRemaining;
 
-                        originResults[minSize].MinSize = (maxSizeCurrentResult + 1);
+                            originResults[minSize].MinSize = (maxSizeCurrentResult + 1);
+                        }
                     }
                     else if (minSize == maxSizeCurrentResult)
                     {
-                        originResults[minSize] = ResultRoute.ExtractRoute(_edges, parkingNode, maxSizeCurrentResult);
-                        originResults[minSize].RunwayEntryPoint = entryPoint;
-                        originResults[minSize].AvailableRunwayLength = entryPoint.TakeoffLengthRemaining;
+                        ResultRoute theRoute = ResultRoute.ExtractRoute(_edges, parkingNode, maxSizeCurrentResult);
+                        if (!theRoute.HasNode(entryPoint.OnRunwayNode))
+                        {
+                            originResults[minSize] = theRoute;
+                            originResults[minSize].RunwayEntryPoint = entryPoint;
+                            originResults[minSize].AvailableRunwayLength = entryPoint.TakeoffLengthRemaining;
+                        }
                     }
                 }
             }
 
-            // Nsty overkill to make sure parkings with the same 'nearest' node will have routes generated
+            // Nasty overkill to make sure parkings with the same 'nearest' node will have routes generated
             foreach (KeyValuePair<XPlaneAircraftCategory, ResultRoute> result in originResults)
             {
                 result.Value.AddParking(parking);

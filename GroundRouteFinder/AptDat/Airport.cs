@@ -449,7 +449,7 @@ namespace GroundRouteFinder.AptDat
 
                 foreach (TaxiNode node in _taxiNodes)
                 {
-                    sw.WriteLine($"{node.Latitude * VortexMath.Rad2Deg},{node.Longitude * VortexMath.Rad2Deg},{node.Name}");
+                    sw.WriteLine($"{node.Latitude * VortexMath.Rad2Deg},{node.Longitude * VortexMath.Rad2Deg},{node.Id}");
                 }
             }
         }
