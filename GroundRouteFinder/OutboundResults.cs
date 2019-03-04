@@ -185,65 +185,71 @@ namespace GroundRouteFinder
                 nodeToWrite = currentParking.AlternateAfterPushBack;
             }
 
-            // todo: tie_down straight out
-
             // insert one more point here where the plane is pushed a little bit away from the next point
-            if (nodeToWrite != null)
+            if (currentParking.LocationType == StartUpLocationType.Gate)
             {
-                double nextPushBearing;
-
-                if (VortexMath.DistanceKM(nodeToWrite.Latitude, nodeToWrite.Longitude, currentParking.PushBackLatitude, currentParking.PushBackLongitude) > 0.010)
+                if (nodeToWrite != null)
                 {
-                    // Push target is a virtual node
-                    nextPushBearing = VortexMath.BearingRadians(nodeToWrite.Latitude, nodeToWrite.Longitude, currentParking.PushBackLatitude, currentParking.PushBackLongitude);
+                    double nextPushBearing;
+
+                    if (VortexMath.DistanceKM(nodeToWrite.Latitude, nodeToWrite.Longitude, currentParking.PushBackLatitude, currentParking.PushBackLongitude) > 0.010)
+                    {
+                        // Push target is a virtual node
+                        nextPushBearing = VortexMath.BearingRadians(nodeToWrite.Latitude, nodeToWrite.Longitude, currentParking.PushBackLatitude, currentParking.PushBackLongitude);
+                    }
+                    else
+                    {
+                        // Push target is very close to the actual first node of the route
+                        nextPushBearing = (nodeToWrite.BearingToTarget + VortexMath.PI) % VortexMath.PI2;
+                    }
+
+                    double turn = VortexMath.TurnAngle(currentParking.Bearing + VortexMath.PI, nextPushBearing);
+                    double turnAbs = Math.Abs(turn);
+                    double factor = ((turnAbs) / VortexMath.PI);                // 0...0.5.....1
+                    factor = (factor * factor) + factor / 4;                    // 0...0.375...1.25
+                    double distance = 0.040 * factor;                           // 0m...15m ...50m
+
+                    if (turnAbs < VortexMath.Deg135Rad)
+                    {
+                        // Try to trun the aircraft to the bearing it will need to go in after pushback
+
+                        // First point is on the pushback heading, but away from the actual target to allow the AC to turn
+                        VortexMath.PointFrom(currentParking.PushBackLatitude, currentParking.PushBackLongitude, currentParking.Bearing, distance, ref addLat, ref addLon);
+                        steerPoints.Add(new PushbackPoint(addLat, addLon, 2, $"{currentParking.Name}"));
+
+                        // Second point is on the (extended) line of the first link of the actual route
+                        VortexMath.PointFrom(currentParking.PushBackLatitude, currentParking.PushBackLongitude, nextPushBearing, distance, ref addLat, ref addLon);
+                        steerPoints.Add(new PushbackPoint(addLat, addLon, 2, $"{link.Edge.LinkName}"));
+
+                        // Third point is on the same line but a little bit extra backwards to get the nose in the intended heading
+                        VortexMath.PointFrom(currentParking.PushBackLatitude, currentParking.PushBackLongitude, nextPushBearing, distance + 0.015, ref addLat, ref addLon);
+                        steerPoints.Add(new SteerPoint(addLat, addLon, 8, $"{link.Edge.LinkName}", true));
+                    }
+                    else
+                    {
+                        // Let's just turn it to a 90 degree angle with the first edge
+
+                        // First point is on the pushback heading, but away from the actual target to allow the AC to turn
+                        VortexMath.PointFrom(currentParking.PushBackLatitude, currentParking.PushBackLongitude, currentParking.Bearing, distance, ref addLat, ref addLon);
+                        steerPoints.Add(new PushbackPoint(addLat, addLon, 2, $"{currentParking.Name}"));
+
+                        // Second point is on the (extended) line of the first link of the actual route, but much closer then for the full turn
+                        VortexMath.PointFrom(currentParking.PushBackLatitude, currentParking.PushBackLongitude, nextPushBearing, distance / 2.0, ref addLat, ref addLon);
+                        steerPoints.Add(new PushbackPoint(addLat, addLon, 2, $"{link.Edge.LinkName}"));
+
+                        // Third point is on +/-90 degree angle from the first link
+                        VortexMath.PointFrom(addLat, addLon, (turn > 0) ? nextPushBearing + VortexMath.PI05 : nextPushBearing - VortexMath.PI05, 0.015, ref addLat, ref addLon);
+                        steerPoints.Add(new SteerPoint(addLat, addLon, 5, $"{link.Edge.LinkName}", true));
+
+                        // Add a fourth point back on the intended line
+                        steerPoints.Add(new SteerPoint(currentParking.PushBackLatitude, currentParking.PushBackLongitude, 8, $"{link.Edge.LinkName}"));
+                    }
                 }
-                else
-                {
-                    // Push target is very close to the actual first node of the route
-                    nextPushBearing = (nodeToWrite.BearingToTarget + VortexMath.PI) % VortexMath.PI2;
-                }
-               
-                double turn = VortexMath.TurnAngle(currentParking.Bearing + VortexMath.PI, nextPushBearing);
-                double turnAbs = Math.Abs(turn);
-                double factor = ((turnAbs) / VortexMath.PI);                // 0...0.5.....1
-                factor = (factor * factor) + factor / 4;                    // 0...0.375...1.25
-                double distance = 0.040 * factor;                           // 0m...15m ...50m
-
-                if (turnAbs < VortexMath.Deg135Rad)
-                {
-                    // Try to trun the aircraft to the bearing it will need to go in after pushback
-
-                    // First point is on the pushback heading, but away from the actual target to allow the AC to turn
-                    VortexMath.PointFrom(currentParking.PushBackLatitude, currentParking.PushBackLongitude, currentParking.Bearing, distance, ref addLat, ref addLon);
-                    steerPoints.Add(new PushbackPoint(addLat, addLon, 2, $"{currentParking.Name}"));
-
-                    // Second point is on the (extended) line of the first link of the actual route
-                    VortexMath.PointFrom(currentParking.PushBackLatitude, currentParking.PushBackLongitude, nextPushBearing, distance, ref addLat, ref addLon);
-                    steerPoints.Add(new PushbackPoint(addLat, addLon, 2, $"{link.Edge.LinkName}"));
-
-                    // Third point is on the same line but a little bit extra backwards to get the nose in the intended heading
-                    VortexMath.PointFrom(currentParking.PushBackLatitude, currentParking.PushBackLongitude, nextPushBearing, distance + 0.015, ref addLat, ref addLon);
-                    steerPoints.Add(new SteerPoint(addLat, addLon, 8, $"{link.Edge.LinkName}", true));
-                }
-                else
-                {
-                    // Let's just turn it to a 90 degree angle with the first edge
-
-                    // First point is on the pushback heading, but away from the actual target to allow the AC to turn
-                    VortexMath.PointFrom(currentParking.PushBackLatitude, currentParking.PushBackLongitude, currentParking.Bearing, distance, ref addLat, ref addLon);
-                    steerPoints.Add(new PushbackPoint(addLat, addLon, 2, $"{currentParking.Name}"));
-
-                    // Second point is on the (extended) line of the first link of the actual route, but much closer then for the full turn
-                    VortexMath.PointFrom(currentParking.PushBackLatitude, currentParking.PushBackLongitude, nextPushBearing, distance / 2.0, ref addLat, ref addLon);
-                    steerPoints.Add(new PushbackPoint(addLat, addLon, 2, $"{link.Edge.LinkName}"));
-
-                    // Third point is on +/-90 degree angle from the first link
-                    VortexMath.PointFrom(addLat, addLon, (turn > 0) ? nextPushBearing + VortexMath.PI05 : nextPushBearing - VortexMath.PI05, 0.015, ref addLat, ref addLon);
-                    steerPoints.Add(new SteerPoint(addLat, addLon, 5, $"{link.Edge.LinkName}", true));
-
-                    // Add a fourth point back on the intended line
-                    steerPoints.Add(new SteerPoint(currentParking.PushBackLatitude, currentParking.PushBackLongitude, 8, $"{link.Edge.LinkName}"));
-                }
+            }
+            else
+            {
+                // Tie down, hangar, misc: just add the 'pushback' point as first target, smoothing should take care of the rest
+                steerPoints.Add(new SteerPoint(currentParking.PushBackLatitude, currentParking.PushBackLongitude, 8, $"{link.Edge.LinkName}"));
             }
 
             if (nodeToWrite != link.Node)
