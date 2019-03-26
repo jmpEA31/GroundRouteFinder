@@ -59,6 +59,10 @@ namespace GroundRouteFinder.AptDat
             AlternateAfterPushBack = null;
             PushBackLatitude = 0;
             PushBackLongitude = 0;
+
+            MaxSize = XPlaneAircraftCategory.F;
+            Operation = OperationType.Airline;
+            Operators = Enumerable.Empty<string>();
         }
 
         public void DetermineTaxiOutLocation(IEnumerable<TaxiNode> taxiNodes)

@@ -384,31 +384,34 @@ namespace GroundRouteFinder.AptDat
 
             do
             {
-                // Now find an edge that is marked as 'runway' and that starts at the current node, bt does not lead to the previous node
-                // todo: test with crossing runways
+                // Now find an edge that is marked as 'runway' and that starts at the current node, but does not lead to the previous node
+                IEnumerable<TaxiEdge> edgesToNext = taxiEdges.Where(e => e.IsRunway && (e.StartNode.Id == currentNode.Id && e.EndNode.Id != previousNodeId));
+                if (edgesToNext.Count() == 0)
+                    break;
 
-                try
+                TaxiEdge edgeToNext = edgesToNext.First();
+                if (edgesToNext.Count() > 1)
                 {
-                    TaxiEdge edgeToNext = taxiEdges.SingleOrDefault(e => e.IsRunway && (e.StartNode.Id == currentNode.Id && e.EndNode.Id != previousNodeId));
-                    if (edgeToNext == null)
-                        break;
+                    double maxDeviation = double.MaxValue;
 
-                    // Keep the current Id as the previous Id
-                    previousNodeId = currentNode.Id;
-
-                    // And get the new current node
-                    currentNode = taxiNodes.Single(n => n.Id == edgeToNext.EndNode.Id);
-                    if (currentNode != null)
-                        nodes.Add(currentNode);
-                }
-                catch (Exception ex)
-                {
-                    IEnumerable<TaxiEdge> edgesToNext = taxiEdges.Where(e => e.IsRunway && (e.StartNode.Id == currentNode.Id && e.EndNode.Id != previousNodeId));
-                    if (edgesToNext.Count() > 0)
+                    foreach (TaxiEdge candidate in edgesToNext)
                     {
-                        int k = 5;
+                        double deviation = VortexMath.TurnAngle(this.Bearing, VortexMath.BearingRadians(currentNode, candidate.EndNode));
+                        if (deviation < maxDeviation)
+                        {
+                            edgeToNext = candidate;
+                            maxDeviation = deviation;
+                        }
                     }
                 }
+
+                // Keep the current Id as the previous Id
+                previousNodeId = currentNode.Id;
+
+                // And get the new current node
+                currentNode = taxiNodes.Single(n => n.Id == edgeToNext.EndNode.Id);
+                if (currentNode != null)
+                    nodes.Add(currentNode);
             }
             while (currentNode != null);
 

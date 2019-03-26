@@ -536,7 +536,12 @@ namespace GroundRouteFinder.AptDat
             bool isRunway = (tokens[4][0] != 't');  // taxiway_X or runway
             bool isTwoWay = (tokens[3][0] == 't');  // oneway or twoway
 
-            XPlaneAircraftCategory maxSize = isRunway ? (XPlaneAircraftCategory.Max-1) : (XPlaneAircraftCategory)(tokens[4][8] - 'A');
+            XPlaneAircraftCategory maxSize;
+            if (isRunway || tokens[4].Length < 9)
+                maxSize = (XPlaneAircraftCategory.Max - 1);
+            else
+                maxSize = (XPlaneAircraftCategory)(tokens[4][8] - 'A');
+
             string linkName = tokens.Length > 5 ? string.Join(" ", tokens.Skip(5)) : "";
 
             TaxiNode startNode = _nodeDict[va];

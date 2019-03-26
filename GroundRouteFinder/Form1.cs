@@ -331,6 +331,14 @@ namespace GroundRouteFinder
                 _airport.LogMessage += _airport_LogMessage;
                 _airport.Process();
 
+                if (Settings.GenerateDebugOutput)
+                {
+                    _airport.DebugParkings();
+                    _airport.DebugAtcNodes();
+                    rtb.AppendText($"Debug csv files can be found in:\n {Settings.DataFolder}\n");
+                }
+
+
                 if (!rbNormal.Checked)
                 {
                     if (!Directory.Exists(Path.Combine(Settings.DepartureFolderKML, _airport.ICAO)))
@@ -422,13 +430,6 @@ namespace GroundRouteFinder
                 {
                     rtb.AppendText($"\nKML files can be found in:\n {Settings.ArrivalFolderKML} and\n {Settings.DepartureFolderKML}\n");
                 }
-
-                if (Settings.GenerateDebugOutput)
-                {
-                    _airport.DebugParkings();
-                    _airport.DebugAtcNodes();
-                    rtb.AppendText($"Debug csv files can be found in:\n {Settings.DataFolder}\n");
-                }
             }
             catch (Exception ex)
             {
@@ -456,6 +457,11 @@ namespace GroundRouteFinder
             public double TakeOffDist;
             public double LandingDist;
             public double MinLandingDist;
+
+            public override string ToString()
+            {
+                return Name;
+            }
         }
 
         private void button2_Click(object sender, EventArgs e)
@@ -538,13 +544,18 @@ namespace GroundRouteFinder
             {
                 if (aircraft[wat].Count > 0)
                 {
-                    rtbAircraft.AppendText($"World Traffic Type {(int)wat} <{wat}>\n");
+                    rtbAircraft.AppendText($"World Traffic Type {(int)wat} <{wat}> {aircraft[wat].Count} base aircraft\n");
+
+                    var byCat = aircraft[wat].GroupBy(ac => SpanToCat(ac.WingSpan));
+                    var catCounts = byCat.ToDictionary(ca => ca.Key, ca => ca.ToList().Count);
 
 
                     double minLandingDist = aircraft[wat].Min(ac => ac.LandingDist);
                     double maxLandingDist = aircraft[wat].Max(ac => ac.LandingDist);
 
-                    double minMinLandingDist = aircraft[wat].Min(ac => ac.MinLandingDist);
+                    var withMLD = aircraft[wat].Where(ac => ac.MinLandingDist > 0);
+                    double minMinLandingDist = withMLD.Count() > 0 ? withMLD.Min(ac => ac.MinLandingDist) : 0.0;
+                    int noMinLandingDist = aircraft[wat].Count(ac => ac.MinLandingDist == 0);
                     double maxMinLandingDist = aircraft[wat].Max(ac => ac.MinLandingDist);
 
                     double minWingSpan = aircraft[wat].Min(ac => ac.WingSpan);
@@ -555,6 +566,11 @@ namespace GroundRouteFinder
 
                     string Name = aircraft[wat].First(ac => ac.WingSpan == maxWingSpan).Name;
                     rtbAircraft.AppendText($" Required Gate/Taxiway Size:  <{SpanToCat(maxWingSpan)}>  ({Name} has wingspan {maxWingSpan,4:0.0})\n");
+
+                    foreach (var group in byCat)
+                    {
+                        rtbAircraft.AppendText($" Number of cat {group.Key}           : {catCounts[group.Key],5} {string.Join(", ", group)}\n");
+                    }
 
                     Name = aircraft[wat].First(ac => ac.TakeOffDist == minTakeOff).Name;
                     rtbAircraft.AppendText($" Shortest Takeoff possible : {minTakeOff,5} ({Name})\n");
@@ -570,6 +586,7 @@ namespace GroundRouteFinder
                     rtbAircraft.AppendText($" Shortest Min Ldg Dist.    : {minMinLandingDist,5} ({Name})\n");
                     Name = aircraft[wat].First(ac => ac.MinLandingDist == maxMinLandingDist).Name;
                     rtbAircraft.AppendText($" Longest Min Ldg Dist.     : {maxMinLandingDist,5} ({Name})\n");
+                    rtbAircraft.AppendText($" Without Min Ldg Dist.     : {noMinLandingDist,5}\n");
 
                     //rtbAircraft.AppendText($"{wat,-10} {aircraft[wat].Count(),2} {minLandingDist,5} {maxLandingDist,5}  {minMinLandingDist,5}  {maxMinLandingDist,5} {minTakeOff,5} {maxTakeOff,5} {minWingSpan,4:0.0} <{SpanToCat(minWingSpan)}> {maxWingSpan,4:0.0} <{SpanToCat(maxWingSpan)}>\n");
                     rtbAircraft.AppendText("\n");

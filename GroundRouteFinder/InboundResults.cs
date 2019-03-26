@@ -189,11 +189,18 @@ namespace GroundRouteFinder
                 link = link.Next;
             }
 
-            // todo: remove last point if it takes us past the 'pushback point'
-
-            if (Math.Abs(VortexMath.BearingRadians(steerPoints.Last().Latitude, steerPoints.Last().Longitude, Parking.PushBackLatitude, Parking.PushBackLongitude)) > VortexMath.Deg100Rad)
+            // remove last point if it takes us past the 'pushback point'
+            if (steerPoints.Count > 1)
             {
-                steerPoints.RemoveAt(steerPoints.Count - 1);
+                SteerPoint oneButLast = steerPoints.ElementAt(steerPoints.Count - 2);
+                SteerPoint last = steerPoints.ElementAt(steerPoints.Count - 1);
+                double lastBearing = VortexMath.BearingRadians(oneButLast, last);
+                double bearingToPush = VortexMath.BearingRadians(last.Latitude, last.Longitude, Parking.PushBackLatitude, Parking.PushBackLongitude);
+                double turnToPush = VortexMath.AbsTurnAngle(lastBearing, bearingToPush);
+                if (turnToPush > VortexMath.Deg100Rad)
+                {
+                    steerPoints.RemoveAt(steerPoints.Count - 1);
+                }
             }
 
             // todo: how does this all work with freaky pushback points?
@@ -202,7 +209,7 @@ namespace GroundRouteFinder
             steerPoints.Add(new SteerPoint(Parking.PushBackLatitude, Parking.PushBackLongitude, 5, Parking.Name));
             steerPoints.Add(new ParkingPoint(Parking.Latitude, Parking.Longitude, 5, Parking.Name, Parking.Bearing, true));
 
-            RouteProcessor.Smooth(steerPoints);
+            //RouteProcessor.Smooth(steerPoints);
             RouteProcessor.ProcessRunwayOperations(steerPoints);
 
             if (MaxInPoints < steerPoints.Count)
