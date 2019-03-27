@@ -265,6 +265,7 @@ namespace GroundRouteFinder.AptDat
                 count += ir.WriteRoutes(outputPath, !normalOutput);
             }
 
+            progress.Maximum++; progress.Value++; progress.Maximum--; progress.Value = progress.Maximum; // Work around for a side effect caused by windows animating the progress bar
             progress.Update();
             return count;
         }

@@ -41,7 +41,8 @@
             this.label4 = new System.Windows.Forms.Label();
             this.progressInbound = new System.Windows.Forms.ProgressBar();
             this.label3 = new System.Windows.Forms.Label();
-            this.groupBox4 = new System.Windows.Forms.GroupBox();
+            this.debugGroupBox = new System.Windows.Forms.GroupBox();
+            this.btnRunTestSet = new System.Windows.Forms.Button();
             this.btnShowLogFile = new System.Windows.Forms.Button();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.cbxOverwriteAirportOperations = new System.Windows.Forms.CheckBox();
@@ -73,7 +74,7 @@
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
             this.gbxProgress.SuspendLayout();
-            this.groupBox4.SuspendLayout();
+            this.debugGroupBox.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.gbxOutput.SuspendLayout();
             this.gbxAiport.SuspendLayout();
@@ -140,6 +141,7 @@
             this.txtIcao.Size = new System.Drawing.Size(100, 22);
             this.txtIcao.TabIndex = 0;
             this.txtIcao.Text = "KDFW";
+            this.txtIcao.TextChanged += new System.EventHandler(this.txtIcao_TextChanged);
             // 
             // btnGenerate
             // 
@@ -170,7 +172,7 @@
             // tabPage1
             // 
             this.tabPage1.Controls.Add(this.gbxProgress);
-            this.tabPage1.Controls.Add(this.groupBox4);
+            this.tabPage1.Controls.Add(this.debugGroupBox);
             this.tabPage1.Controls.Add(this.groupBox1);
             this.tabPage1.Controls.Add(this.gbxOutput);
             this.tabPage1.Controls.Add(this.gbxAiport);
@@ -231,17 +233,29 @@
             this.label3.TabIndex = 14;
             this.label3.Text = "Outbound";
             // 
-            // groupBox4
+            // debugGroupBox
             // 
-            this.groupBox4.Controls.Add(this.btnShowLogFile);
-            this.groupBox4.Location = new System.Drawing.Point(662, 14);
-            this.groupBox4.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
-            this.groupBox4.Name = "groupBox4";
-            this.groupBox4.Padding = new System.Windows.Forms.Padding(3, 2, 3, 2);
-            this.groupBox4.Size = new System.Drawing.Size(216, 153);
-            this.groupBox4.TabIndex = 11;
-            this.groupBox4.TabStop = false;
-            this.groupBox4.Text = "Debug";
+            this.debugGroupBox.Controls.Add(this.btnRunTestSet);
+            this.debugGroupBox.Controls.Add(this.btnShowLogFile);
+            this.debugGroupBox.Location = new System.Drawing.Point(662, 14);
+            this.debugGroupBox.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
+            this.debugGroupBox.Name = "debugGroupBox";
+            this.debugGroupBox.Padding = new System.Windows.Forms.Padding(3, 2, 3, 2);
+            this.debugGroupBox.Size = new System.Drawing.Size(216, 153);
+            this.debugGroupBox.TabIndex = 11;
+            this.debugGroupBox.TabStop = false;
+            this.debugGroupBox.Text = "Debug";
+            // 
+            // btnRunTestSet
+            // 
+            this.btnRunTestSet.Location = new System.Drawing.Point(23, 93);
+            this.btnRunTestSet.Name = "btnRunTestSet";
+            this.btnRunTestSet.Size = new System.Drawing.Size(176, 31);
+            this.btnRunTestSet.TabIndex = 7;
+            this.btnRunTestSet.Text = "Run Tests";
+            this.btnRunTestSet.UseVisualStyleBackColor = true;
+            this.btnRunTestSet.Visible = false;
+            this.btnRunTestSet.Click += new System.EventHandler(this.btnRunTestSet_Click);
             // 
             // btnShowLogFile
             // 
@@ -252,7 +266,7 @@
             this.btnShowLogFile.TabIndex = 6;
             this.btnShowLogFile.Text = "Open Last Log file";
             this.btnShowLogFile.UseVisualStyleBackColor = true;
-            this.btnShowLogFile.Click += new System.EventHandler(this.btnShowLogFile_Click);
+            this.btnShowLogFile.MouseUp += new System.Windows.Forms.MouseEventHandler(this.btnShowLogFile_MouseUp);
             // 
             // groupBox1
             // 
@@ -579,12 +593,12 @@
             this.Controls.Add(this.tabControl1);
             this.Margin = new System.Windows.Forms.Padding(4);
             this.Name = "MainForm";
-            this.Text = "Ground Route Generator 0.4";
+            this.Text = "Ground Route Generator 0.5";
             this.tabControl1.ResumeLayout(false);
             this.tabPage1.ResumeLayout(false);
             this.gbxProgress.ResumeLayout(false);
             this.gbxProgress.PerformLayout();
-            this.groupBox4.ResumeLayout(false);
+            this.debugGroupBox.ResumeLayout(false);
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();
             this.gbxOutput.ResumeLayout(false);
@@ -636,7 +650,7 @@
         private System.Windows.Forms.CheckBox cbxOwInboundDefault;
         private System.Windows.Forms.GroupBox groupBox3;
         private System.Windows.Forms.CheckBox cbxGenerateDebugFiles;
-        private System.Windows.Forms.GroupBox groupBox4;
+        private System.Windows.Forms.GroupBox debugGroupBox;
         private System.Windows.Forms.Button btnShowLogFile;
         private System.Windows.Forms.ProgressBar progressOutbound;
         private System.Windows.Forms.Label label4;
@@ -647,6 +661,7 @@
         private System.Windows.Forms.CheckBox cbxFixDuplicateParkingNames;
         private System.Windows.Forms.Label label5;
         private System.Windows.Forms.ComboBox cbxParkingReference;
+        private System.Windows.Forms.Button btnRunTestSet;
     }
 }
 

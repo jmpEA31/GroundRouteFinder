@@ -21,7 +21,9 @@ namespace GroundRouteFinder
         private bool _hasExistingInboundRoutes;
         private bool _hasExistingOutboundRoutes;
         private bool _hasExistingParkingDefs;
-        private bool _hasExistingAirportOperations;    
+        private bool _hasExistingAirportOperations;
+
+        private bool _quietMode;
 
         public MainForm()
         {
@@ -87,10 +89,13 @@ namespace GroundRouteFinder
 
         private void LogElapsed(string message = "")
         {
-            string elapsed = $"<{(DateTime.Now - _start).TotalSeconds:000.000}>".Replace(".", "s").Replace(",", "s");
-            rtb.AppendText($"{elapsed} {message}\n");
-            rtb.ScrollToCaret();
-            rtb.Update();
+            if (!_quietMode)
+            {
+                string elapsed = $"<{(DateTime.Now - _start).TotalSeconds:000.000}>".Replace(".", "s").Replace(",", "s");
+                rtb.AppendText($"{elapsed} {message}\n");
+                rtb.ScrollToCaret();
+                rtb.Update();
+            }
         }
 
         private void _airport_LogMessage(object sender, LogEventArgs e)
@@ -102,19 +107,30 @@ namespace GroundRouteFinder
 
         private void btnAnalyze_Click(object sender, EventArgs e)
         {
+            _start = DateTime.Now;
+            rtb.Clear();
+            Analyse(txtIcao.Text.ToUpper());
+        }
+
+        /// <summary>
+        /// Run initial analysis on airport
+        /// </summary>
+        /// <param name="icao">icao code of the airport to analyse</param>
+        /// <param name="quiet">override to true to suppress log messages in the richtextbox</param>
+        /// <returns>true if no errors occured during analysis</returns>
+        private bool Analyse(string icao, bool quiet = false)
+        {
+            _quietMode = quiet;
+
             try
             {
-                _start = DateTime.Now;
-                rtb.Clear();
-                string icao = txtIcao.Text.ToUpper();
-
                 bool found = ScanCustomSceneries(icao);
                 if (found)
                 {
                     _airport = new Airport();
                     if (!_airport.Analyze(Path.Combine(Settings.DataFolder, $"{icao}.tmp"), icao))
                     {
-                        rtb.AppendText("Customized airport does not contain the minimal data requiered to generate routes (parkings + atc taxi network).\n");
+                        LogElapsed("Customized airport does not contain the minimal data requiered to generate routes (parkings + atc taxi network).");
                         found = false;
                         _airport = null;
                     }
@@ -122,32 +138,32 @@ namespace GroundRouteFinder
 
                 if (!found)
                 {
-                    found = scanDefaultAptDat(icao);
+                    found = ScanDefaultAptDat(icao);
                     if (found)
                     {
                         _airport = new Airport();
                         if (!_airport.Analyze(Path.Combine(Settings.DataFolder, $"{icao}.tmp"), icao))
                         {
-                            rtb.AppendText("Default airport does not contain the minimal data requiered to generate routes (parkings + atc taxi network).\n");
+                            LogElapsed("Default airport does not contain the minimal data requiered to generate routes (parkings + atc taxi network).");
                             found = false;
                             _airport = null;
-                            return;
+                            return false;
                         }
                     }
                 }
 
                 if (!found)
                 {
-                    return;
+                    return false;
                 }
 
-                rtb.AppendText("Parkings and ATC taxi network are present.\n");
+                LogElapsed("Parkings and ATC taxi network are present.");
 
                 var ps = _airport.Parkings.GroupBy(p => p.Name);
                 foreach (var psv in ps)
                 {
                     if (psv.Count() > 1)
-                        rtb.AppendText($"WARNING Duplicate parking names in apt source: <{psv.First().Name}> occurs {psv.Count()} times.\n");
+                        LogElapsed($"WARNING Duplicate parking names in apt source: <{psv.First().Name}> occurs {psv.Count()} times.");
                 }
 
 
@@ -170,8 +186,10 @@ namespace GroundRouteFinder
             }
             catch (Exception ex)
             {
-                rtb.AppendText($"\nAn exception occurred during analysis:\n{ex}");
+                LogElapsed($"\nAn exception occurred during analysis:\n{ex}");
+                return false;
             }
+            return true;
         }
 
         private bool CheckWorldTrafficFolders(string icao, out bool hasInboundRoutes, out bool hasOutboundRoutes, out bool hasParkingDefs, out bool hasAirportOperations)
@@ -183,7 +201,7 @@ namespace GroundRouteFinder
 
             if (!Directory.Exists(Settings.WorldTrafficLocation))
             {
-                rtb.AppendText("World Traffic folder not found.\n");
+                LogElapsed("World Traffic folder not found.");
                 return false;
             }
 
@@ -193,7 +211,7 @@ namespace GroundRouteFinder
             }
             else if (Directory.EnumerateFiles(Path.Combine(Settings.WorldTrafficGroundRoutes, "Departure", icao)).Count() != 0)
             {
-                rtb.AppendText($"* Departure ground routes already exist for {icao}!\n");
+                LogElapsed($"* Departure ground routes already exist for {icao}!");
                 hasOutboundRoutes = true;
             }
 
@@ -203,7 +221,7 @@ namespace GroundRouteFinder
             }
             else if (Directory.EnumerateFiles(Path.Combine(Settings.WorldTrafficGroundRoutes, "Arrival", icao)).Count() != 0)
             {
-                rtb.AppendText($"* Arrival ground routes already exist for {icao}!\n");
+                LogElapsed($"* Arrival ground routes already exist for {icao}!");
                 hasInboundRoutes = true;
             }
 
@@ -213,7 +231,7 @@ namespace GroundRouteFinder
             }
             else if (Directory.EnumerateFiles(Path.Combine(Settings.WorldTrafficParkingDefs, icao)).Count() != 0)
             {
-                rtb.AppendText($"* Parking definitions already exist for {icao}!\n");
+                LogElapsed($"* Parking definitions already exist for {icao}!");
                 hasParkingDefs = true;
             }
 
@@ -223,7 +241,7 @@ namespace GroundRouteFinder
             }
             else if (File.Exists(Path.Combine(Settings.WorldTrafficOperations, $"{icao}.txt")))
             {
-                rtb.AppendText($"* Operations already exist for {icao}!\n");
+                LogElapsed($"* Operations already exist for {icao}!");
                 hasAirportOperations = true;
             }
 
@@ -237,7 +255,7 @@ namespace GroundRouteFinder
 
             if (!File.Exists(customSceneries))
             {
-                rtb.AppendText("scenery_packs.ini not found, customized airports will not be checked.\n");
+                LogElapsed("scenery_packs.ini not found, customized airports will not be checked.");
                 return false;
             }
 
@@ -257,7 +275,7 @@ namespace GroundRouteFinder
                     found = ScanAirportFile(path, icao);
                     if (found)
                     {
-                        rtb.AppendText($"{icao} found in {path}.\n");
+                        LogElapsed($"{icao} found in {path}.");
                         break;
                     }
                 }
@@ -265,23 +283,23 @@ namespace GroundRouteFinder
             return found;
         }
 
-        private bool scanDefaultAptDat(string icao)
+        private bool ScanDefaultAptDat(string icao)
         {
             string defaultAptDat = Settings.XPlaneLocation + @"\Custom Scenery\Global Airports\Earth nav data\apt.dat";
             if (!File.Exists(defaultAptDat))
             {
-                rtb.AppendText($"Default apt.dat not found. Unable to find {icao}.\n");
+                LogElapsed($"Default apt.dat not found. Unable to find {icao}.");
                 return false;
             }
 
             bool found = ScanAirportFile(defaultAptDat, icao);
             if (found)
             {
-                rtb.AppendText($"{icao} found in default apt.dat.\n");
+                LogElapsed($"{icao} found in default apt.dat.");
             }
             else
             {
-                rtb.AppendText($"{icao} not found in default apt.dat.\n");
+                LogElapsed($"{icao} not found in default apt.dat.");
             }
             return found;
         }
@@ -322,24 +340,34 @@ namespace GroundRouteFinder
 
         private void btnGenerate_Click(object sender, EventArgs e)
         {
+            rtb.Clear();
+            _start = DateTime.Now;
+            LogElapsed($"Starting generation.");
+            _airport.LogMessage += _airport_LogMessage;
+
+            Generate(!rbNormal.Checked);
+
+            _airport.LogMessage -= _airport_LogMessage;
+            LogElapsed($"done");
+        }
+
+        private bool Generate(bool generateKml, bool overwriteAll = false)
+        {
             try
             {
-                rtb.Clear();
-                _start = DateTime.Now;
-                LogElapsed($"Starting generation.");
+                progressOutbound.Value = 0;
+                progressInbound.Value = 0;
 
-                _airport.LogMessage += _airport_LogMessage;
                 _airport.Process();
 
                 if (Settings.GenerateDebugOutput)
                 {
                     _airport.DebugParkings();
                     _airport.DebugAtcNodes();
-                    rtb.AppendText($"Debug csv files can be found in:\n {Settings.DataFolder}\n");
+                    LogElapsed($"Debug csv files can be found in:\n {Settings.DataFolder}");
                 }
 
-
-                if (!rbNormal.Checked)
+                if (generateKml)
                 {
                     if (!Directory.Exists(Path.Combine(Settings.DepartureFolderKML, _airport.ICAO)))
                     {
@@ -351,9 +379,13 @@ namespace GroundRouteFinder
                     }
                 }
 
-                if (rbNormal.Checked)
+                if (generateKml)
                 {
-                    if (!_hasExistingParkingDefs || cbxOverwriteParkingDefs.Checked)
+                    LogElapsed($"skipping parkings defs in KML mode");
+                }
+                else
+                {
+                    if (!_hasExistingParkingDefs || cbxOverwriteParkingDefs.Checked || overwriteAll)
                     {
                         LogElapsed($"Generating parking defs");
                         int count = _airport.WriteParkingDefs();
@@ -364,14 +396,14 @@ namespace GroundRouteFinder
                         LogElapsed($"not overwriting parking defs");
                     }
                 }
+
+                if (generateKml)
+                {
+                    LogElapsed($"skipping operations in KML mode");
+                }
                 else
                 {
-                    LogElapsed($"skipping parkings defs in KML mode");
-                }
-
-                if (rbNormal.Checked)
-                {
-                    if (!_hasExistingAirportOperations || cbxOverwriteAirportOperations.Checked)
+                    if (!_hasExistingAirportOperations || cbxOverwriteAirportOperations.Checked || overwriteAll)
                     {
                         LogElapsed($"Generating operations");
                         if (!_airport.WriteOperations())
@@ -384,12 +416,9 @@ namespace GroundRouteFinder
                         LogElapsed($"not overwriting operations");
                     }
                 }
-                else
-                {
-                    LogElapsed($"skipping operations in KML mode");
-                }
+                
 
-                if (!_hasExistingOutboundRoutes || cbxOverwriteOutboundRoutes.Checked)
+                if (!_hasExistingOutboundRoutes || cbxOverwriteOutboundRoutes.Checked || overwriteAll)
                 {
                     LogElapsed($"Generating outbound routes");
 
@@ -406,7 +435,7 @@ namespace GroundRouteFinder
                     LogElapsed($"not overwriting outbound routes");
                 }
 
-                if (!_hasExistingInboundRoutes || cbxOverwriteInboundRoutes.Checked)
+                if (!_hasExistingInboundRoutes || cbxOverwriteInboundRoutes.Checked || overwriteAll)
                 {
                     LogElapsed($"Generating inbound routes");
 
@@ -423,18 +452,17 @@ namespace GroundRouteFinder
                     LogElapsed($"not overwriting inbound routes");
                 }
 
-                _airport.LogMessage -= _airport_LogMessage;
-                LogElapsed($"done");
-
-                if (!rbNormal.Checked)
+                if (generateKml)
                 {
-                    rtb.AppendText($"\nKML files can be found in:\n {Settings.ArrivalFolderKML} and\n {Settings.DepartureFolderKML}\n");
+                    LogElapsed($"\nKML files can be found in:\n {Settings.ArrivalFolderKML} and\n {Settings.DepartureFolderKML}");
                 }
             }
             catch (Exception ex)
             {
-                rtb.AppendText($"\nAn exception occurred during generation:\n{ex}");
+                LogElapsed($"\nAn exception occurred during generation:\n{ex}");
+                return false;
             }
+            return true;
         }
 
         private void btnBrowse_Click(object sender, EventArgs e)
@@ -670,11 +698,6 @@ namespace GroundRouteFinder
             Settings.GenerateDebugOutput = cbxGenerateDebugFiles.Checked;
         }
 
-        private void btnShowLogFile_Click(object sender, EventArgs e)
-        {
-            rtb.Text = Logger.LoadLog();
-        }
-
         private void cbxFixDuplicateParkingNames_CheckedChanged(object sender, EventArgs e)
         {
             Settings.FixDuplicateParkingNames = cbxFixDuplicateParkingNames.Checked;
@@ -683,6 +706,42 @@ namespace GroundRouteFinder
         private void cbxParkingReference_SelectedIndexChanged(object sender, EventArgs e)
         {
             Settings.ParkingReference = cbxParkingReference.SelectedIndex;
+        }
+
+        private void btnRunTestSet_Click(object sender, EventArgs e)
+        {
+            string[] airports = { "LFPG", "KSFO", "KORD", "EHAM", "KDFW" };
+
+            _start = DateTime.Now;
+            rtb.Clear();
+            foreach (string airport in airports)
+            {
+                if (Analyse(airport, true))
+                {
+                    if (Generate(false, true))
+                        rtb.AppendText($"{airport} Analysis: ok     - Generation: ok\n");
+                    else
+                        rtb.AppendText($"{airport} Analysis: ok     - Generation: failed\n");
+                }
+                else
+                {
+                    rtb.AppendText($"{airport} Analysis: failed\n");
+                }
+                rtb.Update();
+            }
+        }
+
+        private void txtIcao_TextChanged(object sender, EventArgs e)
+        {
+            btnGenerate.Enabled = false;
+        }
+
+        private void btnShowLogFile_MouseUp(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Left)
+                rtb.Text = Logger.LoadLog();
+            else if (e.Button == MouseButtons.Middle)
+                btnRunTestSet.Visible = true;
         }
     }
 }
