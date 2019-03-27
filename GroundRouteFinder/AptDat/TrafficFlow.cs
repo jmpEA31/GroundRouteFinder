@@ -8,13 +8,13 @@ using GroundRouteFinder.LogSupport;
 
 namespace GroundRouteFinder.AptDat
 {
-    public class WindLimts
+    public class WindLimits
     {
         public int MinDir;
         public int MaxDir;
         public int MaxSpeed;
 
-        public WindLimts(int minDir, int maxDir, int maxSpeed)
+        public WindLimits(int minDir, int maxDir, int maxSpeed)
         {
             MinDir = minDir;
             MaxDir = maxDir;
@@ -57,7 +57,7 @@ namespace GroundRouteFinder.AptDat
         public int MinCeiling;
         public double MinVisibility;
 
-        public List<WindLimts> WindLimits;
+        public List<WindLimits> WindLimits;
         public List<TimeLimts> TimeLimits;
         public List<RunwayUse> RunwayUses;
 
@@ -65,7 +65,7 @@ namespace GroundRouteFinder.AptDat
         {
             MinCeiling = 0;
             MinVisibility = 0;
-            WindLimits = new List<WindLimts>();
+            WindLimits = new List<WindLimits>();
             TimeLimits = new List<TimeLimts>();
             RunwayUses = new List<RunwayUse>();
         }
@@ -96,7 +96,7 @@ namespace GroundRouteFinder.AptDat
         public void ParseWindRule(string line)
         {
             string[] tokens = line.Split(_splitters, StringSplitOptions.RemoveEmptyEntries);
-            WindLimits.Add(new WindLimts(int.Parse(tokens[2]), int.Parse(tokens[3]), int.Parse(tokens[4])));
+            WindLimits.Add(new WindLimits(int.Parse(tokens[2]), int.Parse(tokens[3]), int.Parse(tokens[4])));
         }
 
         public void ParseTimeRule(string line)
@@ -246,7 +246,7 @@ namespace GroundRouteFinder.AptDat
                 List<Tuple<int, int>> coveredDirections = new List<Tuple<int, int>>();
                 foreach (TrafficRule rule in rules.OrderBy(r => r.WindLimits.Min(wl => wl.MaxSpeed))) // Sorting by min MaxWindSpeed
                 {
-                    foreach (WindLimts windLimit in rule.WindLimits.OrderBy(wl => wl.MaxSpeed)) // Sorting by min MaxWindSpeed again, trying to 'force' the low wind speed rule to be processed first
+                    foreach (WindLimits windLimit in rule.WindLimits.OrderBy(wl => wl.MaxSpeed)) // Sorting by min MaxWindSpeed again, trying to 'force' the low wind speed rule to be processed first
                     {
                         if (currentMaxWindSpeed == -1)
                         {
@@ -272,7 +272,7 @@ namespace GroundRouteFinder.AptDat
 
                 foreach (TrafficRule rule in rules.OrderBy(r => r.WindLimits.Min(wl => wl.MaxSpeed))) // Sorting by min MaxWindSpeed
                 {
-                    foreach (WindLimts windLimit in rule.WindLimits.OrderBy(wl => wl.MaxSpeed)) // Sorting by min MaxWindSpeed again, trying to 'force' the low wind speed rule to be processed first
+                    foreach (WindLimits windLimit in rule.WindLimits.OrderBy(wl => wl.MaxSpeed)) // Sorting by min MaxWindSpeed again, trying to 'force' the low wind speed rule to be processed first
                     {
                         if (currentMaxWindSpeed == -1)
                         {
@@ -292,27 +292,45 @@ namespace GroundRouteFinder.AptDat
                                 string startTime = $"{timeLimit.From / 100}:{timeLimit.From % 100}";
                                 string endTime = $"{timeLimit.Until / 100}:{timeLimit.Until % 100}";
 
-                                if (_noOverlap)
-                                    windLimit.MaxDir++;
-                                windLimit.MaxDir = Math.Min(360, windLimit.MaxDir);
-                                WriteOperation(ruleIdx, currentMinWindSpeed, windLimit, startTime, endTime);
-                                Logger.Log($"{currentMinWindSpeed,3}-{currentMaxWindSpeed,3} kts {windLimit.MinDir:000}-{windLimit.MaxDir:000} {startTime} {endTime}");
-                                WriteRunways(rule.RunwayUses, ruleIdx++, startTime, endTime);
+                                GenerateOperations(ref ruleIdx, rule, windLimit, currentMinWindSpeed, currentMaxWindSpeed, startTime, endTime);
                             }
                         }
                         else
                         {
-                            if (_noOverlap)
-                                windLimit.MaxDir++;
-                            windLimit.MaxDir = Math.Min(360, windLimit.MaxDir);
-                            WriteOperation(ruleIdx, currentMinWindSpeed, windLimit, "00:00", "24:00");
-                            Logger.Log($"{currentMinWindSpeed,3}-{currentMaxWindSpeed,3} kts {windLimit.MinDir:000}-{windLimit.MaxDir:000} 00:00 24:00");
-                            WriteRunways(rule.RunwayUses, ruleIdx++, "00:00", "24:00");
+                            GenerateOperations(ref ruleIdx, rule, windLimit, currentMinWindSpeed, currentMaxWindSpeed, "00:00", "24:00");
                         }
                     }
                 }
             }
             return RuleSetOk;
+        }
+
+        /// <summary>
+        /// Add operations and runways for the generated operations
+        /// </summary>
+        /// <param name="ruleIdx"></param>
+        /// <param name="rule"></param>
+        /// <param name="windLimit"></param>
+        /// <param name="currentMinWindSpeed"></param>
+        /// <param name="currentMaxWindSpeed"></param>
+        /// <param name="startTime"></param>
+        /// <param name="endTime"></param>
+        private void GenerateOperations(ref int ruleIdx, TrafficRule rule, WindLimits windLimit, int currentMinWindSpeed, int currentMaxWindSpeed, string startTime, string endTime)
+        {
+            // Extend the upper limit of the wind rule to make it match WT behavior
+            if (_noOverlap)
+                windLimit.MaxDir++;
+            windLimit.MaxDir = Math.Min(360, windLimit.MaxDir);
+
+            // Write the operation, and track whether it actually resulted in two operations
+            bool splitOperation = GenerateOperation(ruleIdx, currentMinWindSpeed, windLimit, startTime, endTime);
+
+            Logger.Log($"{currentMinWindSpeed,3}-{currentMaxWindSpeed,3} kts {windLimit.MinDir:000}-{windLimit.MaxDir:000} {startTime} {endTime}");
+
+            // Write the runways for the (or both) operation(s)
+            GenerateRunways(rule.RunwayUses, ruleIdx++, startTime, endTime);
+            if (splitOperation)
+                GenerateRunways(rule.RunwayUses, ruleIdx++, startTime, endTime);
         }
 
         /// <summary>
@@ -375,18 +393,31 @@ namespace GroundRouteFinder.AptDat
                 return true;
         }
 
-        private void WriteOperation(int index, int windMinSpeed, WindLimts windLimit, string startTime, string endTime)
+        /// <summary>
+        /// Generate a line for a wind/time elated operation rule
+        /// </summary>
+        /// <param name="index">index number of the operation</param>
+        /// <param name="windMinSpeed"></param>
+        /// <param name="windLimit"></param>
+        /// <param name="startTime"></param>
+        /// <param name="endTime"></param>
+        /// <returns>true if the operation needed to be split into at 0 degrees</returns>
+        private bool GenerateOperation(int index, int windMinSpeed, WindLimits windLimit, string startTime, string endTime)
         {
             if (windLimit.MaxDir < windLimit.MinDir)
             {
                 _operations.Add($"{index,-7} {windMinSpeed,-17} {windLimit.MaxSpeed,-18} {windLimit.MinDir,-14} {360,-15} {startTime}  {endTime}");
-                _operations.Add($"{index,-7} {windMinSpeed,-17} {windLimit.MaxSpeed,-18} {0,-14} {windLimit.MaxDir,-15} {startTime}  {endTime}");
+                _operations.Add($"{index+1,-7} {windMinSpeed,-17} {windLimit.MaxSpeed,-18} {0,-14} {windLimit.MaxDir,-15} {startTime}  {endTime}");
+                return true;
             }
             else
+            {
                 _operations.Add($"{index,-7} {windMinSpeed,-17} {windLimit.MaxSpeed,-18} {windLimit.MinDir,-14} {windLimit.MaxDir,-15} {startTime}  {endTime}");
+                return false;
+            }
         }
 
-        private void WriteRunways(List<RunwayUse> runwayUses, int index, string startTime, string endTime)
+        private void GenerateRunways(List<RunwayUse> runwayUses, int index, string startTime, string endTime)
         {
             foreach (RunwayUse ru in runwayUses)
             {
