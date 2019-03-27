@@ -14,6 +14,12 @@ namespace GroundRouteFinder.LogSupport
         public static void CreateLogfile(string path)
         {
             fileName = Path.Combine(path, "logfile.txt");
+
+            if (File.Exists(fileName))
+            {
+                File.Copy(fileName, fileName + ".prev", true);
+            }
+
             using (StreamWriter sw = File.CreateText(fileName))
             {
                 sw.WriteLine("Ground Route Generator Log");
@@ -35,5 +41,14 @@ namespace GroundRouteFinder.LogSupport
             else
                 return "No log file found";
         }
+
+        public static string LoadOldLog()
+        {
+            if (File.Exists(fileName + ".prev"))
+                return File.ReadAllText(fileName + ".prev");
+            else
+                return "No old log file found";
+        }
+
     }
 }

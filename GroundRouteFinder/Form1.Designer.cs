@@ -71,6 +71,7 @@
             this.rtbAircraft = new System.Windows.Forms.RichTextBox();
             this.btnAnalyseAircraft = new System.Windows.Forms.Button();
             this.btnExit = new System.Windows.Forms.Button();
+            this.btnPrevLog = new System.Windows.Forms.Button();
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
             this.gbxProgress.SuspendLayout();
@@ -235,6 +236,7 @@
             // 
             // debugGroupBox
             // 
+            this.debugGroupBox.Controls.Add(this.btnPrevLog);
             this.debugGroupBox.Controls.Add(this.btnRunTestSet);
             this.debugGroupBox.Controls.Add(this.btnShowLogFile);
             this.debugGroupBox.Location = new System.Drawing.Point(662, 14);
@@ -248,7 +250,7 @@
             // 
             // btnRunTestSet
             // 
-            this.btnRunTestSet.Location = new System.Drawing.Point(23, 93);
+            this.btnRunTestSet.Location = new System.Drawing.Point(23, 105);
             this.btnRunTestSet.Name = "btnRunTestSet";
             this.btnRunTestSet.Size = new System.Drawing.Size(176, 31);
             this.btnRunTestSet.TabIndex = 7;
@@ -264,7 +266,7 @@
             this.btnShowLogFile.Name = "btnShowLogFile";
             this.btnShowLogFile.Size = new System.Drawing.Size(176, 31);
             this.btnShowLogFile.TabIndex = 6;
-            this.btnShowLogFile.Text = "Open Last Log file";
+            this.btnShowLogFile.Text = "Open Log file";
             this.btnShowLogFile.UseVisualStyleBackColor = true;
             this.btnShowLogFile.MouseUp += new System.Windows.Forms.MouseEventHandler(this.btnShowLogFile_MouseUp);
             // 
@@ -584,6 +586,17 @@
             this.btnExit.UseVisualStyleBackColor = true;
             this.btnExit.Click += new System.EventHandler(this.btnExit_Click);
             // 
+            // btnPrevLog
+            // 
+            this.btnPrevLog.Location = new System.Drawing.Point(23, 67);
+            this.btnPrevLog.Margin = new System.Windows.Forms.Padding(4);
+            this.btnPrevLog.Name = "btnPrevLog";
+            this.btnPrevLog.Size = new System.Drawing.Size(176, 31);
+            this.btnPrevLog.TabIndex = 8;
+            this.btnPrevLog.Text = "Open Prev Log file";
+            this.btnPrevLog.UseVisualStyleBackColor = true;
+            this.btnPrevLog.Click += new System.EventHandler(this.btnPrevLog_Click);
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
@@ -662,6 +675,7 @@
         private System.Windows.Forms.Label label5;
         private System.Windows.Forms.ComboBox cbxParkingReference;
         private System.Windows.Forms.Button btnRunTestSet;
+        private System.Windows.Forms.Button btnPrevLog;
     }
 }
 

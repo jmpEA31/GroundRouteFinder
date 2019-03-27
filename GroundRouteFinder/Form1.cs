@@ -749,5 +749,10 @@ namespace GroundRouteFinder
             else if (e.Button == MouseButtons.Middle)
                 btnRunTestSet.Visible = true;
         }
+
+        private void btnPrevLog_Click(object sender, EventArgs e)
+        {
+            rtb.Text = Logger.LoadOldLog();
+        }
     }
 }
