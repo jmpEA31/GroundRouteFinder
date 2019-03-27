@@ -61,13 +61,20 @@ namespace GroundRouteFinder.AptDat
         public List<TimeLimts> TimeLimits;
         public List<RunwayUse> RunwayUses;
 
-        public TrafficRule()
+        public string Description = "";
+
+        public TrafficRule(string source)
         {
             MinCeiling = 0;
             MinVisibility = 0;
             WindLimits = new List<WindLimits>();
             TimeLimits = new List<TimeLimts>();
             RunwayUses = new List<RunwayUse>();
+
+            if (source.Length > 5)
+            {
+                Description = source.Substring(5);
+            }
         }
 
         public RunwayUse GetUse(string designator)
@@ -160,7 +167,7 @@ namespace GroundRouteFinder.AptDat
                 switch (line.Substring(0, 4))
                 {
                     case "1000":
-                        _currentRule = new TrafficRule();
+                        _currentRule = new TrafficRule(line);
                         TrafficRules.Add(_currentRule);
 
                         if (!_flowRulesFound)
@@ -323,14 +330,14 @@ namespace GroundRouteFinder.AptDat
             windLimit.MaxDir = Math.Min(360, windLimit.MaxDir);
 
             // Write the operation, and track whether it actually resulted in two operations
-            bool splitOperation = GenerateOperation(ruleIdx, currentMinWindSpeed, windLimit, startTime, endTime);
+            bool splitOperation = GenerateOperation(ruleIdx, currentMinWindSpeed, windLimit, startTime, endTime, rule.Description);
 
             Logger.Log($"{currentMinWindSpeed,3}-{currentMaxWindSpeed,3} kts {windLimit.MinDir:000}-{windLimit.MaxDir:000} {startTime} {endTime}");
 
             // Write the runways for the (or both) operation(s)
-            GenerateRunways(rule.RunwayUses, ruleIdx++, startTime, endTime);
+            GenerateRunways(rule.RunwayUses, ruleIdx++, startTime, endTime, rule.Description);
             if (splitOperation)
-                GenerateRunways(rule.RunwayUses, ruleIdx++, startTime, endTime);
+                GenerateRunways(rule.RunwayUses, ruleIdx++, startTime, endTime, rule.Description);
         }
 
         /// <summary>
@@ -402,29 +409,29 @@ namespace GroundRouteFinder.AptDat
         /// <param name="startTime"></param>
         /// <param name="endTime"></param>
         /// <returns>true if the operation needed to be split into at 0 degrees</returns>
-        private bool GenerateOperation(int index, int windMinSpeed, WindLimits windLimit, string startTime, string endTime)
+        private bool GenerateOperation(int index, int windMinSpeed, WindLimits windLimit, string startTime, string endTime, string description)
         {
             if (windLimit.MaxDir < windLimit.MinDir)
             {
-                _operations.Add($"{index,-7} {windMinSpeed,-17} {windLimit.MaxSpeed,-18} {windLimit.MinDir,-14} {360,-15} {startTime}  {endTime}");
+                _operations.Add($"{index,-7} {windMinSpeed,-17} {windLimit.MaxSpeed,-18} {windLimit.MinDir,-14} {360,-15} {startTime}  {endTime} {description}");
                 _operations.Add($"{index+1,-7} {windMinSpeed,-17} {windLimit.MaxSpeed,-18} {0,-14} {windLimit.MaxDir,-15} {startTime}  {endTime}");
                 return true;
             }
             else
             {
-                _operations.Add($"{index,-7} {windMinSpeed,-17} {windLimit.MaxSpeed,-18} {windLimit.MinDir,-14} {windLimit.MaxDir,-15} {startTime}  {endTime}");
+                _operations.Add($"{index,-7} {windMinSpeed,-17} {windLimit.MaxSpeed,-18} {windLimit.MinDir,-14} {windLimit.MaxDir,-15} {startTime}  {endTime} {description}");
                 return false;
             }
         }
 
-        private void GenerateRunways(List<RunwayUse> runwayUses, int index, string startTime, string endTime)
+        private void GenerateRunways(List<RunwayUse> runwayUses, int index, string startTime, string endTime, string description)
         {
             foreach (RunwayUse ru in runwayUses)
             {
                 if (ru.Arrivals)
-                    _runwayOps.Add($"{index,-8} {ru.Designator,-19} 1          {startTime}  {endTime}");
+                    _runwayOps.Add($"{index,-8} {ru.Designator,-19} 1          {startTime}  {endTime}  {description}");
                 if (ru.Departures)
-                    _runwayOps.Add($"{index,-8} {ru.Designator,-19} 2          {startTime}  {endTime}");
+                    _runwayOps.Add($"{index,-8} {ru.Designator,-19} 2          {startTime}  {endTime}  {description}");
             }
         }
 
@@ -434,7 +441,7 @@ namespace GroundRouteFinder.AptDat
             using (StreamWriter sw = File.CreateText(operationFile))
             {
                 sw.WriteLine("                                                                            Start  End");
-                sw.WriteLine("INDEX   Low Wind Speed    High Wind Speed    Low Wind Dir   High Wind Dir   Time   Time Comments (not parsed)");
+                sw.WriteLine("INDEX   Low Wind Speed    High Wind Speed    Low Wind Dir   High Wind Dir   Time   Time  Comments (not parsed)");
                 sw.WriteLine("---------------------------------------------------------------------------------------------------------------------");
                 sw.WriteLine("START_OPERATIONS");
                 foreach (string op in _operations)
