@@ -12,80 +12,35 @@ namespace GroundRouteFinder
     public static class Settings
     {
         public static string DataFolder = "";
+        public static string DepartureFolderKML = "";
+        public static string ArrivalFolderKML = "";
 
-        public static string DepartureFolderKML = @"E:\GroundRoutes\Departure\";
-        public static string ArrivalFolderKML = @"E:\GroundRoutes\Arrival\";
-
+        private static string _xplaneLocation = null;
         public static string XPlaneLocation
         {
-            get
-            {
-                RegistryKey key = OpenReg();
-                string val = key.GetValue("XPlaneLocation") as string;
-                key.Close();
-                return val != null ? val : "";
-            }
-
-            set
-            {
-                RegistryKey key = OpenReg(); 
-                key.SetValue("XPlaneLocation", value);
-                key.Close();
-            }
+            get { return getValue("XPlaneLocation", ref _xplaneLocation, ""); }
+            set { setValue("XPlaneLocation", ref _xplaneLocation, value); }
         }
 
+        private static bool? _overwriteInbound;
         public static bool OverwriteInbound
         {
-            get
-            {
-                RegistryKey key = OpenReg();
-                bool val = (int)key.GetValue("OverwriteInbound", 0) == 0 ? false : true;
-                key.Close();
-                return val;
-            }
-
-            set
-            {
-                RegistryKey key = OpenReg(); 
-                key.SetValue("OverwriteInbound", value, RegistryValueKind.DWord);
-                key.Close();
-            }
+            get { return getBool("OverwriteInbound", ref _overwriteInbound); }
+            set { setBool("OverwriteInbound", ref _overwriteInbound, value); }
         }
 
+        private static bool? _overwriteOutbound;
         public static bool OverwriteOutbound
         {
-            get
-            {
-                RegistryKey key = OpenReg();
-                bool val = (int)key.GetValue("OverwriteOutbound", 0) == 0 ? false : true;
-                key.Close();
-                return val;
-            }
-
-            set
-            {
-                RegistryKey key = OpenReg();
-                key.SetValue("OverwriteOutbound", value, RegistryValueKind.DWord);
-                key.Close();
-            }
+            get { return getBool("OverwriteOutbound", ref _overwriteOutbound); }
+            set { setBool("OverwriteOutbound", ref _overwriteOutbound, value); }
         }
 
+        private static bool? _overwriteParkingDefs;
         public static bool OverwriteParkingDefs
         {
-            get
-            {
-                RegistryKey key = OpenReg();
-                bool val = (int)key.GetValue("OverwriteParkingDefs", 0) == 0 ? false : true;
-                key.Close();
-                return val;
-            }
-
-            set
-            {
-                RegistryKey key = OpenReg();
-                key.SetValue("OverwriteParkingDefs", value, RegistryValueKind.DWord);
-                key.Close();
-            }
+            get { return getBool("OverwriteParkingDefs", ref _overwriteParkingDefs); }
+            set { setBool("OverwriteParkingDefs", ref _overwriteParkingDefs, value); }
         }
 
         private static bool? _overwriteOperations;
@@ -149,6 +104,36 @@ namespace GroundRouteFinder
             }
         }
 
+        private static T getValue<T>(string name, ref T storage, T fallback) where T : class
+        {
+            if (storage != null) return storage;
+
+            using (RegistryKey key = OpenReg())
+            {
+                storage = (T)key.GetValue(name, fallback);
+                key.Close();
+            }
+            return storage;
+        }
+
+        private static void setValue<T>(string name, ref T storage, T value) where T : class
+        {
+            if (storage != null && EqualityComparer<T>.Default.Equals(storage, value))
+                return;
+
+            using (RegistryKey key = OpenReg())
+            {
+                storage = value;
+
+                if (storage is string) // probably the only actual valid and usable case
+                    key.SetValue(name, value, RegistryValueKind.String);
+                else
+                    key.SetValue(name, value, RegistryValueKind.DWord);
+
+                key.Close();
+            }
+        }
+
         private static T getValue<T>(string name, ref T? storage, T fallback) where T : struct
         {
             if (storage.HasValue) return storage.Value;
@@ -175,10 +160,10 @@ namespace GroundRouteFinder
         }
 
 
-        public static string WorldTrafficLocation { get { return Path.Combine(XPlaneLocation, @"ClassicJetSimUtils\WorldTraffic"); }  }
-        public static string WorldTrafficGroundRoutes { get { return Path.Combine(XPlaneLocation, @"ClassicJetSimUtils\WorldTraffic\GroundRoutes"); } }
-        public static string WorldTrafficParkingDefs { get { return Path.Combine(XPlaneLocation, @"ClassicJetSimUtils\WorldTraffic\ParkingDefs"); } }
-        public static string WorldTrafficOperations { get { return Path.Combine(XPlaneLocation, @"ClassicJetSimUtils\WorldTraffic\AirportOperations"); } }
+        public static string WorldTrafficLocation { get { return Path.Combine(XPlaneLocation, "ClassicJetSimUtils", "WorldTraffic"); }  }
+        public static string WorldTrafficGroundRoutes { get { return Path.Combine(XPlaneLocation, "ClassicJetSimUtils", "WorldTraffic", "GroundRoutes"); } }
+        public static string WorldTrafficParkingDefs { get { return Path.Combine(XPlaneLocation, "ClassicJetSimUtils", "WorldTraffic", "ParkingDefs"); } }
+        public static string WorldTrafficOperations { get { return Path.Combine(XPlaneLocation, "ClassicJetSimUtils", "WorldTraffic", "AirportOperations"); } }
 
         private static RegistryKey OpenReg()
         {

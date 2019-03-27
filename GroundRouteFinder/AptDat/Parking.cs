@@ -357,7 +357,7 @@ namespace GroundRouteFinder.AptDat
 
         public void WriteParkingDef()
         {
-            string filename = $"{Settings.WorldTrafficParkingDefs}\\{_airport.ICAO}\\{Name}.txt";
+            string filename = Path.Combine(Settings.WorldTrafficParkingDefs, _airport.ICAO, Name) + ".txt";
             using (StreamWriter sw = File.CreateText(filename))
             {
                 int military = (Operation == OperationType.Military) ? 1 : 0;

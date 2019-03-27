@@ -118,7 +118,7 @@ namespace GroundRouteFinder
                         {
                             string allSizes = string.Join(" ", wtTypes.Select(w => (int)w).OrderBy(w => w));
                             string sizeName = (wtTypes.Count() == 10) ? "all" : allSizes.Replace(" ", "");
-                            string fileName = $"{outputPath}\\{route.Runway.Designator}_to_{Parking.FileNameSafeName}_{route.RouteStart.Node.Id}_{sizeName}";
+                            string fileName = Path.Combine(outputPath, $"{route.Runway.Designator}_to_{Parking.FileNameSafeName}_{route.RouteStart.Node.Id}_{sizeName}");
 
                             using (RouteWriter sw = RouteWriter.Create(kml ? 0 : 1, fileName, allSizes, -1, -1, route.Runway.Designator, ParkingReferenceConverter.ParkingReference(Settings.ParkingReference)))
                             {

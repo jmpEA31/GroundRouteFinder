@@ -251,7 +251,7 @@ namespace GroundRouteFinder
         private bool ScanCustomSceneries(string icao)
         {
             bool found = false;
-            string customSceneries = Settings.XPlaneLocation + @"\Custom Scenery\scenery_packs.ini";
+            string customSceneries = Path.Combine(Settings.XPlaneLocation, "Custom Scenery", "scenery_packs.ini");
 
             if (!File.Exists(customSceneries))
             {
@@ -262,13 +262,19 @@ namespace GroundRouteFinder
             string[] customs = File.ReadAllLines(customSceneries);
             foreach (string custom in customs)
             {
-                string[] tokens = custom.Split(new char[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
-                if (tokens.Length == 0)
-                    continue;
-
-                if (tokens[0] == "SCENERY_PACK")
+                if (custom.StartsWith("SCENERY_PACK"))
                 {
-                    string path = Path.Combine(Settings.XPlaneLocation, string.Join(" ", tokens.Skip(1)), "Earth nav data", "apt.dat").Replace("/", "\\");
+                    // get the path from the ini file
+                    string sceneryPath = custom.Substring(13);
+
+                    // split on the mac / windows alternate path separator
+                    string[] paths = sceneryPath.Split('/');
+
+                    // build full path using xplane folder, scenery path (joined with current OS separator) and default sub folder/name for airport file
+                    string path = Path.Combine(Settings.XPlaneLocation, 
+                                               string.Join(Path.DirectorySeparatorChar.ToString(), paths), 
+                                               "Earth nav data", "apt.dat");
+
                     if (!File.Exists(path))
                         continue;
 
@@ -285,7 +291,7 @@ namespace GroundRouteFinder
 
         private bool ScanDefaultAptDat(string icao)
         {
-            string defaultAptDat = Settings.XPlaneLocation + @"\Custom Scenery\Global Airports\Earth nav data\apt.dat";
+            string defaultAptDat = Path.Combine(Settings.XPlaneLocation, "Custom Scenery", "Global Airports", "Earth nav data", "apt.dat");
             if (!File.Exists(defaultAptDat))
             {
                 LogElapsed($"Default apt.dat not found. Unable to find {icao}.");
@@ -494,7 +500,7 @@ namespace GroundRouteFinder
 
         private void button2_Click(object sender, EventArgs e)
         {
-            string aircraftFolder = Settings.XPlaneLocation + @"\ClassicJetSimUtils\WorldTraffic\AircraftTypes";
+            string aircraftFolder = Path.Combine(Settings.XPlaneLocation, "ClassicJetSimUtils", "WorldTraffic", "AircraftTypes");
             IEnumerable<string> baseAircraft = Directory.EnumerateFiles(aircraftFolder, "*_BASE.txt");
             rtbAircraft.Clear();
             rtbAircraft.AppendText($"Found {baseAircraft.Count()} 'base' aircraft.\n\n");

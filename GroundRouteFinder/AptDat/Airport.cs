@@ -423,7 +423,7 @@ namespace GroundRouteFinder.AptDat
 
         internal void DebugParkings()
         {
-            using (StreamWriter sw = File.CreateText(Settings.DataFolder + "\\starts.csv"))
+            using (StreamWriter sw = File.CreateText(Path.Combine(Settings.DataFolder, "starts.csv")))
             {
                 sw.WriteLine("latitude,longitude,name\n");
                 foreach (Parking parking in _parkings)
@@ -432,7 +432,7 @@ namespace GroundRouteFinder.AptDat
                 }
             }
 
-            using (StreamWriter sw = File.CreateText(Settings.DataFolder + "\\pushback.csv"))
+            using (StreamWriter sw = File.CreateText(Path.Combine(Settings.DataFolder, "pushback.csv")))
             {
                 sw.WriteLine("latitude,longitude,name\n");
                 foreach (Parking parking in _parkings)
@@ -444,7 +444,7 @@ namespace GroundRouteFinder.AptDat
 
         internal void DebugAtcNodes()
         {
-            using (StreamWriter sw = File.CreateText(Settings.DataFolder + "\\atcnodes.csv"))
+            using (StreamWriter sw = File.CreateText(Path.Combine(Settings.DataFolder, "atcnodes.csv")))
             {
                 sw.WriteLine("latitude,longitude,name\n");
 
