@@ -49,6 +49,7 @@ namespace GroundRouteFinder.AptDat
 
         public double DisplacedLatitude;
         public double DisplacedLongitude;
+
         public TaxiNode DisplacedNode;
 
         private Runway _oppositeEnd;
@@ -61,6 +62,7 @@ namespace GroundRouteFinder.AptDat
                 if (_oppositeEnd != null)
                 {
                     Bearing = VortexMath.BearingRadians(this, _oppositeEnd);
+                    VortexMath.PointFrom(Latitude, Longitude, Bearing, Displacement, ref DisplacedLatitude, ref DisplacedLongitude);
                     Length = VortexMath.DistanceKM(DisplacedLatitude, DisplacedLongitude, _oppositeEnd.Latitude, _oppositeEnd.Longitude);
                 }
             }
@@ -72,7 +74,7 @@ namespace GroundRouteFinder.AptDat
         public Dictionary<TaxiNode, List<EntryPoint>> EntryGroups;
         public Dictionary<TaxiNode, List<ExitPoint>> ExitGroups;
 
-        public double Bearing;
+        public double Bearing { get; set; }
 
 
         private bool _availableForLanding = true;
@@ -99,13 +101,10 @@ namespace GroundRouteFinder.AptDat
             EntryGroups = new Dictionary<TaxiNode, List<EntryPoint>>();
             ExitGroups = new Dictionary<TaxiNode, List<ExitPoint>>();
 
-            //            TakeOffSpots = new List<RunwayTakeOffSpot>();
-
             Designator = designator;
-            Latitude = latitude;
-            Longitude = longitude;
             Displacement = displacement;
-            VortexMath.PointFrom(Latitude, Longitude, Bearing, Displacement, ref DisplacedLatitude, ref DisplacedLongitude);
+            DisplacedLatitude = 0;
+            DisplacedLongitude = 0;
 
             OppositeEnd = null;
         }

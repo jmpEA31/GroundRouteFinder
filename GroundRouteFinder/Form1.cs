@@ -10,6 +10,7 @@ using System.Windows.Forms;
 using System.IO;
 using GroundRouteFinder.AptDat;
 using GroundRouteFinder.LogSupport;
+using GroundRouteFinder.Output;
 
 namespace GroundRouteFinder
 {
@@ -366,13 +367,6 @@ namespace GroundRouteFinder
 
                 _airport.Process();
 
-                if (Settings.GenerateDebugOutput)
-                {
-                    _airport.DebugParkings();
-                    _airport.DebugAtcNodes();
-                    LogElapsed($"Debug csv files can be found in:\n {Settings.DataFolder}");
-                }
-
                 if (generateKml)
                 {
                     if (!Directory.Exists(Path.Combine(Settings.DepartureFolderKML, _airport.ICAO)))
@@ -462,6 +456,15 @@ namespace GroundRouteFinder
                 {
                     LogElapsed($"\nKML files can be found in:\n {Settings.ArrivalFolderKML} and\n {Settings.DepartureFolderKML}");
                 }
+
+                if (Settings.GenerateDebugOutput)
+                {
+                    _airport.DebugParkings();
+                    _airport.DebugAtcNodes();
+                    KmlSummarizer.Write(_airport);
+                    LogElapsed($"Debug csv files can be found in:\n {Settings.DataFolder}");
+                }
+
             }
             catch (Exception ex)
             {

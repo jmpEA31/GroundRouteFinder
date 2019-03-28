@@ -25,10 +25,16 @@ namespace GroundRouteFinder.AptDat
         public string ICAO;
         
         private Dictionary<uint, TaxiNode> _nodeDict;
+
         private IEnumerable<TaxiNode> _taxiNodes;
+        public IEnumerable<TaxiNode> TaxiNodes { get { return _taxiNodes; } }
+
         private List<Parking> _parkings; /* could be gate, helo, tie down, ... but 'parking' improved readability of some of the code */
         public List<Parking> Parkings { get { return _parkings; } }
+
         private List<Runway> _runways;
+        public List<Runway> Runways { get { return _runways; } }
+
         private List<TaxiEdge> _edges;
 
         public List<LineElement> _lines;
