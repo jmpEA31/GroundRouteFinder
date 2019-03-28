@@ -606,7 +606,7 @@
             this.Controls.Add(this.tabControl1);
             this.Margin = new System.Windows.Forms.Padding(4);
             this.Name = "MainForm";
-            this.Text = "Ground Route Generator 0.5";
+            this.Text = "Ground Route Generator 0.6";
             this.tabControl1.ResumeLayout(false);
             this.tabPage1.ResumeLayout(false);
             this.gbxProgress.ResumeLayout(false);

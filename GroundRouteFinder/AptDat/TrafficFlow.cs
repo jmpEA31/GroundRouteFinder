@@ -24,13 +24,17 @@ namespace GroundRouteFinder.AptDat
 
     public class TimeLimts
     {
-        public int From;
-        public int Until;
+        public string From;
+        public string Until;
 
         public TimeLimts(int from, int until)
         {
-            From = from;
-            Until = until;
+            From = $"{from / 100:00}:{from % 100:00}";
+
+            if (until == 2359)
+                until = 2400;
+
+            Until = $"{until / 100:00}:{until % 100:00}";
         }
     }
 
@@ -296,10 +300,7 @@ namespace GroundRouteFinder.AptDat
                         {
                             foreach (TimeLimts timeLimit in rule.TimeLimits)
                             {
-                                string startTime = $"{timeLimit.From / 100}:{timeLimit.From % 100}";
-                                string endTime = $"{timeLimit.Until / 100}:{timeLimit.Until % 100}";
-
-                                GenerateOperations(ref ruleIdx, rule, windLimit, currentMinWindSpeed, currentMaxWindSpeed, startTime, endTime);
+                                GenerateOperations(ref ruleIdx, rule, windLimit, currentMinWindSpeed, currentMaxWindSpeed, timeLimit.From, timeLimit.Until);
                             }
                         }
                         else
