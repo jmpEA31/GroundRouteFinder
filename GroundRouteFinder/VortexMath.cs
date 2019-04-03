@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -47,6 +48,16 @@ namespace GroundRouteFinder
         public const double Feet6500Km = 6500.0 * Foot2Km;
         public const double Feet8000Km = 8000.0 * Foot2Km;
         public const double Feet9000Km = 9000.0 * Foot2Km;
+
+        public static double Parse(string input)
+        {
+            return double.Parse(input, CultureInfo.InvariantCulture);
+        }
+
+        public static double ParseDegreesToRadians(string input)
+        {
+            return double.Parse(input, CultureInfo.InvariantCulture) * VortexMath.Deg2Rad;
+        }
 
         /// <summary>
         /// Return the distance between two location objects in radians

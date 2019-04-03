@@ -158,6 +158,10 @@ namespace GroundRouteFinder
                     return false;
                 }
 
+                StringBuilder sb = new StringBuilder();
+                _airport.AnalyzeFlows(sb);
+                LogElapsed($"\n{sb.ToString()}\n");
+
                 LogElapsed("Parkings and ATC taxi network are present.");
 
                 var ps = _airport.Parkings.GroupBy(p => p.Name);
@@ -557,16 +561,16 @@ namespace GroundRouteFinder
                             nameCache = tokens[1];
                             break;
                         case "wingspan":
-                            aircraftBase.WingSpan = double.Parse(tokens[1]);
+                            aircraftBase.WingSpan = VortexMath.Parse(tokens[1]);
                             break;
                         case "takeoffdistatmtow":
-                            aircraftBase.TakeOffDist = double.Parse(tokens[1]);
+                            aircraftBase.TakeOffDist = VortexMath.Parse(tokens[1]);
                             break;
                         case "landingdist":
-                            aircraftBase.LandingDist = double.Parse(tokens[1]);
+                            aircraftBase.LandingDist = VortexMath.Parse(tokens[1]);
                             break;
                         case "minlandingdist":
-                            aircraftBase.MinLandingDist = double.Parse(tokens[1]);
+                            aircraftBase.MinLandingDist = VortexMath.Parse(tokens[1]);
                             break;
                         default:
                             break;

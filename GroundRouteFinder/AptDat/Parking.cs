@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using GroundRouteFinder.LogSupport;
+using GroundRouteFinder.Output;
 
 namespace GroundRouteFinder.AptDat
 {
@@ -358,7 +359,7 @@ namespace GroundRouteFinder.AptDat
         public void WriteParkingDef()
         {
             string filename = Path.Combine(Settings.WorldTrafficParkingDefs, _airport.ICAO, Name) + ".txt";
-            using (StreamWriter sw = File.CreateText(filename))
+            using (InvariantWriter sw = new InvariantWriter(filename, Encoding.ASCII))
             {
                 int military = (Operation == OperationType.Military) ? 1 : 0;
                 int cargo = (Operation == OperationType.Cargo) ? 1 : 0;

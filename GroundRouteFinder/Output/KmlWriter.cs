@@ -12,7 +12,7 @@ namespace GroundRouteFinder.Output
         private StringBuilder _coords = new StringBuilder();
 
         public KmlWriter(string path)
-            : base(path + ".kml")
+            : base(path + ".kml", Encoding.UTF8)
         {
             _coords = new StringBuilder();
 

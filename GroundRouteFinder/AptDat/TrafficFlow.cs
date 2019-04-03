@@ -5,9 +5,28 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using GroundRouteFinder.LogSupport;
+using GroundRouteFinder.Output;
 
 namespace GroundRouteFinder.AptDat
 {
+    public class SimpleFlowRule
+    {
+        public string Description;
+        public double MinVis;
+        public double MinCeil;
+        public string StartTime;
+        public string EndTime;
+        public int MinDir;
+        public int MaxDir;
+        public int MaxSpeed;
+
+        public override string ToString()
+        {
+            return $"{MinVis:00.0} {MinCeil,5:0} {StartTime} {EndTime} {MaxSpeed,2} {MinDir:000} {MaxDir:000} {Description}";
+        }
+    }
+
+
     public class WindLimits
     {
         public int MinDir;
@@ -26,14 +45,18 @@ namespace GroundRouteFinder.AptDat
     {
         public string From;
         public string Until;
+        public int FromInt;
+        public int UntilInt;
 
         public TimeLimts(int from, int until)
         {
+            FromInt = from;
             From = $"{from / 100:00}:{from % 100:00}";
 
             if (until == 2359)
                 until = 2400;
 
+            UntilInt = until;
             Until = $"{until / 100:00}:{until % 100:00}";
         }
     }
@@ -95,7 +118,7 @@ namespace GroundRouteFinder.AptDat
         public void ParseVisibilityRule(string line)
         {
             string[] tokens = line.Split(_splitters, StringSplitOptions.RemoveEmptyEntries);
-            MinVisibility = double.Parse(tokens[2]);
+            MinVisibility = VortexMath.Parse(tokens[2]);
         }
 
         public void ParseCeilingRule(string line)
@@ -152,6 +175,9 @@ namespace GroundRouteFinder.AptDat
 
     public class TrafficFlow
     {
+        public List<SimpleFlowRule> FlowRules = new List<SimpleFlowRule>();
+
+
         public List<TrafficRule> TrafficRules;
         private TrafficRule _currentRule;
         private bool _flowRulesFound;
@@ -219,27 +245,61 @@ namespace GroundRouteFinder.AptDat
         private List<string> _runwayOps;
         private bool _noOverlap;
 
-        public bool Analyze()
+        public bool Analyze(StringBuilder report)
         {
-            Logger.Log("Analyzing Operations");
+            report.AppendLine("\nTraffic Flow Analysis");
 
-            // Filter out rules without wind speed/direction specs (could be helos)
-            TrafficRules = TrafficRules.Where(tr => tr.WindLimits.Count > 0).ToList();
+            foreach (TrafficRule rule in TrafficRules)
+            {
+                if (rule.WindLimits.Count == 0)
+                {
+                    rule.WindLimits.Add(new WindLimits(0, 360, 99));
+                }
 
-             // Todo: check whether the result has a fallback and covers all winddirections
-             // Todo: handle multiple visibility options
-             _operations = new List<string>();
+                if (rule.TimeLimits.Count == 0)
+                {
+                    rule.TimeLimits.Add(new TimeLimts(0, 2359));
+                }
+            }
+
+
+            // Todo: check whether the result has a fallback and covers all winddirections
+            // Todo: handle multiple visibility options
+            _operations = new List<string>();
             _runwayOps = new List<string>();
 
             int ruleIdx = 0;
             IEnumerable<Tuple<int, double>> cvKeys = TrafficRules.Select(tr => new Tuple<int, double>(tr.MinCeiling, tr.MinVisibility)).Distinct();
             if (cvKeys.Count() == 0)
             {
-                Logger.Log(" apt.dat has no usable traffic rules.");
+                report.AppendLine(" apt.dat has no usable traffic flow rules.");
                 return false;
             }
 
-            Logger.Log($" apt.dat has traffic rules: {string.Join(", ", cvKeys.Select(cvk => "(c>" + cvk.Item1 + "ft v>" + cvk.Item2 + "nm)")) }");
+            foreach (TrafficRule rule in TrafficRules)
+            {
+                foreach (TimeLimts interval in rule.TimeLimits)
+                {
+                    foreach (WindLimits winds in rule.WindLimits)
+                    {
+                        SimpleFlowRule sfr = new SimpleFlowRule();
+                        sfr.MinVis = rule.MinVisibility;
+                        sfr.MinCeil = rule.MinCeiling;
+                        sfr.StartTime = interval.From;
+                        sfr.EndTime = interval.Until;
+                        sfr.MinDir = winds.MinDir;
+                        sfr.MaxDir = winds.MaxDir;
+                        sfr.MaxSpeed = winds.MaxSpeed;
+                        sfr.Description = rule.Description;
+                        FlowRules.Add(sfr);
+                    }
+                }
+            }
+
+            foreach (SimpleFlowRule sfr in FlowRules)
+            {
+                report.AppendLine(sfr.ToString());
+            }
 
 
             Tuple<int, double> cvKey = cvKeys.First();
@@ -439,7 +499,7 @@ namespace GroundRouteFinder.AptDat
         internal void Write(string icao)
         {
             string operationFile = Path.Combine(Settings.WorldTrafficOperations, $"{icao}.txt");
-            using (StreamWriter sw = File.CreateText(operationFile))
+            using (InvariantWriter sw = new InvariantWriter(operationFile, Encoding.ASCII))
             {
                 sw.WriteLine("                                                                            Start  End");
                 sw.WriteLine("INDEX   Low Wind Speed    High Wind Speed    Low Wind Dir   High Wind Dir   Time   Time  Comments (not parsed)");

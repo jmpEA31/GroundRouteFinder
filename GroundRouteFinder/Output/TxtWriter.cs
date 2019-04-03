@@ -10,7 +10,7 @@ namespace GroundRouteFinder.Output
     public class TxtWriter : RouteWriter
     {
         public TxtWriter(string path, string allSizes, int cargo, int military, string designator, string parkingCenter)
-            : base(path + ".txt")
+            : base(path + ".txt", Encoding.ASCII)
         {
             WriteLine($"STARTAIRCRAFTTYPE\n{allSizes}\nENDAIRCRAFTTYPE\n");
 

@@ -12,7 +12,7 @@ namespace GroundRouteFinder.Output
     {
         public static void Write(Airport airport)
         {
-            using (StreamWriter sw = File.CreateText(Path.Combine(Settings.DataFolder, airport.ICAO + ".kml")))
+            using (InvariantWriter sw = new InvariantWriter(Path.Combine(Settings.DataFolder, airport.ICAO + ".kml"), Encoding.UTF8))
             {
                 sw.WriteLine("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
                 sw.WriteLine("<kml xmlns=\"http://www.opengis.net/kml/2.2\">");
@@ -28,7 +28,7 @@ namespace GroundRouteFinder.Output
             }
         }
 
-        private static void WriteNodes(StreamWriter sw, IEnumerable<TaxiNode> nodes)
+        private static void WriteNodes(InvariantWriter sw, IEnumerable<TaxiNode> nodes)
         {
             foreach (TaxiNode node in nodes)
             {
@@ -36,7 +36,7 @@ namespace GroundRouteFinder.Output
             }
         }
 
-        private static void WriteRunways(StreamWriter sw, IEnumerable<Runway> runways)
+        private static void WriteRunways(InvariantWriter sw, IEnumerable<Runway> runways)
         {
             foreach (Runway runway in runways)
             {

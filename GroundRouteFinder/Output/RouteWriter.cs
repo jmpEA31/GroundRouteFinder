@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -7,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace GroundRouteFinder.Output
 {
-    public abstract class RouteWriter : StreamWriter
+    public abstract class RouteWriter : InvariantWriter
     {
         public static RouteWriter Create(int type, string path, string allSizes = "", int cargo = -1, int military = -1, string designator = "", string parkingCenter = "")
         {
@@ -21,8 +22,12 @@ namespace GroundRouteFinder.Output
             }
         }
 
-        public RouteWriter(string path)
-            : base(path, false, Encoding.ASCII)
+        /// <summary>
+        /// Create a routewriter
+        /// </summary>
+        /// <param name="path"></param>
+        public RouteWriter(string path, Encoding encoding)
+            : base(path, encoding)
         {
         }
 

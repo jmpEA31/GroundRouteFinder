@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using GroundRouteFinder.LogSupport;
+using GroundRouteFinder.Output;
 
 namespace GroundRouteFinder.AptDat
 {
@@ -184,12 +185,18 @@ namespace GroundRouteFinder.AptDat
 
             Log($"Parkings: {string.Join(" ", numberOfParkingsPerCategory.Select(kvp => kvp.Key.ToString() + ": " + kvp.Value.ToString()))}");
 
-            _flows.Analyze();
+            StringBuilder sb = new StringBuilder();
+            _flows.Analyze(sb);
 
             foreach (Runway r in _runways)
             {
                 r.Analyze(_taxiNodes, _edges);
             }
+        }
+
+        public bool AnalyzeFlows(StringBuilder sb)
+        {
+            return _flows.Analyze(sb);
         }
 
         public int WriteParkingDefs()
@@ -429,7 +436,7 @@ namespace GroundRouteFinder.AptDat
 
         internal void DebugParkings()
         {
-            using (StreamWriter sw = File.CreateText(Path.Combine(Settings.DataFolder, "starts.csv")))
+            using (InvariantWriter sw = new InvariantWriter(Path.Combine(Settings.DataFolder, "starts.csv"), Encoding.UTF8))
             {
                 sw.WriteLine("latitude,longitude,name\n");
                 foreach (Parking parking in _parkings)
@@ -438,7 +445,7 @@ namespace GroundRouteFinder.AptDat
                 }
             }
 
-            using (StreamWriter sw = File.CreateText(Path.Combine(Settings.DataFolder, "pushback.csv")))
+            using (InvariantWriter sw = new InvariantWriter(Path.Combine(Settings.DataFolder, "pushback.csv"), Encoding.UTF8))
             {
                 sw.WriteLine("latitude,longitude,name\n");
                 foreach (Parking parking in _parkings)
@@ -450,7 +457,7 @@ namespace GroundRouteFinder.AptDat
 
         internal void DebugAtcNodes()
         {
-            using (StreamWriter sw = File.CreateText(Path.Combine(Settings.DataFolder, "atcnodes.csv")))
+            using (InvariantWriter sw = new InvariantWriter(Path.Combine(Settings.DataFolder, "atcnodes.csv"), Encoding.UTF8))
             {
                 sw.WriteLine("latitude,longitude,name\n");
 
@@ -472,15 +479,15 @@ namespace GroundRouteFinder.AptDat
         {
             string[] tokens = line.Split(_splitters, StringSplitOptions.RemoveEmptyEntries);
 
-            double latitude1 = double.Parse(tokens[9]) * VortexMath.Deg2Rad;
-            double longitude1 = double.Parse(tokens[10]) * VortexMath.Deg2Rad;
-            double latitude2 = double.Parse(tokens[18]) * VortexMath.Deg2Rad;
-            double longitude2 = double.Parse(tokens[19]) * VortexMath.Deg2Rad;
+            double latitude1 = VortexMath.ParseDegreesToRadians(tokens[9]);
+            double longitude1 = VortexMath.ParseDegreesToRadians(tokens[10]); 
+            double latitude2 = VortexMath.ParseDegreesToRadians(tokens[18]); 
+            double longitude2 = VortexMath.ParseDegreesToRadians(tokens[19]);
 
-            Runway r1 = new Runway(tokens[8], latitude1, longitude1, double.Parse(tokens[11]) / 1000.0);
+            Runway r1 = new Runway(tokens[8], latitude1, longitude1, VortexMath.Parse(tokens[11]) / 1000.0);
             r1.LogMessage += RelayMessage;
 
-            Runway r2 = new Runway(tokens[17], latitude2, longitude2, double.Parse(tokens[20]) / 1000.0);
+            Runway r2 = new Runway(tokens[17], latitude2, longitude2, VortexMath.Parse(tokens[20]) / 1000.0);
             r2.LogMessage += RelayMessage;
 
             r1.OppositeEnd = r2;
@@ -496,8 +503,8 @@ namespace GroundRouteFinder.AptDat
             {
                 cle = new LineElement();
                 string[] tokens = line.Split(_splitters, StringSplitOptions.RemoveEmptyEntries);
-                double latitude1 = double.Parse(tokens[1]) * VortexMath.Deg2Rad;
-                double longitude1 = double.Parse(tokens[2]) * VortexMath.Deg2Rad;
+                double latitude1 = VortexMath.ParseDegreesToRadians(tokens[1]);
+                double longitude1 = VortexMath.ParseDegreesToRadians(tokens[2]);
                 cle.Latitude = latitude1;
                 cle.Longitude = longitude1;
                 _lines.Add(cle);
@@ -514,8 +521,8 @@ namespace GroundRouteFinder.AptDat
             {
                 string[] tokens = line.Split(_splitters, StringSplitOptions.RemoveEmptyEntries);
                 LineElement le = new LineElement();
-                double latitude1 = double.Parse(tokens[1]) * VortexMath.Deg2Rad;
-                double longitude1 = double.Parse(tokens[2]) * VortexMath.Deg2Rad;
+                double latitude1 = VortexMath.ParseDegreesToRadians(tokens[1]);
+                double longitude1 = VortexMath.ParseDegreesToRadians(tokens[2]);
                 le.Latitude = latitude1;
                 le.Longitude = longitude1;
                 cle.Segments.Add(le);
@@ -611,9 +618,9 @@ namespace GroundRouteFinder.AptDat
 
             Parking sp = new Parking(this)
             {
-                Latitude = double.Parse(tokens[1]) * VortexMath.Deg2Rad,
-                Longitude = double.Parse(tokens[2]) * VortexMath.Deg2Rad,
-                Bearing = ((double.Parse(tokens[3]) + 540) * VortexMath.Deg2Rad) % (VortexMath.PI2) - Math.PI,
+                Latitude = VortexMath.ParseDegreesToRadians(tokens[1]),
+                Longitude = VortexMath.ParseDegreesToRadians(tokens[2]),
+                Bearing = ((VortexMath.Parse(tokens[3]) + 540) * VortexMath.Deg2Rad) % (VortexMath.PI2) - Math.PI,
                 LocationType = StartUpLocationTypeConverter.FromString(tokens[4]),
                 XpTypes = AircraftTypeConverter.XPlaneTypesFromStrings(xpTypes),
                 Name = string.Join(" ", tokens.Skip(6))

@@ -42,8 +42,8 @@ namespace GroundRouteFinder.AptDat
 
         public void ComputeLonLat()
         {
-            Latitude = double.Parse(LatitudeString) * VortexMath.Deg2Rad;
-            Longitude = double.Parse(LongitudeString) * VortexMath.Deg2Rad;
+            Latitude = VortexMath.ParseDegreesToRadians(LatitudeString);
+            Longitude = VortexMath.ParseDegreesToRadians(LongitudeString);
         }
 
         public void AddEdgeFrom(TaxiEdge edge)

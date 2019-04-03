@@ -42,6 +42,7 @@
             this.progressInbound = new System.Windows.Forms.ProgressBar();
             this.label3 = new System.Windows.Forms.Label();
             this.debugGroupBox = new System.Windows.Forms.GroupBox();
+            this.btnPrevLog = new System.Windows.Forms.Button();
             this.btnRunTestSet = new System.Windows.Forms.Button();
             this.btnShowLogFile = new System.Windows.Forms.Button();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
@@ -71,7 +72,6 @@
             this.rtbAircraft = new System.Windows.Forms.RichTextBox();
             this.btnAnalyseAircraft = new System.Windows.Forms.Button();
             this.btnExit = new System.Windows.Forms.Button();
-            this.btnPrevLog = new System.Windows.Forms.Button();
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
             this.gbxProgress.SuspendLayout();
@@ -141,7 +141,7 @@
             this.txtIcao.Name = "txtIcao";
             this.txtIcao.Size = new System.Drawing.Size(100, 22);
             this.txtIcao.TabIndex = 0;
-            this.txtIcao.Text = "KDFW";
+            this.txtIcao.Text = "KIAH";
             this.txtIcao.TextChanged += new System.EventHandler(this.txtIcao_TextChanged);
             // 
             // btnGenerate
@@ -247,6 +247,17 @@
             this.debugGroupBox.TabIndex = 11;
             this.debugGroupBox.TabStop = false;
             this.debugGroupBox.Text = "Debug";
+            // 
+            // btnPrevLog
+            // 
+            this.btnPrevLog.Location = new System.Drawing.Point(23, 67);
+            this.btnPrevLog.Margin = new System.Windows.Forms.Padding(4);
+            this.btnPrevLog.Name = "btnPrevLog";
+            this.btnPrevLog.Size = new System.Drawing.Size(176, 31);
+            this.btnPrevLog.TabIndex = 8;
+            this.btnPrevLog.Text = "Open Prev Log file";
+            this.btnPrevLog.UseVisualStyleBackColor = true;
+            this.btnPrevLog.Click += new System.EventHandler(this.btnPrevLog_Click);
             // 
             // btnRunTestSet
             // 
@@ -585,17 +596,6 @@
             this.btnExit.Text = "Exit";
             this.btnExit.UseVisualStyleBackColor = true;
             this.btnExit.Click += new System.EventHandler(this.btnExit_Click);
-            // 
-            // btnPrevLog
-            // 
-            this.btnPrevLog.Location = new System.Drawing.Point(23, 67);
-            this.btnPrevLog.Margin = new System.Windows.Forms.Padding(4);
-            this.btnPrevLog.Name = "btnPrevLog";
-            this.btnPrevLog.Size = new System.Drawing.Size(176, 31);
-            this.btnPrevLog.TabIndex = 8;
-            this.btnPrevLog.Text = "Open Prev Log file";
-            this.btnPrevLog.UseVisualStyleBackColor = true;
-            this.btnPrevLog.Click += new System.EventHandler(this.btnPrevLog_Click);
             // 
             // MainForm
             // 

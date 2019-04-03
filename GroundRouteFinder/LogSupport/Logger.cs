@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -30,7 +31,7 @@ namespace GroundRouteFinder.LogSupport
         {
             using (StreamWriter sw = File.AppendText(fileName))
             {
-                sw.WriteLine(message);
+                sw.WriteLine(message.ToString(CultureInfo.InvariantCulture));
             }
         }
 
@@ -49,6 +50,5 @@ namespace GroundRouteFinder.LogSupport
             else
                 return "No old log file found";
         }
-
     }
 }
