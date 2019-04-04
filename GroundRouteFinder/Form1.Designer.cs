@@ -76,6 +76,9 @@
             this.rtbAircraft = new System.Windows.Forms.RichTextBox();
             this.btnAnalyseAircraft = new System.Windows.Forms.Button();
             this.btnExit = new System.Windows.Forms.Button();
+            this.cbxIntersectionTakeOffs = new System.Windows.Forms.CheckBox();
+            this.label6 = new System.Windows.Forms.Label();
+            this.txtMaximumIntersectionShift = new System.Windows.Forms.TextBox();
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
             this.gbxProgress.SuspendLayout();
@@ -448,6 +451,9 @@
             // 
             // groupBox5
             // 
+            this.groupBox5.Controls.Add(this.txtMaximumIntersectionShift);
+            this.groupBox5.Controls.Add(this.label6);
+            this.groupBox5.Controls.Add(this.cbxIntersectionTakeOffs);
             this.groupBox5.Controls.Add(this.label5);
             this.groupBox5.Controls.Add(this.cbxParkingReference);
             this.groupBox5.Controls.Add(this.cbxFixDuplicateParkingNames);
@@ -455,7 +461,7 @@
             this.groupBox5.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.groupBox5.Name = "groupBox5";
             this.groupBox5.Padding = new System.Windows.Forms.Padding(2, 2, 2, 2);
-            this.groupBox5.Size = new System.Drawing.Size(404, 180);
+            this.groupBox5.Size = new System.Drawing.Size(404, 332);
             this.groupBox5.TabIndex = 14;
             this.groupBox5.TabStop = false;
             this.groupBox5.Text = "General";
@@ -645,6 +651,34 @@
             this.btnExit.UseVisualStyleBackColor = true;
             this.btnExit.Click += new System.EventHandler(this.btnExit_Click);
             // 
+            // cbxIntersectionTakeOffs
+            // 
+            this.cbxIntersectionTakeOffs.AutoSize = true;
+            this.cbxIntersectionTakeOffs.Location = new System.Drawing.Point(18, 109);
+            this.cbxIntersectionTakeOffs.Name = "cbxIntersectionTakeOffs";
+            this.cbxIntersectionTakeOffs.Size = new System.Drawing.Size(143, 17);
+            this.cbxIntersectionTakeOffs.TabIndex = 3;
+            this.cbxIntersectionTakeOffs.Text = "Use intersection takeoffs";
+            this.cbxIntersectionTakeOffs.UseVisualStyleBackColor = true;
+            this.cbxIntersectionTakeOffs.CheckedChanged += new System.EventHandler(this.cbxIntersectionTakeOffs_CheckedChanged);
+            // 
+            // label6
+            // 
+            this.label6.AutoSize = true;
+            this.label6.Location = new System.Drawing.Point(34, 139);
+            this.label6.Name = "label6";
+            this.label6.Size = new System.Drawing.Size(91, 13);
+            this.label6.TabIndex = 4;
+            this.label6.Text = "Maximum shift (ft):";
+            // 
+            // txtMaximumIntersectionShift
+            // 
+            this.txtMaximumIntersectionShift.Location = new System.Drawing.Point(140, 136);
+            this.txtMaximumIntersectionShift.Name = "txtMaximumIntersectionShift";
+            this.txtMaximumIntersectionShift.Size = new System.Drawing.Size(108, 20);
+            this.txtMaximumIntersectionShift.TabIndex = 5;
+            this.txtMaximumIntersectionShift.TextChanged += new System.EventHandler(this.txtMaximumIntersectionShift_TextChanged);
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -653,7 +687,7 @@
             this.Controls.Add(this.btnExit);
             this.Controls.Add(this.tabControl1);
             this.Name = "MainForm";
-            this.Text = "Ground Route Generator 0.6";
+            this.Text = "Ground Route Generator 0.7";
             this.tabControl1.ResumeLayout(false);
             this.tabPage1.ResumeLayout(false);
             this.gbxProgress.ResumeLayout(false);
@@ -728,6 +762,9 @@
         private System.Windows.Forms.TableLayoutPanel conversionLayoutPanel;
         private System.Windows.Forms.Button button2;
         private System.Windows.Forms.Button button1;
+        private System.Windows.Forms.TextBox txtMaximumIntersectionShift;
+        private System.Windows.Forms.Label label6;
+        private System.Windows.Forms.CheckBox cbxIntersectionTakeOffs;
     }
 }
 

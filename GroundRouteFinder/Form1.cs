@@ -54,6 +54,9 @@ namespace GroundRouteFinder
 
             cbxFixDuplicateParkingNames.Checked = Settings.FixDuplicateParkingNames;
 
+            cbxIntersectionTakeOffs.Checked = Settings.UseIntersectionTakeOffs;
+            txtMaximumIntersectionShift.Text = Settings.MaxIntersectionShift.ToString();
+
             cbxParkingReference.Items.Clear();
             for (WorldTrafficParkingReference i = WorldTrafficParkingReference.MainWheel; i < WorldTrafficParkingReference.Max; i++)
             {
@@ -627,8 +630,10 @@ namespace GroundRouteFinder
                     {
                         case "type":
                             currentType = (WorldTrafficAircraftType)int.Parse(tokens[1]);
-                            aircraftBase = new AircraftBase();
-                            aircraftBase.Name = nameCache.ToUpper();
+                            aircraftBase = new AircraftBase
+                            {
+                                Name = nameCache.ToUpper()
+                            };
                             break;
                         case "name":
                             nameCache = tokens[1];
@@ -833,6 +838,20 @@ namespace GroundRouteFinder
         private void btnPrevLog_Click(object sender, EventArgs e)
         {
             rtb.Text = Logger.LoadOldLog();
+        }
+
+        private void cbxIntersectionTakeOffs_CheckedChanged(object sender, EventArgs e)
+        {
+            Settings.UseIntersectionTakeOffs = cbxIntersectionTakeOffs.Checked;
+        }
+
+        private void txtMaximumIntersectionShift_TextChanged(object sender, EventArgs e)
+        {
+            int max = 0;
+            if (int.TryParse(txtMaximumIntersectionShift.Text, out max))
+            {
+                Settings.MaxIntersectionShift = max;
+            }
         }
     }
 }

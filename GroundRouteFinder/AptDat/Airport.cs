@@ -196,7 +196,7 @@ namespace GroundRouteFinder.AptDat
             }
 
             Log($"Parkings by Category: {string.Join(" ", numberOfParkingsPerCategory.Select(kvp => kvp.Key.ToString() + ": " + kvp.Value.ToString()))}");
-            Log($"Parkings by WorldTraffic type: {string.Join(" ", numberOfParkingsPerWTType.Select(kvp => kvp.Key.ToString() + ": " + kvp.Value.ToString()))}");
+            Log($"Parkings by WorldTraffic type:\n\t{string.Join("\n\t", numberOfParkingsPerWTType.Select(kvp => $"{kvp.Key.ToString(),-15}: {kvp.Value.ToString()}"))}".Replace("Max", "UndefinedS"));
 
             StringBuilder sb = new StringBuilder();
             _flows.Analyze(sb);

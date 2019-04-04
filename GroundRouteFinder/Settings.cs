@@ -78,6 +78,19 @@ namespace GroundRouteFinder
             set { setValue("ParkingReference", ref _parkingReference, value); }
         }
 
+        private static bool? _useIntersectionTakeOffs;
+        public static bool UseIntersectionTakeOffs
+        {
+            get { return getBool("UseIntersectionTakeOffs", ref _useIntersectionTakeOffs); }
+            set { setBool("UseIntersectionTakeOffs", ref _useIntersectionTakeOffs, value); }
+        }
+
+        private static int? _maxIntersectionShift;
+        public static int MaxIntersectionShift
+        {
+            get { return getValue("MaxIntersectionShift", ref _maxIntersectionShift, 1500); }
+            set { setValue("MaxIntersectionShift", ref _maxIntersectionShift, value); }
+        }
 
         private static bool getBool(string name, ref bool? storage)
         {

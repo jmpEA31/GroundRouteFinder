@@ -239,6 +239,14 @@ namespace GroundRouteFinder.AptDat
                     break;
             }
 
+            bool gotLeft = false;
+            bool gotRight = false;
+            bool useIntersections = Settings.UseIntersectionTakeOffs;
+            double maxShiftKm = (double)Settings.MaxIntersectionShift * VortexMath.Foot2Km;
+
+            // Find at least one enrty from the left and one from the right
+            // If using intersections is allowed, add the intersections as option
+            // as long as they are not too far from the runway start
             foreach (var result in EntryGroups)
             {
                 Logger.Log($"{Designator} Group: {result.Key.Id}");
@@ -249,14 +257,32 @@ namespace GroundRouteFinder.AptDat
 
                 if (right != null)
                 {
-                    Logger.Log($" Right Entry: {right.OffRunwayNode.Id}->{right.OnRunwayNode.Id} {right.TurnAngle * VortexMath.Rad2Deg:0.0} {right.TakeoffLengthRemaining * VortexMath.KmToFoot:0}ft");
-                    EntryGroups[result.Key].Add(right);
+                    // No entry from the right, or using intersections is allowed
+                    if (!gotRight || useIntersections)
+                    {
+                        // No entry from the right, or current intersections is not too far from runway start
+                        if (!gotRight || (this.Length - maxShiftKm) < right.TakeoffLengthRemaining)
+                        {
+                            Logger.Log($" Right Entry: {right.OffRunwayNode.Id}->{right.OnRunwayNode.Id} {right.TurnAngle * VortexMath.Rad2Deg:0.0} {right.TakeoffLengthRemaining * VortexMath.KmToFoot:0}ft");
+                            EntryGroups[result.Key].Add(right);
+                            gotRight = true;
+                        }
+                    }
                 }
 
                 if (left != null)
                 {
-                    Logger.Log($" Left  Entry: {left.OffRunwayNode.Id}->{left.OnRunwayNode.Id} {left.TurnAngle * VortexMath.Rad2Deg:0.0} {left.TakeoffLengthRemaining * VortexMath.KmToFoot:0}ft");
-                    EntryGroups[result.Key].Add(left);
+                    // No entry from the left, or using intersections is allowed
+                    if (!gotLeft || useIntersections)
+                    {
+                        // No entry from the left, or current intersections is not too far from runway start
+                        if (!gotLeft || (this.Length - maxShiftKm) < left.TakeoffLengthRemaining)
+                        {
+                            Logger.Log($" Left  Entry: {left.OffRunwayNode.Id}->{left.OnRunwayNode.Id} {left.TurnAngle * VortexMath.Rad2Deg:0.0} {left.TakeoffLengthRemaining * VortexMath.KmToFoot:0}ft");
+                            EntryGroups[result.Key].Add(left);
+                            gotLeft = true;
+                        }
+                    }
                 }
             }         
         }
