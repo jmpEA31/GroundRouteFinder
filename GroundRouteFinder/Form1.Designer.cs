@@ -72,6 +72,10 @@
             this.rtbAircraft = new System.Windows.Forms.RichTextBox();
             this.btnAnalyseAircraft = new System.Windows.Forms.Button();
             this.btnExit = new System.Windows.Forms.Button();
+            this.groupBox4 = new System.Windows.Forms.GroupBox();
+            this.conversionLayoutPanel = new System.Windows.Forms.TableLayoutPanel();
+            this.button1 = new System.Windows.Forms.Button();
+            this.button2 = new System.Windows.Forms.Button();
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
             this.gbxProgress.SuspendLayout();
@@ -84,6 +88,7 @@
             this.groupBox3.SuspendLayout();
             this.groupBox2.SuspendLayout();
             this.tabAircraft.SuspendLayout();
+            this.groupBox4.SuspendLayout();
             this.SuspendLayout();
             // 
             // rtb
@@ -379,6 +384,7 @@
             // 
             // tabPage2
             // 
+            this.tabPage2.Controls.Add(this.groupBox4);
             this.tabPage2.Controls.Add(this.groupBox5);
             this.tabPage2.Controls.Add(this.groupBox3);
             this.tabPage2.Controls.Add(this.groupBox2);
@@ -597,6 +603,49 @@
             this.btnExit.UseVisualStyleBackColor = true;
             this.btnExit.Click += new System.EventHandler(this.btnExit_Click);
             // 
+            // groupBox4
+            // 
+            this.groupBox4.Controls.Add(this.button2);
+            this.groupBox4.Controls.Add(this.button1);
+            this.groupBox4.Controls.Add(this.conversionLayoutPanel);
+            this.groupBox4.Location = new System.Drawing.Point(558, 62);
+            this.groupBox4.Name = "groupBox4";
+            this.groupBox4.Size = new System.Drawing.Size(964, 577);
+            this.groupBox4.TabIndex = 15;
+            this.groupBox4.TabStop = false;
+            this.groupBox4.Text = "Aircraft Mapping";
+            // 
+            // conversionLayoutPanel
+            // 
+            this.conversionLayoutPanel.ColumnCount = 2;
+            this.conversionLayoutPanel.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
+            this.conversionLayoutPanel.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
+            this.conversionLayoutPanel.Location = new System.Drawing.Point(7, 25);
+            this.conversionLayoutPanel.Name = "conversionLayoutPanel";
+            this.conversionLayoutPanel.RowCount = 2;
+            this.conversionLayoutPanel.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
+            this.conversionLayoutPanel.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
+            this.conversionLayoutPanel.Size = new System.Drawing.Size(951, 401);
+            this.conversionLayoutPanel.TabIndex = 0;
+            // 
+            // button1
+            // 
+            this.button1.Location = new System.Drawing.Point(21, 445);
+            this.button1.Name = "button1";
+            this.button1.Size = new System.Drawing.Size(141, 28);
+            this.button1.TabIndex = 1;
+            this.button1.Text = "Set Strict Defaults";
+            this.button1.UseVisualStyleBackColor = true;
+            // 
+            // button2
+            // 
+            this.button2.Location = new System.Drawing.Point(185, 445);
+            this.button2.Name = "button2";
+            this.button2.Size = new System.Drawing.Size(141, 28);
+            this.button2.TabIndex = 2;
+            this.button2.Text = "Set Defaults++";
+            this.button2.UseVisualStyleBackColor = true;
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
@@ -627,6 +676,7 @@
             this.groupBox2.ResumeLayout(false);
             this.groupBox2.PerformLayout();
             this.tabAircraft.ResumeLayout(false);
+            this.groupBox4.ResumeLayout(false);
             this.ResumeLayout(false);
 
         }
@@ -676,6 +726,10 @@
         private System.Windows.Forms.ComboBox cbxParkingReference;
         private System.Windows.Forms.Button btnRunTestSet;
         private System.Windows.Forms.Button btnPrevLog;
+        private System.Windows.Forms.GroupBox groupBox4;
+        private System.Windows.Forms.TableLayoutPanel conversionLayoutPanel;
+        private System.Windows.Forms.Button button2;
+        private System.Windows.Forms.Button button1;
     }
 }
 

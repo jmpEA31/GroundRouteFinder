@@ -8,12 +8,13 @@ namespace GroundRouteFinder.AptDat
 {
     public enum XPlaneAircraftType
     {
-        Fighter,
-        Helo,
-        Prop,
-        TurboProp,
-        Jet,
-        HeavyJet
+        Fighter = 0,
+        Helo = 1,
+        Prop = 2,
+        TurboProp = 3,
+        Jet = 4,
+        HeavyJet = 5,
+        Max = 6
     }
 
     public enum XPlaneAircraftCategory : int

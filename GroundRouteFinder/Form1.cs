@@ -61,6 +61,77 @@ namespace GroundRouteFinder
             }
 
             cbxParkingReference.SelectedIndex = Settings.ParkingReference;
+
+            conversionLayoutPanel.RowCount = 1 + (int)XPlaneAircraftCategory.Max;
+            int existing = conversionLayoutPanel.RowStyles.Count;
+            for (int i = 0; i < conversionLayoutPanel.RowCount - existing; i++)
+            {
+                if (i >= existing)
+                    conversionLayoutPanel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+                else
+                    conversionLayoutPanel.RowStyles[i].SizeType = SizeType.AutoSize;
+            }
+
+            conversionLayoutPanel.ColumnCount = 1 + (int)XPlaneAircraftType.Max;
+            int width = conversionLayoutPanel.Width / conversionLayoutPanel.ColumnCount;
+            existing = conversionLayoutPanel.ColumnStyles.Count;
+            for (int i = 0; i < conversionLayoutPanel.ColumnCount; i++)
+            {
+                if (i >= existing)
+                    conversionLayoutPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, width));
+                else
+                {
+                    conversionLayoutPanel.ColumnStyles[i].SizeType = SizeType.Absolute;
+                    conversionLayoutPanel.ColumnStyles[i].Width = width;
+                }
+            }
+
+            for (int r = 0; r < 1 + (int)XPlaneAircraftCategory.Max; r++)
+            {
+                for (int c = 0; c < 1 + (int)XPlaneAircraftType.Max; c++)
+                {
+                    switch (c)
+                    {
+                        case 0:
+                            {
+                                Label newLabel = new Label();
+                                switch (r)
+                                {
+                                    case 0:
+                                        newLabel.Text = "XP Cat / Type:";
+                                        break;
+                                    default:
+                                        newLabel.Text = $"{(XPlaneAircraftCategory)(r - 1)}";
+                                        break;
+                                }
+                                conversionLayoutPanel.Controls.Add(newLabel, c, r);
+                            }
+                            break;
+
+                        default:
+                            {
+                                switch (r)
+                                {
+                                    case 0:
+                                        Label newLabel = new Label();
+                                        newLabel.Text = $"{(XPlaneAircraftType)(c - 1)}";
+                                        conversionLayoutPanel.Controls.Add(newLabel, c, r);
+                                        break;
+
+                                    default:
+                                        ComboBox cbx = new ComboBox();
+                                        for (WorldTrafficAircraftType wtat = WorldTrafficAircraftType.Fighter; wtat < WorldTrafficAircraftType.Max; wtat++)
+                                        {
+                                            cbx.Items.Add(wtat);
+                                        }
+                                        conversionLayoutPanel.Controls.Add(cbx, c, r);
+                                        break;
+                                }
+                            }
+                            break;
+                    }
+                }
+            }
         }
 
         private void SetXPlaneLocation()
