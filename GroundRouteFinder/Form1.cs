@@ -723,7 +723,7 @@ namespace GroundRouteFinder
 
         private void btnRunTestSet_Click(object sender, EventArgs e)
         {
-            string[] airports = { "LFPG", "KSFO", "KORD", "EHAM", "KDFW" };
+            string[] airports = { "LFPG", "KSFO", "KORD", "EHAM", "KDFW", "KIAH", "EGLL" };
 
             _start = DateTime.Now;
             rtb.Clear();

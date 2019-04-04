@@ -175,15 +175,28 @@ namespace GroundRouteFinder.AptDat
                 numberOfParkingsPerCategory[cat] = 0;
             }
 
+            Dictionary<WorldTrafficAircraftType, int> numberOfParkingsPerWTType = new Dictionary<WorldTrafficAircraftType, int>();
+            for (WorldTrafficAircraftType cat = WorldTrafficAircraftType.Fighter; cat <= WorldTrafficAircraftType.Max; cat++)
+            {
+                numberOfParkingsPerWTType[cat] = 0;
+            }
+
             foreach (Parking parking in _parkings)
             {
                 parking.DetermineWtTypes();
                 parking.DetermineTaxiOutLocation(_taxiNodes); // Move this to first if we need pushback info in the parking def
                 numberOfParkingsPerCategory[parking.MaxSize]++;
+
+                foreach (XPlaneAircraftType wtt in parking.XpTypes)
+                {
+                    WorldTrafficAircraftType t = AircraftTypeConverter.WTTypeFromXPlaneTypeAndCat(parking.MaxSize, wtt);
+                    numberOfParkingsPerWTType[t]++;
+                }
                 //parking.FindNearestLine(_lines);
             }
 
-            Log($"Parkings: {string.Join(" ", numberOfParkingsPerCategory.Select(kvp => kvp.Key.ToString() + ": " + kvp.Value.ToString()))}");
+            Log($"Parkings by Category: {string.Join(" ", numberOfParkingsPerCategory.Select(kvp => kvp.Key.ToString() + ": " + kvp.Value.ToString()))}");
+            Log($"Parkings by WorldTraffic type: {string.Join(" ", numberOfParkingsPerWTType.Select(kvp => kvp.Key.ToString() + ": " + kvp.Value.ToString()))}");
 
             StringBuilder sb = new StringBuilder();
             _flows.Analyze(sb);

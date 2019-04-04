@@ -40,6 +40,9 @@ namespace GroundRouteFinder.Output
         {
             foreach (Runway runway in runways)
             {
+                if (runway.RunwayNodes == null)
+                    continue;
+
                 sw.WriteLine($"  <Placemark><styleUrl>#RunwayIcon</styleUrl><name>{runway.Designator}</name><Point><coordinates>{runway.DisplacedLongitude * VortexMath.Rad2Deg},{runway.DisplacedLatitude * VortexMath.Rad2Deg},0</coordinates></Point></Placemark>");
                 sw.WriteLine($"  <Placemark><styleUrl>#NearestRunway</styleUrl><name>{runway.Designator}</name><Point><coordinates>{runway.Longitude * VortexMath.Rad2Deg},{runway.Latitude * VortexMath.Rad2Deg},0</coordinates></Point></Placemark>");
 

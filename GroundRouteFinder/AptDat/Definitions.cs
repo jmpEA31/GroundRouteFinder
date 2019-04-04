@@ -324,5 +324,80 @@ namespace GroundRouteFinder.AptDat
             }
             return wtTypes.Distinct();
         }
+
+        public static WorldTrafficAircraftType WTTypeFromXPlaneTypeAndCat(XPlaneAircraftCategory category, XPlaneAircraftType xpType)
+        {
+            switch (category)
+            {
+                case XPlaneAircraftCategory.A:
+                    switch (xpType)
+                    {
+                        case XPlaneAircraftType.Helo:
+                            return WorldTrafficAircraftType.Helo;
+                        case XPlaneAircraftType.Fighter:
+                            return WorldTrafficAircraftType.Fighter;
+                        case XPlaneAircraftType.Prop:
+                        case XPlaneAircraftType.TurboProp:
+                            return WorldTrafficAircraftType.LightProp;
+                        case XPlaneAircraftType.Jet:
+                            return WorldTrafficAircraftType.LightJet;
+                        default:
+                            break;
+                    }
+                    break;
+                case XPlaneAircraftCategory.B:
+                    switch (xpType)
+                    {
+                        case XPlaneAircraftType.TurboProp:
+                            return WorldTrafficAircraftType.MediumProp;
+                        case XPlaneAircraftType.Jet:
+                            return WorldTrafficAircraftType.MediumJet;
+                        default:
+                            break;
+                    }
+                    break;
+                case XPlaneAircraftCategory.C:
+                    switch (xpType)
+                    {
+                        case XPlaneAircraftType.TurboProp:
+                            return WorldTrafficAircraftType.MediumProp;
+                        case XPlaneAircraftType.Jet:
+                            return WorldTrafficAircraftType.LargeJet;
+                        default:
+                            break;
+                    }
+                    break;
+                case XPlaneAircraftCategory.D:
+                    switch (xpType)
+                    {
+                        case XPlaneAircraftType.TurboProp:
+                            return WorldTrafficAircraftType.LargeProp;
+                        case XPlaneAircraftType.HeavyJet:
+                            return WorldTrafficAircraftType.HeavyJet;
+                        default:
+                            break;
+                    }
+                    break;
+                case XPlaneAircraftCategory.E:
+                    switch (xpType)
+                    {
+                        case XPlaneAircraftType.HeavyJet:
+                            return WorldTrafficAircraftType.HeavyJet;
+                        default:
+                            break;
+                    }
+                    break;
+                case XPlaneAircraftCategory.F:
+                    switch (xpType)
+                    {
+                        case XPlaneAircraftType.HeavyJet:
+                            return WorldTrafficAircraftType.SuperHeavy;
+                        default:
+                            break;
+                    }
+                    break;
+            }
+            return WorldTrafficAircraftType.Max;
+        }
     }
 }
