@@ -86,6 +86,7 @@ namespace GroundRouteFinder
                 }
             }
 
+            /*
             for (int r = 0; r < 1 + (int)XPlaneAircraftCategory.Max; r++)
             {
                 for (int c = 0; c < 1 + (int)XPlaneAircraftType.Max; c++)
@@ -132,6 +133,7 @@ namespace GroundRouteFinder
                     }
                 }
             }
+            */
         }
 
         private void SetXPlaneLocation()
@@ -229,9 +231,9 @@ namespace GroundRouteFinder
                     return false;
                 }
 
-                StringBuilder sb = new StringBuilder();
-                _airport.AnalyzeFlows(sb);
-                LogElapsed($"\n{sb.ToString()}\n");
+                //StringBuilder sb = new StringBuilder();
+                //_airport.AnalyzeFlows(sb);
+                //LogElapsed($"\n{sb.ToString()}\n");
 
                 LogElapsed("Parkings and ATC taxi network are present.");
 

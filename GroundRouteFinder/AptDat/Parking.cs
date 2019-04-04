@@ -382,6 +382,10 @@ namespace GroundRouteFinder.AptDat
                 sw.WriteLine($"PushBackTurnHdg   0");
                 sw.WriteLine($"PushBackDist2_ft  0");
                 sw.WriteLine($"Has1300_data      1");
+                sw.WriteLine($"Priority          0");
+                sw.WriteLine($"International     1");
+                sw.WriteLine($"SmallPropAllowed  1");
+                sw.WriteLine($"LightPropAllowed  1");
                 sw.WriteLine($"Enabled           1");
                 sw.WriteLine("END");
             }

@@ -320,11 +320,11 @@ namespace GroundRouteFinder.AptDat
                 {
                     minimumExit = exitGroup.Value;
                 }
-                else if (mediumExit == null || mediumExit.First().LandingLengthUsed < VortexMath.Feet6500Km)
+                else if (mediumExit == null || mediumExit.First().LandingLengthUsed < VortexMath.Feet5000Km)
                 {
                     mediumExit = exitGroup.Value;
                 }
-                else if (longExit == null || longExit.First().LandingLengthUsed < VortexMath.Feet8000Km)
+                else if (longExit == null || longExit.First().LandingLengthUsed < VortexMath.Feet6500Km)
                 {
                     longExit = exitGroup.Value;
                 }
