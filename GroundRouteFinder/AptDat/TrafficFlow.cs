@@ -449,7 +449,7 @@ namespace GroundRouteFinder.AptDat
                         covered = new Tuple<int, int>(covered.Item1, linked.Item2);
                 }
             }
-            while (linked != null);
+            while (linked != null && (!(covered.Item1 == 0 && covered.Item2 == 360)));
 
             Logger.Log($"{currentMinWindSpeed,3}-{currentMaxWindSpeed,3} kts coverage: {covered.Item1:000}-{covered.Item2:000}");
             if (covered.Item1 != 0 || covered.Item2 != 360)
