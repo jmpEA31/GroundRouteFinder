@@ -11,6 +11,7 @@ using System.IO;
 using GroundRouteFinder.AptDat;
 using GroundRouteFinder.LogSupport;
 using GroundRouteFinder.Output;
+using System.Globalization;
 
 namespace GroundRouteFinder
 {
@@ -29,6 +30,8 @@ namespace GroundRouteFinder
         public MainForm()
         {
             InitializeComponent();
+            CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
+
             Logger.CreateLogfile(Settings.DataFolder);
             Setup();
         }
