@@ -223,8 +223,9 @@ namespace GroundRouteFinder.AptDat
                     case "1004":
                         _currentRule.ParseTimeRule(line);
                         return true;
-                    case "1100":
-                        if (line.StartsWith("1100 Gener"))
+                    case "1100": // Pre wed 2.0
+                    case "1110": // As of wed 2.0
+                        if (line.StartsWith("1100 Gener")) // Pre wed 2.0 work around
                             return false;
                         _currentRule.ParseRunwayUse(line, runways);
                         return true;

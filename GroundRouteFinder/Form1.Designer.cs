@@ -59,6 +59,9 @@
             this.button1 = new System.Windows.Forms.Button();
             this.conversionLayoutPanel = new System.Windows.Forms.TableLayoutPanel();
             this.groupBox5 = new System.Windows.Forms.GroupBox();
+            this.txtMaximumIntersectionShift = new System.Windows.Forms.TextBox();
+            this.label6 = new System.Windows.Forms.Label();
+            this.cbxIntersectionTakeOffs = new System.Windows.Forms.CheckBox();
             this.label5 = new System.Windows.Forms.Label();
             this.cbxParkingReference = new System.Windows.Forms.ComboBox();
             this.cbxFixDuplicateParkingNames = new System.Windows.Forms.CheckBox();
@@ -76,9 +79,6 @@
             this.rtbAircraft = new System.Windows.Forms.RichTextBox();
             this.btnAnalyseAircraft = new System.Windows.Forms.Button();
             this.btnExit = new System.Windows.Forms.Button();
-            this.cbxIntersectionTakeOffs = new System.Windows.Forms.CheckBox();
-            this.label6 = new System.Windows.Forms.Label();
-            this.txtMaximumIntersectionShift = new System.Windows.Forms.TextBox();
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
             this.gbxProgress.SuspendLayout();
@@ -181,7 +181,7 @@
             this.tabPage1.Controls.Add(this.rtb);
             this.tabPage1.Location = new System.Drawing.Point(4, 22);
             this.tabPage1.Name = "tabPage1";
-            this.tabPage1.Padding = new System.Windows.Forms.Padding(3, 3, 3, 3);
+            this.tabPage1.Padding = new System.Windows.Forms.Padding(3);
             this.tabPage1.Size = new System.Drawing.Size(1239, 660);
             this.tabPage1.TabIndex = 0;
             this.tabPage1.Text = "Generator";
@@ -194,9 +194,9 @@
             this.gbxProgress.Controls.Add(this.progressInbound);
             this.gbxProgress.Controls.Add(this.label3);
             this.gbxProgress.Location = new System.Drawing.Point(663, 14);
-            this.gbxProgress.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.gbxProgress.Margin = new System.Windows.Forms.Padding(2);
             this.gbxProgress.Name = "gbxProgress";
-            this.gbxProgress.Padding = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.gbxProgress.Padding = new System.Windows.Forms.Padding(2);
             this.gbxProgress.Size = new System.Drawing.Size(436, 120);
             this.gbxProgress.TabIndex = 16;
             this.gbxProgress.TabStop = false;
@@ -205,7 +205,7 @@
             // progressOutbound
             // 
             this.progressOutbound.Location = new System.Drawing.Point(21, 42);
-            this.progressOutbound.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.progressOutbound.Margin = new System.Windows.Forms.Padding(2);
             this.progressOutbound.Name = "progressOutbound";
             this.progressOutbound.Size = new System.Drawing.Size(401, 19);
             this.progressOutbound.Style = System.Windows.Forms.ProgressBarStyle.Continuous;
@@ -224,7 +224,7 @@
             // progressInbound
             // 
             this.progressInbound.Location = new System.Drawing.Point(21, 83);
-            this.progressInbound.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.progressInbound.Margin = new System.Windows.Forms.Padding(2);
             this.progressInbound.Name = "progressInbound";
             this.progressInbound.Size = new System.Drawing.Size(401, 19);
             this.progressInbound.Style = System.Windows.Forms.ProgressBarStyle.Continuous;
@@ -246,9 +246,9 @@
             this.debugGroupBox.Controls.Add(this.btnRunTestSet);
             this.debugGroupBox.Controls.Add(this.btnShowLogFile);
             this.debugGroupBox.Location = new System.Drawing.Point(496, 11);
-            this.debugGroupBox.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.debugGroupBox.Margin = new System.Windows.Forms.Padding(2);
             this.debugGroupBox.Name = "debugGroupBox";
-            this.debugGroupBox.Padding = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.debugGroupBox.Padding = new System.Windows.Forms.Padding(2);
             this.debugGroupBox.Size = new System.Drawing.Size(162, 124);
             this.debugGroupBox.TabIndex = 11;
             this.debugGroupBox.TabStop = false;
@@ -267,7 +267,7 @@
             // btnRunTestSet
             // 
             this.btnRunTestSet.Location = new System.Drawing.Point(17, 85);
-            this.btnRunTestSet.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.btnRunTestSet.Margin = new System.Windows.Forms.Padding(2);
             this.btnRunTestSet.Name = "btnRunTestSet";
             this.btnRunTestSet.Size = new System.Drawing.Size(132, 25);
             this.btnRunTestSet.TabIndex = 7;
@@ -293,9 +293,9 @@
             this.groupBox1.Controls.Add(this.cbxOverwriteOutboundRoutes);
             this.groupBox1.Controls.Add(this.cbxOverwriteInboundRoutes);
             this.groupBox1.Location = new System.Drawing.Point(164, 11);
-            this.groupBox1.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.groupBox1.Margin = new System.Windows.Forms.Padding(2);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Padding = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.groupBox1.Padding = new System.Windows.Forms.Padding(2);
             this.groupBox1.Size = new System.Drawing.Size(161, 124);
             this.groupBox1.TabIndex = 11;
             this.groupBox1.TabStop = false;
@@ -305,7 +305,7 @@
             // 
             this.cbxOverwriteAirportOperations.AutoSize = true;
             this.cbxOverwriteAirportOperations.Location = new System.Drawing.Point(18, 89);
-            this.cbxOverwriteAirportOperations.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.cbxOverwriteAirportOperations.Margin = new System.Windows.Forms.Padding(2);
             this.cbxOverwriteAirportOperations.Name = "cbxOverwriteAirportOperations";
             this.cbxOverwriteAirportOperations.Size = new System.Drawing.Size(110, 17);
             this.cbxOverwriteAirportOperations.TabIndex = 3;
@@ -316,7 +316,7 @@
             // 
             this.cbxOverwriteParkingDefs.AutoSize = true;
             this.cbxOverwriteParkingDefs.Location = new System.Drawing.Point(18, 67);
-            this.cbxOverwriteParkingDefs.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.cbxOverwriteParkingDefs.Margin = new System.Windows.Forms.Padding(2);
             this.cbxOverwriteParkingDefs.Name = "cbxOverwriteParkingDefs";
             this.cbxOverwriteParkingDefs.Size = new System.Drawing.Size(87, 17);
             this.cbxOverwriteParkingDefs.TabIndex = 2;
@@ -327,7 +327,7 @@
             // 
             this.cbxOverwriteOutboundRoutes.AutoSize = true;
             this.cbxOverwriteOutboundRoutes.Location = new System.Drawing.Point(18, 45);
-            this.cbxOverwriteOutboundRoutes.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.cbxOverwriteOutboundRoutes.Margin = new System.Windows.Forms.Padding(2);
             this.cbxOverwriteOutboundRoutes.Name = "cbxOverwriteOutboundRoutes";
             this.cbxOverwriteOutboundRoutes.Size = new System.Drawing.Size(110, 17);
             this.cbxOverwriteOutboundRoutes.TabIndex = 1;
@@ -338,7 +338,7 @@
             // 
             this.cbxOverwriteInboundRoutes.AutoSize = true;
             this.cbxOverwriteInboundRoutes.Location = new System.Drawing.Point(18, 23);
-            this.cbxOverwriteInboundRoutes.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.cbxOverwriteInboundRoutes.Margin = new System.Windows.Forms.Padding(2);
             this.cbxOverwriteInboundRoutes.Name = "cbxOverwriteInboundRoutes";
             this.cbxOverwriteInboundRoutes.Size = new System.Drawing.Size(102, 17);
             this.cbxOverwriteInboundRoutes.TabIndex = 0;
@@ -351,9 +351,9 @@
             this.gbxOutput.Controls.Add(this.rbNormal);
             this.gbxOutput.Controls.Add(this.radioButton2);
             this.gbxOutput.Location = new System.Drawing.Point(330, 11);
-            this.gbxOutput.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.gbxOutput.Margin = new System.Windows.Forms.Padding(2);
             this.gbxOutput.Name = "gbxOutput";
-            this.gbxOutput.Padding = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.gbxOutput.Padding = new System.Windows.Forms.Padding(2);
             this.gbxOutput.Size = new System.Drawing.Size(162, 124);
             this.gbxOutput.TabIndex = 10;
             this.gbxOutput.TabStop = false;
@@ -365,9 +365,9 @@
             this.gbxAiport.Controls.Add(this.btnAnalyseAirport);
             this.gbxAiport.Controls.Add(this.txtIcao);
             this.gbxAiport.Location = new System.Drawing.Point(10, 11);
-            this.gbxAiport.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.gbxAiport.Margin = new System.Windows.Forms.Padding(2);
             this.gbxAiport.Name = "gbxAiport";
-            this.gbxAiport.Padding = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.gbxAiport.Padding = new System.Windows.Forms.Padding(2);
             this.gbxAiport.Size = new System.Drawing.Size(150, 124);
             this.gbxAiport.TabIndex = 9;
             this.gbxAiport.TabStop = false;
@@ -394,7 +394,7 @@
             this.tabPage2.Controls.Add(this.label1);
             this.tabPage2.Location = new System.Drawing.Point(4, 22);
             this.tabPage2.Name = "tabPage2";
-            this.tabPage2.Padding = new System.Windows.Forms.Padding(3, 3, 3, 3);
+            this.tabPage2.Padding = new System.Windows.Forms.Padding(3);
             this.tabPage2.Size = new System.Drawing.Size(1239, 660);
             this.tabPage2.TabIndex = 1;
             this.tabPage2.Text = "Settings";
@@ -406,9 +406,9 @@
             this.groupBox4.Controls.Add(this.button1);
             this.groupBox4.Controls.Add(this.conversionLayoutPanel);
             this.groupBox4.Location = new System.Drawing.Point(418, 50);
-            this.groupBox4.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.groupBox4.Margin = new System.Windows.Forms.Padding(2);
             this.groupBox4.Name = "groupBox4";
-            this.groupBox4.Padding = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.groupBox4.Padding = new System.Windows.Forms.Padding(2);
             this.groupBox4.Size = new System.Drawing.Size(723, 469);
             this.groupBox4.TabIndex = 15;
             this.groupBox4.TabStop = false;
@@ -418,7 +418,7 @@
             // button2
             // 
             this.button2.Location = new System.Drawing.Point(139, 362);
-            this.button2.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.button2.Margin = new System.Windows.Forms.Padding(2);
             this.button2.Name = "button2";
             this.button2.Size = new System.Drawing.Size(106, 23);
             this.button2.TabIndex = 2;
@@ -428,7 +428,7 @@
             // button1
             // 
             this.button1.Location = new System.Drawing.Point(16, 362);
-            this.button1.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.button1.Margin = new System.Windows.Forms.Padding(2);
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(106, 23);
             this.button1.TabIndex = 1;
@@ -441,7 +441,7 @@
             this.conversionLayoutPanel.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
             this.conversionLayoutPanel.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
             this.conversionLayoutPanel.Location = new System.Drawing.Point(5, 20);
-            this.conversionLayoutPanel.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.conversionLayoutPanel.Margin = new System.Windows.Forms.Padding(2);
             this.conversionLayoutPanel.Name = "conversionLayoutPanel";
             this.conversionLayoutPanel.RowCount = 2;
             this.conversionLayoutPanel.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
@@ -458,13 +458,41 @@
             this.groupBox5.Controls.Add(this.cbxParkingReference);
             this.groupBox5.Controls.Add(this.cbxFixDuplicateParkingNames);
             this.groupBox5.Location = new System.Drawing.Point(9, 187);
-            this.groupBox5.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.groupBox5.Margin = new System.Windows.Forms.Padding(2);
             this.groupBox5.Name = "groupBox5";
-            this.groupBox5.Padding = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.groupBox5.Padding = new System.Windows.Forms.Padding(2);
             this.groupBox5.Size = new System.Drawing.Size(404, 332);
             this.groupBox5.TabIndex = 14;
             this.groupBox5.TabStop = false;
             this.groupBox5.Text = "General";
+            // 
+            // txtMaximumIntersectionShift
+            // 
+            this.txtMaximumIntersectionShift.Location = new System.Drawing.Point(140, 136);
+            this.txtMaximumIntersectionShift.Name = "txtMaximumIntersectionShift";
+            this.txtMaximumIntersectionShift.Size = new System.Drawing.Size(108, 20);
+            this.txtMaximumIntersectionShift.TabIndex = 5;
+            this.txtMaximumIntersectionShift.TextChanged += new System.EventHandler(this.txtMaximumIntersectionShift_TextChanged);
+            // 
+            // label6
+            // 
+            this.label6.AutoSize = true;
+            this.label6.Location = new System.Drawing.Point(34, 139);
+            this.label6.Name = "label6";
+            this.label6.Size = new System.Drawing.Size(91, 13);
+            this.label6.TabIndex = 4;
+            this.label6.Text = "Maximum shift (ft):";
+            // 
+            // cbxIntersectionTakeOffs
+            // 
+            this.cbxIntersectionTakeOffs.AutoSize = true;
+            this.cbxIntersectionTakeOffs.Location = new System.Drawing.Point(18, 109);
+            this.cbxIntersectionTakeOffs.Name = "cbxIntersectionTakeOffs";
+            this.cbxIntersectionTakeOffs.Size = new System.Drawing.Size(143, 17);
+            this.cbxIntersectionTakeOffs.TabIndex = 3;
+            this.cbxIntersectionTakeOffs.Text = "Use intersection takeoffs";
+            this.cbxIntersectionTakeOffs.UseVisualStyleBackColor = true;
+            this.cbxIntersectionTakeOffs.CheckedChanged += new System.EventHandler(this.cbxIntersectionTakeOffs_CheckedChanged);
             // 
             // label5
             // 
@@ -480,7 +508,7 @@
             // 
             this.cbxParkingReference.FormattingEnabled = true;
             this.cbxParkingReference.Location = new System.Drawing.Point(140, 61);
-            this.cbxParkingReference.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.cbxParkingReference.Margin = new System.Windows.Forms.Padding(2);
             this.cbxParkingReference.Name = "cbxParkingReference";
             this.cbxParkingReference.Size = new System.Drawing.Size(108, 21);
             this.cbxParkingReference.TabIndex = 1;
@@ -490,7 +518,7 @@
             // 
             this.cbxFixDuplicateParkingNames.AutoSize = true;
             this.cbxFixDuplicateParkingNames.Location = new System.Drawing.Point(18, 30);
-            this.cbxFixDuplicateParkingNames.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.cbxFixDuplicateParkingNames.Margin = new System.Windows.Forms.Padding(2);
             this.cbxFixDuplicateParkingNames.Name = "cbxFixDuplicateParkingNames";
             this.cbxFixDuplicateParkingNames.Size = new System.Drawing.Size(157, 17);
             this.cbxFixDuplicateParkingNames.TabIndex = 0;
@@ -526,9 +554,9 @@
             this.groupBox2.Controls.Add(this.cbxOwOutboundDefault);
             this.groupBox2.Controls.Add(this.cbxOwInboundDefault);
             this.groupBox2.Location = new System.Drawing.Point(9, 50);
-            this.groupBox2.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.groupBox2.Margin = new System.Windows.Forms.Padding(2);
             this.groupBox2.Name = "groupBox2";
-            this.groupBox2.Padding = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.groupBox2.Padding = new System.Windows.Forms.Padding(2);
             this.groupBox2.Size = new System.Drawing.Size(199, 124);
             this.groupBox2.TabIndex = 12;
             this.groupBox2.TabStop = false;
@@ -538,7 +566,7 @@
             // 
             this.cbxOwOperationsDefault.AutoSize = true;
             this.cbxOwOperationsDefault.Location = new System.Drawing.Point(18, 89);
-            this.cbxOwOperationsDefault.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.cbxOwOperationsDefault.Margin = new System.Windows.Forms.Padding(2);
             this.cbxOwOperationsDefault.Name = "cbxOwOperationsDefault";
             this.cbxOwOperationsDefault.Size = new System.Drawing.Size(110, 17);
             this.cbxOwOperationsDefault.TabIndex = 3;
@@ -550,7 +578,7 @@
             // 
             this.cbxOwParkingDefsDefault.AutoSize = true;
             this.cbxOwParkingDefsDefault.Location = new System.Drawing.Point(18, 67);
-            this.cbxOwParkingDefsDefault.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.cbxOwParkingDefsDefault.Margin = new System.Windows.Forms.Padding(2);
             this.cbxOwParkingDefsDefault.Name = "cbxOwParkingDefsDefault";
             this.cbxOwParkingDefsDefault.Size = new System.Drawing.Size(87, 17);
             this.cbxOwParkingDefsDefault.TabIndex = 2;
@@ -562,7 +590,7 @@
             // 
             this.cbxOwOutboundDefault.AutoSize = true;
             this.cbxOwOutboundDefault.Location = new System.Drawing.Point(18, 45);
-            this.cbxOwOutboundDefault.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.cbxOwOutboundDefault.Margin = new System.Windows.Forms.Padding(2);
             this.cbxOwOutboundDefault.Name = "cbxOwOutboundDefault";
             this.cbxOwOutboundDefault.Size = new System.Drawing.Size(110, 17);
             this.cbxOwOutboundDefault.TabIndex = 1;
@@ -574,7 +602,7 @@
             // 
             this.cbxOwInboundDefault.AutoSize = true;
             this.cbxOwInboundDefault.Location = new System.Drawing.Point(18, 23);
-            this.cbxOwInboundDefault.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.cbxOwInboundDefault.Margin = new System.Windows.Forms.Padding(2);
             this.cbxOwInboundDefault.Name = "cbxOwInboundDefault";
             this.cbxOwInboundDefault.Size = new System.Drawing.Size(102, 17);
             this.cbxOwInboundDefault.TabIndex = 0;
@@ -614,7 +642,7 @@
             this.tabAircraft.Controls.Add(this.btnAnalyseAircraft);
             this.tabAircraft.Location = new System.Drawing.Point(4, 22);
             this.tabAircraft.Name = "tabAircraft";
-            this.tabAircraft.Padding = new System.Windows.Forms.Padding(3, 3, 3, 3);
+            this.tabAircraft.Padding = new System.Windows.Forms.Padding(3);
             this.tabAircraft.Size = new System.Drawing.Size(1239, 660);
             this.tabAircraft.TabIndex = 2;
             this.tabAircraft.Text = "Aircraft Analysis";
@@ -643,41 +671,13 @@
             // 
             this.btnExit.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.btnExit.Location = new System.Drawing.Point(1156, 693);
-            this.btnExit.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.btnExit.Margin = new System.Windows.Forms.Padding(2);
             this.btnExit.Name = "btnExit";
             this.btnExit.Size = new System.Drawing.Size(86, 29);
             this.btnExit.TabIndex = 8;
             this.btnExit.Text = "Exit";
             this.btnExit.UseVisualStyleBackColor = true;
             this.btnExit.Click += new System.EventHandler(this.btnExit_Click);
-            // 
-            // cbxIntersectionTakeOffs
-            // 
-            this.cbxIntersectionTakeOffs.AutoSize = true;
-            this.cbxIntersectionTakeOffs.Location = new System.Drawing.Point(18, 109);
-            this.cbxIntersectionTakeOffs.Name = "cbxIntersectionTakeOffs";
-            this.cbxIntersectionTakeOffs.Size = new System.Drawing.Size(143, 17);
-            this.cbxIntersectionTakeOffs.TabIndex = 3;
-            this.cbxIntersectionTakeOffs.Text = "Use intersection takeoffs";
-            this.cbxIntersectionTakeOffs.UseVisualStyleBackColor = true;
-            this.cbxIntersectionTakeOffs.CheckedChanged += new System.EventHandler(this.cbxIntersectionTakeOffs_CheckedChanged);
-            // 
-            // label6
-            // 
-            this.label6.AutoSize = true;
-            this.label6.Location = new System.Drawing.Point(34, 139);
-            this.label6.Name = "label6";
-            this.label6.Size = new System.Drawing.Size(91, 13);
-            this.label6.TabIndex = 4;
-            this.label6.Text = "Maximum shift (ft):";
-            // 
-            // txtMaximumIntersectionShift
-            // 
-            this.txtMaximumIntersectionShift.Location = new System.Drawing.Point(140, 136);
-            this.txtMaximumIntersectionShift.Name = "txtMaximumIntersectionShift";
-            this.txtMaximumIntersectionShift.Size = new System.Drawing.Size(108, 20);
-            this.txtMaximumIntersectionShift.TabIndex = 5;
-            this.txtMaximumIntersectionShift.TextChanged += new System.EventHandler(this.txtMaximumIntersectionShift_TextChanged);
             // 
             // MainForm
             // 
@@ -687,7 +687,7 @@
             this.Controls.Add(this.btnExit);
             this.Controls.Add(this.tabControl1);
             this.Name = "MainForm";
-            this.Text = "Ground Route Generator 0.7";
+            this.Text = "Ground Route Generator 0.8";
             this.tabControl1.ResumeLayout(false);
             this.tabPage1.ResumeLayout(false);
             this.gbxProgress.ResumeLayout(false);
